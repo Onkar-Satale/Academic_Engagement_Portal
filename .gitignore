@@ -15,11 +15,10 @@ frontend/build/
 
 # Environment variables & Local configuration
 .env
-*.env
+.env.local
 backend/.env
 frontend/.env
-!frontend/.env.example
-!backend/.env.example
+!*.env.example
 
 # Logs
 npm-debug.log*
