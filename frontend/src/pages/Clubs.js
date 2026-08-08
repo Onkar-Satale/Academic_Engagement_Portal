@@ -45,6 +45,7 @@ export default function Clubs() {
 
   useEffect(() => {
     fetchClubs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addClub = async () => {

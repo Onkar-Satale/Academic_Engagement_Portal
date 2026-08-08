@@ -47,6 +47,7 @@ export default function ClubDetails() {
 
   useEffect(() => {
     fetchClub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId]);
 
   const fetchClub = async () => {

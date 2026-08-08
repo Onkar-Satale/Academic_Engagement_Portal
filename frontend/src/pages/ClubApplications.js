@@ -11,6 +11,7 @@ const ClubApplications = () => {
 
   useEffect(() => {
     fetchApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId]);
 
   const fetchApplications = async () => {
