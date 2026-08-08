@@ -33,6 +33,7 @@ export default function Events() {
 
   useEffect(() => {
     fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <p>Loading Event/Session...</p>;

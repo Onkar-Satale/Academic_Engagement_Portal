@@ -51,12 +51,14 @@ export default function EventDetails() {
 
   useEffect(() => {
     fetchEvent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
   useEffect(() => {
     if (user && event) {
       fetchAttendees();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, event]);
 
   if (!event || !user) return <p>Loading Events/Sessions...</p>;
