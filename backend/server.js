@@ -62,6 +62,10 @@ app.use("/api/club-interests", clubInterestRoutes);
 app.use("/api/club-registrations", clubRegistrationRoutes);
 app.use("/api/event-registrations", eventRegistrationRoutes);
 
+app.get("/", (req, res) => {
+  res.json({ success: true, message: "Academic Engagement Portal Backend API Server is running securely" });
+});
+
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "Academic Engagement Portal Backend API Server is operational" });
 });
