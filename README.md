@@ -39,9 +39,9 @@ Academic Engagement Portal follows a modern decoupled architecture separating th
 
 <div align="center">
 
-![System Design Architecture](frontend/public/logo.svg)
+![Academic Engagement Portal Architecture](assets/architecture.png)
 
-*High-Level System Design Architecture illustrating React SPA, Node.js REST API Gateway, Express Authorization & Validation Middlewares, and MySQL Relational Engine.*
+*High-Level System Design Architecture illustrating React SPA, Node.js REST API Gateway, Express Authorization & Validation Middlewares, Admin Dashboard, MySQL Database, and Email Notification Service.*
 
 </div>
 
@@ -51,6 +51,7 @@ Academic Engagement Portal follows a modern decoupled architecture separating th
 
 ```
 Academic-Engagement-Portal-main/
+├── assets/                     # Architecture diagram & application screenshots
 ├── backend/                    # Node.js + Express REST API Server
 │   ├── controllers/            # Auth, Club, Event, Permission, Approval & Notification controllers
 │   ├── database/               # Relational database schemas & seed data (schema.sql, 3.sql)
@@ -180,19 +181,37 @@ npm start
 
 ## 📸 Screenshots & Visual Walkthrough
 
-<div align="center">
+### 🔑 Authentication & Security
 
-### 🏛️ Multi-Tier Approval Dashboard
-![Approval Dashboard](frontend/public/logo.svg)
-*Interactive authority panel for reviewing and approving multi-level permission requests with detailed audit trails.*
-
-### 📋 Club Directory & Event Management
-| Campus Club Directory | Event Detail & Registration |
+| Login Interface | Sign Up / User Registration |
 | :---: | :---: |
-| ![Clubs Page](frontend/public/logo.svg) | ![Event Registration](frontend/public/logo.svg) |
-| *Explore active campus clubs, recruitment status, and activities.* | *View event schedules, venues, and submit registration forms.* |
+| ![Login Interface](assets/login.png) | ![Sign Up Interface](assets/signup.png) |
+| *Secure user authentication with JWT Bearer tokens and password hashing.* | *Multi-role registration supporting Students, Club Heads, Mentors, and Administrators.* |
 
-</div>
+<br />
+
+### 🏠 Landing Page & Platform Overview
+
+| Hero Banner | How It Works Workflow |
+| :---: | :---: |
+| ![Landing Page](assets/landing_page.png) | ![How It Works](assets/how_it_works.png) |
+| *Centralized campus engagement portal hero banner with quick action links.* | *4-step process for club creation, event approvals, and student participation.* |
+
+<br />
+
+### 🎪 Campus Clubs, Events & User Profile
+
+| Campus Clubs Directory | Events & Competitions |
+| :---: | :---: |
+| ![Clubs Directory](assets/clubs_directory.png) | ![Events Directory](assets/events_directory.png) |
+| *Explore campus clubs, active membership stats, and mentorship details.* | *Browse upcoming workshops, hackathons, and campus activities.* |
+
+<br />
+
+| Account Profile & User Dashboard |
+| :---: |
+| ![Account Profile](assets/account_profile.png) |
+| *Personal details, role permissions, active club memberships, and registered event sessions.* |
 
 ---
 
