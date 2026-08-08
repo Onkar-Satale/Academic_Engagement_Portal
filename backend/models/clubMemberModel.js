@@ -1,0 +1,128 @@
+import { db } from "../config/db.js";
+
+export const ClubMemberModel = {
+  join: async (club_id, user_id) => {
+    await db.query(
+      `INSERT INTO club_member (club_id, user_id) VALUES (?, ?)`,
+      [club_id, user_id]
+    );
+  },
+
+  leave: async (club_id, user_id) => {
+    await db.query(
+      `DELETE FROM club_member WHERE club_id = ? AND user_id = ?`,
+      [club_id, user_id]
+    );
+  },
+
+  getEnrolledClubs: async (userId) => {
+    const [rows] = await db.query(
+      "SELECT DISTINCT club_id FROM club_member WHERE user_id = ?",
+      [userId]
+    );
+    return rows.map(r => r.club_id);
+  },
+
+  getClubMembers: async (clubId) => {
+    const [members] = await db.query(
+      `SELECT cm.user_id, u.name as student_name, u.email, u.year, u.department as branch
+       FROM club_member cm
+       JOIN user u ON cm.user_id = u.user_id
+       WHERE cm.club_id = ?`,
+      [clubId]
+    );
+    return members;
+  },
+
+  addStudent: async (clubId, studentData) => {
+    const { name, email, roll_no, year, branch } = studentData;
+    let [users] = await db.query("SELECT user_id FROM user WHERE email = ?", [email]);
+    let studentId;
+
+    if (!users.length) {
+      const [userRes] = await db.query(
+        "INSERT INTO user (name, email, department, year, role_id) VALUES (?, ?, ?, ?, 1)",
+        [name, email, branch || null, year || null]
+      );
+      studentId = userRes.insertId;
+    } else {
+      studentId = users[0].user_id;
+    }
+
+    const [exists] = await db.query(
+      "SELECT 1 FROM club_member WHERE club_id = ? AND user_id = ?",
+      [clubId, studentId]
+    );
+    if (exists.length) return false;
+
+    await db.query(
+      "INSERT INTO club_member (club_id, user_id, status) VALUES (?, ?, 'approved')",
+      [clubId, studentId]
+    );
+    return true;
+  },
+
+  removeStudent: async (clubId, email) => {
+    const [result] = await db.query(
+      `DELETE cm FROM club_member cm
+       JOIN user u ON cm.user_id = u.user_id
+       WHERE cm.club_id = ? AND u.email = ?`,
+      [clubId, email]
+    );
+    return result.affectedRows > 0;
+  },
+
+  getUserAssociatedClubs: async (userId, userRole) => {
+    let query;
+    let params;
+
+    if (userRole === 'Student') {
+      query = `
+        SELECT DISTINCT 
+          c.*,
+          mentor.name as mentor_name,
+          mentor.email as mentor_email,
+          head.name as head_name,
+          head.email as head_email
+        FROM club c
+        INNER JOIN club_member cm ON cm.club_id = c.club_id
+        LEFT JOIN user mentor ON c.club_mentor_id = mentor.user_id
+        LEFT JOIN user head ON c.club_head_id = head.user_id
+        WHERE cm.user_id = ?
+      `;
+      params = [userId];
+    } else {
+      query = `
+        SELECT DISTINCT 
+          c.*,
+          mentor.name as mentor_name,
+          mentor.email as mentor_email,
+          head.name as head_name,
+          head.email as head_email
+        FROM club c
+        LEFT JOIN club_member cm ON cm.club_id = c.club_id AND cm.user_id = ?
+        LEFT JOIN user mentor ON c.club_mentor_id = mentor.user_id
+        LEFT JOIN user head ON c.club_head_id = head.user_id
+        WHERE cm.user_id = ? OR c.club_head_id = ? OR c.club_mentor_id = ?
+      `;
+      params = [userId, userId, userId, userId];
+    }
+
+    const [clubs] = await db.query(query, params);
+    return clubs;
+  },
+
+  expressInterest: async (userId, clubId) => {
+    await db.query("INSERT INTO club_interest (user_id, club_id) VALUES (?, ?)", [userId, clubId]);
+  },
+
+  getUserInterests: async (userId) => {
+    const [rows] = await db.query(
+      "SELECT ci.*, c.name as club_name FROM club_interest ci JOIN club c ON ci.club_id = c.club_id WHERE ci.user_id = ?",
+      [userId]
+    );
+    return rows;
+  }
+};
+
+export default ClubMemberModel;

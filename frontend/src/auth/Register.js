@@ -1,0 +1,275 @@
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import api from "../api/axios";
+import "./Login.css";
+
+export default function RegisterPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [department, setDepartment] = useState("");
+  const [year, setYear] = useState("");
+  const [roleId, setRoleId] = useState(1);
+  const [roles, setRoles] = useState([]);
+  const [secretKey, setSecretKey] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [message, setMessage] = useState(null);
+  const [type, setType] = useState("");
+
+  useEffect(() => {
+    api.get("/users/roles")
+      .then((res) => setRoles(res.data))
+      .catch(() => {
+        const fallback = [{ role_id: 1, role_name: "Student" }];
+        setRoles(fallback);
+        setRoleId(1);
+      });
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+
+    const selectedRole = roles.find(r => r.role_id === roleId);
+
+    const fields = [
+      { name: "Full Name", value: name },
+      { name: "Email", value: email },
+      { name: "Password", value: password },
+    ];
+
+    if (!["Estate Manager", "Principal", "Director"].includes(selectedRole?.role_name)) {
+      fields.push({ name: "Department", value: department });
+    }
+
+    if (["Student", "Club Head"].includes(selectedRole?.role_name)) {
+      fields.push({ name: "Year", value: year });
+    }
+
+    const emptyFields = fields.filter(f => !f.value);
+
+    if (emptyFields.length === 1) {
+      const msg = `${emptyFields[0].name} is required`;
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+
+    if (emptyFields.length > 1) {
+      const msg = "All fields are required";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+
+    /* ==========================================================================
+       1. EMAIL VALIDATION
+       ========================================================================== */
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      const msg = "Please enter a valid email address";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+
+    /* ==========================================================================
+       2. PASSWORD STRICT VALIDATION
+       ========================================================================== */
+    if (password.length < 8) {
+      const msg = "Password must be at least 8 characters long";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+    if (!/[A-Z]/.test(password)) {
+      const msg = "Password must contain at least one uppercase letter (A-Z)";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+    if (!/[a-z]/.test(password)) {
+      const msg = "Password must contain at least one lowercase letter (a-z)";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+    if (!/[0-9]/.test(password)) {
+      const msg = "Password must contain at least one number (0-9)";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      const msg = "Password must contain at least one special character (!@#$%^&*)";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+
+    const rolesRequiringKeys = ["Club Head", "Admin", "Faculty", "Club Mentor", "Estate Manager", "Principal", "Director"];
+    if (rolesRequiringKeys.includes(selectedRole?.role_name) && !secretKey) {
+      const msg = `${selectedRole.role_name} role requires a secret key`;
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+
+    setLoading(true);
+    try {
+      const res = await api.post("/auth/register", {
+        name,
+        email,
+        password,
+        department,
+        year: showYear ? year : null,
+        role_id: roleId,
+        secret_key: secretKey
+      });
+
+      setType("success");
+      setMessage("Registration successful! Logging you in...");
+      toast.success("Account created successfully! 🎉");
+
+      if (res.data.token && res.data.user) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        window.dispatchEvent(new Event("authChange"));
+      }
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    } catch (err) {
+      const errMsg = err.response?.data?.message || "Registration failed";
+      setType("error");
+      setMessage(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentRoleName = roles.find(r => r.role_id === roleId)?.role_name;
+  const rolesRequiringKeys = ["Club Head", "Admin", "Faculty", "Club Mentor", "Estate Manager", "Principal", "Director"];
+  const requiresKey = rolesRequiringKeys.includes(currentRoleName);
+
+  const keyPlaceholder = currentRoleName === "Club Head"
+    ? "Enter Club Secret Key"
+    : `Enter ${currentRoleName} Key`;
+
+  const showYear = ["Student", "Club Head"].includes(currentRoleName);
+
+  return (
+    <div className="auth-container">
+      <form className="auth-form" onSubmit={handleSubmit} noValidate>
+        <h2>Sign Up</h2>
+
+        {message && (
+          <div className={`auth-message ${type}`}>
+            {message}
+          </div>
+        )}
+
+        <select
+          value={roleId}
+          onChange={(e) => setRoleId(Number(e.target.value))}
+          className="role-select"
+        >
+          {roles.map((role) => (
+            <option key={role.role_id} value={role.role_id}>
+              {role.role_name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <div className="password-input-wrap">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            className="password-toggle-btn"
+            onClick={() => setShowPassword(!showPassword)}
+            title={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              /* Slashed Eye (Hidden) */
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            ) : (
+              /* Eye (Visible) */
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {!["Estate Manager", "Principal", "Director"].includes(currentRoleName) && (
+          <select
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            className="role-select"
+          >
+            <option value="">Select Department</option>
+            <option value="CS">CS (Computer Science)</option>
+            <option value="IT">IT (Information Technology)</option>
+            <option value="AIDS">AIDS (AI & Data Science)</option>
+            <option value="ECE">ECE (Electronics & Communication)</option>
+            <option value="ENTC">ENTC (Electronics & Telecommunication)</option>
+          </select>
+        )}
+
+        {showYear && (
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="role-select"
+          >
+            <option value="">Select Year</option>
+            <option value="1">FE (First Year)</option>
+            <option value="2">SE (Second Year)</option>
+            <option value="3">TE (Third Year)</option>
+            <option value="4">BE (Final / Fourth Year)</option>
+          </select>
+        )}
+
+        {requiresKey && (
+          <input
+            type="text"
+            placeholder={keyPlaceholder}
+            value={secretKey}
+            onChange={(e) => setSecretKey(e.target.value)}
+          />
+        )}
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Registering..." : "Register"}
+        </button>
+      </form>
+    </div>
+  );
+}

@@ -1,0 +1,80 @@
+/* Official College Portal Footer - Clean 3-Color Design */
+.footer-container {
+  width: 100%;
+  background: rgba(9, 13, 22, 0.95);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 60px 40px 30px 40px;
+  text-align: center;
+  position: relative;
+}
+
+.footer-top {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.footer-top h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.footer-about p {
+  max-width: 700px;
+  margin: 0 auto;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.footer-links ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.footer-links ul li a {
+  text-decoration: none;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+}
+
+.footer-links ul li a:hover {
+  color: #ffffff;
+  border-color: var(--primary-hover);
+  background: var(--primary-glow);
+}
+
+.footer-contact p {
+  margin: 8px 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.footer-contact strong {
+  color: #ffffff;
+}
+
+.footer-bottom {
+  border-top: 1px solid var(--border-color);
+  padding-top: 24px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 40px;
+}

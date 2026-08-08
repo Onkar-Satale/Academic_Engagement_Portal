@@ -1,0 +1,70 @@
+/* Official College Contact Page - Clean 3-Color Dark System */
+.contact-page {
+  font-family: var(--font-family);
+  text-align: center;
+  color: var(--text-main);
+  background: var(--bg-main);
+  padding: 40px 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.contact-hero {
+  margin-bottom: 40px;
+}
+
+.contact-hero h1 {
+  font-size: 2.5rem;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.contact-hero p {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.contact-cards {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 0 auto;
+}
+
+.contact-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--box-shadow);
+  flex: 1 1 260px;
+  text-align: left;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-focus);
+}
+
+.contact-card h2 {
+  color: #ffffff;
+  margin-bottom: 12px;
+  font-size: 1.25rem;
+}
+
+.contact-card p {
+  margin: 8px 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.contact-card a {
+  color: var(--primary-light);
+  text-decoration: none;
+}
+
+.contact-card a:hover {
+  color: var(--primary-hover);
+}

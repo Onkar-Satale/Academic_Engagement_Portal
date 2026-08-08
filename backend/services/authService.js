@@ -1,0 +1,89 @@
+import jwt from "jsonwebtoken";
+import { UserModel } from "../models/userModel.js";
+import { RoleModel } from "../models/roleModel.js";
+import { ClubModel } from "../models/clubModel.js";
+import ApiError from "../utils/ApiError.js";
+
+export const authService = {
+  findUserByEmail: async (email) => {
+    return await UserModel.findByEmail(email);
+  },
+
+  registerUser: async ({ name, email, password, department, year, role_id, secret_key }) => {
+    const existing = await UserModel.findByEmail(email);
+    if (existing) throw new ApiError(400, "Email is already registered");
+
+    const role = await RoleModel.getById(role_id);
+    if (!role) throw new ApiError(400, "Invalid role");
+
+    const roleName = role.role_name;
+
+    if (roleName === "Club Head") {
+      const club = await ClubModel.findByKey(secret_key);
+      if (!club) throw new ApiError(400, "Invalid Club Head Key");
+    } else if (roleName === "Club Mentor") {
+      const club = await ClubModel.findByKey(secret_key);
+      if (!club) throw new ApiError(400, "Invalid Club Mentor Key");
+    }
+
+    const userId = await UserModel.create({ name, email, password, department, year, role_id });
+
+    let club_id = null;
+    if (roleName === "Club Head") {
+      club_id = await ClubModel.assignHead(secret_key, userId);
+    } else if (roleName === "Club Mentor") {
+      club_id = await ClubModel.assignMentor(secret_key, userId);
+    }
+
+    const secret = process.env.JWT_SECRET || "supersecretkey123";
+    const token = jwt.sign({ id: userId, role_id }, secret, { expiresIn: "7d" });
+
+    return {
+      token,
+      user: {
+        id: userId,
+        user_id: userId,
+        name,
+        email,
+        department,
+        year,
+        role_id,
+        role_name: roleName,
+        club_id
+      }
+    };
+  },
+
+  loginUser: async (email, password) => {
+    const user = await UserModel.findByEmail(email);
+    if (!user) throw new ApiError(401, "Invalid credentials");
+
+    const isMatch = await UserModel.verifyPassword(password, user.password_hash);
+    if (!isMatch) throw new ApiError(401, "Invalid credentials");
+
+    const secret = process.env.JWT_SECRET || "supersecretkey123";
+    const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, secret, { expiresIn: "7d" });
+
+    let club_id = null;
+    if (user.role_id === 2 || user.role_id === 5) {
+      club_id = await ClubModel.findByUserRole(user.user_id);
+    }
+
+    return {
+      token,
+      user: {
+        id: user.user_id,
+        user_id: user.user_id,
+        name: user.name,
+        email: user.email,
+        department: user.department,
+        year: user.year,
+        role_id: user.role_id,
+        role_name: user.role_name,
+        club_id
+      }
+    };
+  }
+};
+
+export default authService;

@@ -1,0 +1,133 @@
+.approval-dashboard-container {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  color: #fff;
+}
+
+.approval-dashboard-container h2 {
+  font-size: 2rem;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.approval-dashboard-container .subtitle {
+  color: #94a3b8;
+  margin-bottom: 30px;
+}
+
+.approval-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.approval-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.approval-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.approval-header h3 {
+  font-size: 1.3rem;
+  margin: 0 0 4px 0;
+  color: #f8fafc;
+}
+
+.club-subtitle {
+  font-size: 0.85rem;
+  color: #a855f7;
+}
+
+.level-badge {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.approval-details p {
+  margin: 6px 0;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.approval-details .desc {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 8px;
+  color: #94a3b8;
+}
+
+.remarks-box {
+  margin: 18px 0;
+}
+
+.remarks-box input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.remarks-box input:focus {
+  border-color: #6366f1;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.approve-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+}
+
+.reject-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+}
+
+.action-buttons button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.empty-state, .loading-spinner {
+  text-align: center;
+  padding: 60px 0;
+  color: #94a3b8;
+  font-size: 1.1rem;
+}

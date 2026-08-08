@@ -1,0 +1,115 @@
+/* Official College ClubDetails Styling */
+.club-details-container {
+  max-width: 950px;
+  margin: 40px auto;
+  padding: 36px;
+  background: var(--bg-card);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--box-shadow);
+  color: var(--text-main);
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--primary-light);
+  border: 1px solid var(--border-color);
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-glow);
+}
+
+.club-details-container h1 {
+  font-size: 2.2rem;
+  color: #ffffff;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.club-description {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin-bottom: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.club-info-section {
+  margin-bottom: 28px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.club-info-section h3 {
+  color: #ffffff;
+  margin-bottom: 14px;
+  font-size: 1.25rem;
+}
+
+.leadership-cards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.leader-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 220px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+}
+
+.leader-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.leader-name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.leader-email {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.leader-role-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--primary-light);
+  background: var(--primary-glow);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
