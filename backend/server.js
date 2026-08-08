@@ -19,7 +19,34 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN;
+const frontendUrl = process.env.FRONTEND_URL;
+const allowedOriginsList = allowedOrigins
+  ? allowedOrigins.split(",").map((origin) => origin.trim())
+  : [];
+
+if (frontendUrl && !allowedOriginsList.includes(frontendUrl.trim())) {
+  allowedOriginsList.push(frontendUrl.trim());
+}
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (
+        !origin ||
+        allowedOriginsList.length === 0 ||
+        allowedOriginsList.includes(origin) ||
+        origin.startsWith("http://localhost") ||
+        origin.startsWith("http://127.0.0.1")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy violation: Origin not allowed"));
+      }
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);

@@ -35,8 +35,9 @@ export const authService = {
       club_id = await ClubModel.assignMentor(secret_key, userId);
     }
 
-    const secret = process.env.JWT_SECRET || "supersecretkey123";
-    const token = jwt.sign({ id: userId, role_id }, secret, { expiresIn: "7d" });
+    const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || "supersecretkey123";
+    const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "15m";
+    const token = jwt.sign({ id: userId, role_id }, secret, { expiresIn });
 
     return {
       token,
@@ -61,8 +62,9 @@ export const authService = {
     const isMatch = await UserModel.verifyPassword(password, user.password_hash);
     if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
-    const secret = process.env.JWT_SECRET || "supersecretkey123";
-    const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, secret, { expiresIn: "7d" });
+    const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || "supersecretkey123";
+    const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "15m";
+    const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, secret, { expiresIn });
 
     let club_id = null;
     if (user.role_id === 2 || user.role_id === 5) {
