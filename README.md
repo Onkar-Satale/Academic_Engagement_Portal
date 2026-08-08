@@ -106,7 +106,8 @@ CORS_ORIGIN=http://localhost:3000
 
 ### 2. Frontend Configuration (`frontend/.env`)
 ```env
-REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_API_URL=http://localhost:5000
+REACT_APP_WEB3FORMS_KEY=7c30012f-a14c-4141-b8af-64707af29229
 ```
 
 ---
