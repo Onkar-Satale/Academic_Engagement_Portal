@@ -41,7 +41,7 @@ Academic Engagement Portal follows a modern decoupled architecture separating th
 
 ![Academic Engagement Portal Architecture](assets/architecture.png)
 
-*High-Level System Design Architecture illustrating React SPA, Node.js REST API Gateway, Express Authorization & Validation Middlewares, Admin Dashboard, MySQL Database, and Email Notification Service.*
+*High-Level System Design Architecture illustrating React SPA, Node.js REST API Gateway, Express Authorization & Validation Middlewares, MySQL Database, and Notification Service (Real-time / Email / In-App).*
 
 </div>
 
