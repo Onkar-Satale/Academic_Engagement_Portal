@@ -1,6 +1,6 @@
 # 🎓 Academic Engagement Portal – Campus Club, Event & Multi-Tier Permission System
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://academic-engagement-portal.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://academic-engagement-portal-kappa.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![NodeJS](https://img.shields.io/badge/Node.js-Express-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -15,8 +15,8 @@
 
 | Service | Host Platform | Live URL |
 | :--- | :--- | :--- |
-| **Frontend Application** | Vercel | [https://academic-engagement-portal.vercel.app/](https://academic-engagement-portal.vercel.app/) |
-| **Express Backend API** | Render | [https://academic-portal-backend.onrender.com/](https://academic-portal-backend.onrender.com/) |
+| **Frontend Application** | Vercel | [https://academic-engagement-portal-kappa.vercel.app/](https://academic-engagement-portal-kappa.vercel.app/) |
+| **Express Backend API** | Render | [https://academic-engagement-portal-backend.onrender.com/](https://academic-engagement-portal-backend.onrender.com/) |
 
 ---
 
@@ -94,14 +94,17 @@ Set up environment variables for both the backend server and frontend client bef
 ```env
 PORT=5000
 NODE_ENV=development
+ALLOWED_ORIGINS=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=college_db
-JWT_SECRET=your_super_secret_jwt_access_key
-JWT_EXPIRES_IN=24h
-CORS_ORIGIN=http://localhost:3000
+JWT_ACCESS_SECRET=your_jwt_access_secret_here
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_here
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 
 ### 2. Frontend Configuration (`frontend/.env`)
