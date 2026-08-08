@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../api/axios";
@@ -23,7 +23,7 @@ export default function EventDetails() {
   }, []);
 
   // Fetch event details
-  const fetchEvent = async () => {
+  const fetchEvent = useCallback(async () => {
     try {
       const res = await api.get(`/events/${eventId}`);
       setEvent(res.data);
@@ -38,28 +38,26 @@ export default function EventDetails() {
     } catch (err) {
       console.error("Failed to fetch Event/Session", err);
     }
-  };
+  }, [eventId]);
 
-  const fetchAttendees = async () => {
+  const fetchAttendees = useCallback(async () => {
     try {
       const res = await api.get(`/event-registrations/${eventId}/attendees`);
       setAttendees(res.data);
     } catch (err) {
       // User likely not authorized, ignore
     }
-  };
+  }, [eventId]);
 
   useEffect(() => {
     fetchEvent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
+  }, [fetchEvent]);
 
   useEffect(() => {
     if (user && event) {
       fetchAttendees();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, event]);
+  }, [user, event, fetchAttendees]);
 
   if (!event || !user) return <p>Loading Events/Sessions...</p>;
 
@@ -104,187 +102,231 @@ export default function EventDetails() {
 
   return (
     <div className="event-details-container">
-      {/* ================== Toast Message ================== */}
-      {toast && (
-        <div className={`toast ${toast.type}`}>
-          {toast.message}
+      {/* Header card with Action buttons */}
+      <div className="event-header-card">
+        <div className="event-title-badge">
+          <h2>{event.title}</h2>
+          <span className={`status-badge ${event.status.toLowerCase()}`}>
+            {event.status}
+          </span>
+        </div>
+
+        <div className="event-meta-info">
+          <p>📅 <strong>Date:</strong> {event.date ? event.date.split("T")[0] : "TBD"}</p>
+          <p>📍 <strong>Venue:</strong> {event.venue}</p>
+          <p>🏛️ <strong>Club:</strong> {event.club_name || "General Campus Event"}</p>
+          <p>👤 <strong>Organizer:</strong> {event.organizer_name || "Campus Admin"}</p>
+          {event.conducted_by && (
+            <p>🎤 <strong>Conducted By:</strong> {event.conducted_by}</p>
+          )}
+        </div>
+
+        {/* Edit / Delete actions for privilege users */}
+        {canManageEvent && (
+          <div className="event-action-buttons">
+            {!editMode ? (
+              <>
+                <button className="btn-edit" onClick={() => setEditMode(true)}>
+                  ✏️ Edit Event
+                </button>
+                <button
+                  className="btn-delete"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  🗑️ Delete Event
+                </button>
+              </>
+            ) : (
+              <button className="btn-cancel" onClick={() => setEditMode(false)}>
+                ✖️ Cancel Editing
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Main Content Details */}
+      {!editMode ? (
+        <div className="event-content-card">
+          <h3>Description</h3>
+          <p className="event-description">{event.description}</p>
+
+          {event.additional_info && (
+            <>
+              <h3>Additional Information</h3>
+              <p className="event-additional-info">{event.additional_info}</p>
+            </>
+          )}
+        </div>
+      ) : (
+        /* Edit Form */
+        <div className="event-edit-card">
+          <h3>Edit Event Details</h3>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSave();
+            }}
+          >
+            <div className="form-group">
+              <label>Title</label>
+              <input
+                type="text"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                rows="4"
+                required
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={form.date ? form.date.split("T")[0] : ""}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Venue</label>
+                <input
+                  type="text"
+                  name="venue"
+                  value={form.venue}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Conducted By</label>
+              <input
+                type="text"
+                name="conducted_by"
+                value={form.conducted_by}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Additional Information</label>
+              <textarea
+                name="additional_info"
+                value={form.additional_info}
+                onChange={handleChange}
+                rows="3"
+              />
+            </div>
+
+            <button type="submit" className="btn-save">
+              💾 Save Changes
+            </button>
+          </form>
         </div>
       )}
 
-      {!editMode ? (
-        <>
-          <h1>{event.title}</h1>
-          <p><b>Description:</b> {event.description}</p>
-          <p><b>Date:</b> {new Date(event.date).toLocaleDateString()}</p>
-          <p><b>Venue:</b> {event.venue}</p>
-          <p><b>Status:</b> {event.status}</p>
-          <p><b>Additional Info:</b> {event.additional_info || "N/A"}</p>
-          <p><b>Conducted By:</b> {event.conducted_by || "N/A"}</p>
-
-          {/* ====== ENROLLED COUNT (visible to managers) ====== */}
-          {canManageEvent && (
-            <div className="enrolled-count-badge">
-              <span className="enrolled-icon">👥</span>
-              <span className="enrolled-text">
-                Total Enrolled: <strong>{attendees.length}</strong> student{attendees.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
-
-          {canManageEvent && (
-            <div className="event-buttons">
-              <button className="edit-btn" onClick={() => setEditMode(true)}>Edit Event/Session Details</button>
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-modal">
+            <h4>Confirm Deletion</h4>
+            <p>Are you sure you want to delete this event? This action cannot be undone.</p>
+            <div className="modal-actions">
+              <button className="btn-confirm-delete" onClick={handleDelete}>
+                Yes, Delete
+              </button>
               <button
-                className="delete-btn"
-                onClick={() => setShowDeleteConfirm(true)}
+                className="btn-cancel-modal"
+                onClick={() => setShowDeleteConfirm(false)}
               >
-                Delete Event/Session
+                Cancel
               </button>
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          {/* ====== SEE ENROLLED STUDENTS BUTTON ====== */}
-          {canManageEvent && attendees.length > 0 && (
-            <div style={{ marginTop: "24px" }}>
-              <button
-                className="see-enrolled-btn"
-                onClick={() => setShowAttendees(!showAttendees)}
-              >
-                {showAttendees ? "▲ Hide Enrolled Students" : `▼ See Enrolled Students (${attendees.length})`}
+      {/* Registered Attendees Section for Admins/Organizers */}
+      {canManageEvent && (
+        <div className="attendees-section">
+          <button
+            className="btn-toggle-attendees"
+            onClick={() => setShowAttendees(!showAttendees)}
+          >
+            {showAttendees ? "🙈 Hide Registered Students" : "👥 View Registered Students"} ({attendees.length})
+          </button>
+
+          {showAttendees && (
+            <div className="attendees-list">
+              <h4>Registered Students ({attendees.length})</h4>
+              {attendees.length === 0 ? (
+                <p>No students registered yet.</p>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Department</th>
+                      <th>Year</th>
+                      <th>Registered At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendees.map((attendee) => (
+                      <tr
+                        key={attendee.registration_id}
+                        onClick={() => setSelectedStudent(attendee)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <td>{attendee.full_name}</td>
+                        <td>{attendee.email}</td>
+                        <td>{attendee.department}</td>
+                        <td>{attendee.year}</td>
+                        <td>{new Date(attendee.registered_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Student Details Modal */}
+      {selectedStudent && (
+        <div className="modal-overlay">
+          <div className="modal-content student-modal">
+            <h4>Student Details</h4>
+            <p><strong>Name:</strong> {selectedStudent.full_name}</p>
+            <p><strong>Email:</strong> {selectedStudent.email}</p>
+            <p><strong>Phone:</strong> {selectedStudent.phone || "N/A"}</p>
+            <p><strong>Department:</strong> {selectedStudent.department}</p>
+            <p><strong>Year:</strong> {selectedStudent.year}</p>
+            <p><strong>Roll No:</strong> {selectedStudent.roll_no || "N/A"}</p>
+            {selectedStudent.notes && <p><strong>Notes:</strong> {selectedStudent.notes}</p>}
+            <div className="modal-actions">
+              <button className="btn-cancel-modal" onClick={() => setSelectedStudent(null)}>
+                Close
               </button>
             </div>
-          )}
-
-          {/* ====== ENROLLED STUDENTS LIST ====== */}
-          {canManageEvent && showAttendees && attendees.length > 0 && (
-            <div className="attendees-section">
-              <h2>Enrolled Students ({attendees.length})</h2>
-              <div className="attendees-list">
-                {attendees.map((att, index) => (
-                  <div
-                    key={att.registration_id}
-                    className="student-card"
-                    onClick={() => setSelectedStudent(att)}
-                  >
-                    <div className="student-card-avatar">
-                      {(att.full_name || "?").charAt(0).toUpperCase()}
-                    </div>
-                    <div className="student-card-info">
-                      <span className="student-card-name">{att.full_name || "Unknown"}</span>
-                      <span className="student-card-meta">{att.department} · Year {att.year}</span>
-                    </div>
-                    <span className="student-card-arrow">›</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ====== STUDENT DETAIL MODAL ====== */}
-          {selectedStudent && (
-            <div className="student-modal-overlay" onClick={() => setSelectedStudent(null)}>
-              <div className="student-modal" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close-btn" onClick={() => setSelectedStudent(null)}>✕</button>
-                <div className="modal-avatar">
-                  {(selectedStudent.full_name || "?").charAt(0).toUpperCase()}
-                </div>
-                <h2 className="modal-name">{selectedStudent.full_name}</h2>
-                <div className="modal-details">
-                  <div className="modal-detail-row">
-                    <span className="modal-label">📧 Email</span>
-                    <span className="modal-value">{selectedStudent.email || "N/A"}</span>
-                  </div>
-                  <div className="modal-detail-row">
-                    <span className="modal-label">📞 Phone</span>
-                    <span className="modal-value">{selectedStudent.phone || "N/A"}</span>
-                  </div>
-                  <div className="modal-detail-row">
-                    <span className="modal-label">🏫 Department</span>
-                    <span className="modal-value">{selectedStudent.department || "N/A"}</span>
-                  </div>
-                  <div className="modal-detail-row">
-                    <span className="modal-label">📅 Year</span>
-                    <span className="modal-value">{selectedStudent.year || "N/A"}</span>
-                  </div>
-                  <div className="modal-detail-row">
-                    <span className="modal-label">🎫 Roll No</span>
-                    <span className="modal-value">{selectedStudent.roll_no || "N/A"}</span>
-                  </div>
-                  {selectedStudent.notes && (
-                    <div className="modal-detail-row">
-                      <span className="modal-label">📝 Notes</span>
-                      <span className="modal-value">{selectedStudent.notes}</span>
-                    </div>
-                  )}
-                  <div className="modal-detail-row">
-                    <span className="modal-label">🕐 Registered At</span>
-                    <span className="modal-value">
-                      {selectedStudent.registered_at
-                        ? new Date(selectedStudent.registered_at).toLocaleString()
-                        : "N/A"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Delete Confirmation Toast */}
-          {showDeleteConfirm && (
-            <div className="delete-confirm-toast">
-              <p>Are you sure you want to delete this Event/Session?</p>
-              <div className="delete-confirm-buttons">
-                <button onClick={handleDelete} className="confirm-btn">Yes</button>
-                <button onClick={() => setShowDeleteConfirm(false)} className="cancel-btn">No</button>
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="edit-form">
-          <h2>Edit Event/Session</h2>
-          <input
-            type="text"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            placeholder="Title"
-          />
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Description"
-          />
-          <input
-            type="date"
-            name="date"
-            value={form.date.split("T")[0]}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="venue"
-            value={form.venue}
-            onChange={handleChange}
-            placeholder="Venue"
-          />
-          <textarea
-            name="additional_info"
-            value={form.additional_info}
-            onChange={handleChange}
-            placeholder="Additional Information"
-          />
-          <input
-            type="text"
-            name="conducted_by"
-            value={form.conducted_by}
-            onChange={handleChange}
-            placeholder="Conducted By"
-          />
-          <div className="edit-buttons">
-            <button className="save-btn" onClick={handleSave}>Save Changes</button>
-            <button className="cancel-btn" onClick={() => setEditMode(false)}>Cancel</button>
           </div>
         </div>
       )}
