@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import { toast } from "react-toastify";
 import "./NotificationBell.css";
 
 export default function NotificationBell() {
