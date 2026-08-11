@@ -17,3 +17,69 @@ export const deleteAccount = async (req, res, next) => {
     next(err);
   }
 };
+
+export const generateRoleKey = async (req, res, next) => {
+  try {
+    const { role_id, secret_key } = req.body;
+    if (!role_id) return res.status(400).json({ message: "role_id is required" });
+
+    const { RoleKeyModel } = await import("../models/roleKeyModel.js");
+
+    const existingKey = await RoleKeyModel.findActiveByRole(role_id);
+    if (existingKey) {
+      return res.status(400).json({
+        success: false,
+        message: `A secret key record ('${existingKey.secret_key}') already exists for this role. Delete the existing key record first before generating a new key.`
+      });
+    }
+
+    // Generate random key if not provided
+    const keyToUse = secret_key || `KEY_${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+    const keyId = await RoleKeyModel.create({ secret_key: keyToUse, role_id });
+
+    res.status(201).json({
+      success: true,
+      message: "Role invite key generated successfully",
+      key_id: keyId,
+      secret_key: keyToUse,
+      role_id
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const revokeSecretKey = async (req, res, next) => {
+  try {
+    const { secret_key } = req.body;
+    if (!secret_key) return res.status(400).json({ message: "secret_key is required" });
+
+    const { RoleKeyModel } = await import("../models/roleKeyModel.js");
+    const { ClubModel } = await import("../models/clubModel.js");
+
+    const roleRevoked = await RoleKeyModel.revokeKey(secret_key);
+    const clubRevoked = await ClubModel.revokeClubKey(secret_key);
+
+    if (!roleRevoked && !clubRevoked) {
+      return res.status(404).json({ success: false, message: "Secret key not found or already revoked" });
+    }
+
+    res.json({
+      success: true,
+      message: `Secret key '${secret_key}' has been revoked successfully`
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAllSecretKeys = async (req, res, next) => {
+  try {
+    const { RoleKeyModel } = await import("../models/roleKeyModel.js");
+    const keys = await RoleKeyModel.getAllKeys();
+    res.json(keys);
+  } catch (err) {
+    next(err);
+  }
+};

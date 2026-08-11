@@ -30,6 +30,7 @@ export default function ClubDetails() {
 
   // Registration modal state
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
 
 
 
@@ -54,37 +55,57 @@ export default function ClubDetails() {
     try {
       const token = localStorage.getItem("token");
       const res = await api.get(`/clubs/${clubId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       setClub(res.data);
 
-      const membersRes = await api.get(`/clubs/${clubId}/members`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      let membersData = [];
+      try {
+        const membersRes = await api.get(`/clubs/${clubId}/members`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        membersData = membersRes.data || [];
+      } catch (mErr) {
+        console.warn("Members list restricted or unauthenticated:", mErr);
+      }
 
       setClub(prev => ({
         ...prev,
-        members: membersRes.data
+        members: membersData
       }));
 
-      if (user && user.id === res.data.club_head_id) {
-        setFormData({
-          name: res.data.name || "",
-          description: res.data.description || "",
-          tagline: res.data.tagline || "",
-          category: res.data.category || "",
-          activities: res.data.activities || "",
-          club_head_id: res.data.club_head_id || "",
-        });
-      }
+      setFormData({
+        name: res.data.name || "",
+        description: res.data.description || "",
+        tagline: res.data.tagline || "",
+        category: res.data.category || "",
+        activities: res.data.activities || "",
+        club_head_id: res.data.club_head_id || "",
+        club_mentor_id: res.data.club_mentor_id || "",
+      });
 
       // Check application status if user is logged in
-      if (user && membersRes.data) {
-        const isMember = membersRes.data.some(m => m.user_id === user.id);
-        if (isMember) setApplicationStatus("approved");
+      if (user) {
+        try {
+          const statusRes = await api.get(`/clubs/${clubId}/my-status`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (statusRes.data?.status) {
+            setApplicationStatus(statusRes.data.status);
+          } else if (membersData.some(m => m.user_id === user.id)) {
+            setApplicationStatus("approved");
+          } else {
+            setApplicationStatus(null);
+          }
+        } catch (sErr) {
+          if (membersData.some(m => m.user_id === user.id)) {
+            setApplicationStatus("approved");
+          }
+        }
       }
-    } catch {
+    } catch (err) {
+      console.error("fetchClub error:", err);
       toast.error("Failed to fetch club details ❌");
     } finally {
       setLoading(false);
@@ -276,16 +297,37 @@ export default function ClubDetails() {
               onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
             />
 
-            <button type="submit">Save Changes</button>
-            <button type="button" onClick={() => setEditing(false)}>Cancel</button>
+            <div className="club-edit-form-actions">
+              <button type="submit">Save Changes</button>
+              <button type="button" onClick={() => setEditing(false)}>Cancel</button>
+            </div>
           </form>
         ) : (
           <>
-            <h1>{club.name}</h1>
-            <p><strong>Tagline:</strong> {club.tagline || "N/A"}</p>
-            <p><strong>Category:</strong> {club.category || "N/A"}</p>
-            <p className="club-description">{club.description}</p>
-            <p><strong>Activities:</strong> {club.activities || "N/A"}</p>
+            <div className="club-header-banner">
+              {club.category && <span className="club-category-pill">🏷️ {club.category}</span>}
+              <h1 className="club-title">{club.name}</h1>
+              {club.tagline && <p className="club-tagline-text">"{club.tagline}"</p>}
+            </div>
+
+            <div className="club-info-section">
+              <h3>About the Club</h3>
+              <p className="club-description-text">{club.description || "No description provided."}</p>
+            </div>
+
+            {club.activities && (
+              <div className="club-info-section">
+                <h3>Key Activities & Focus Areas</h3>
+                <div className="activities-grid">
+                  {club.activities.split(/(?=\d+\.|\n)/).map(a => a.trim()).filter(Boolean).map((act, idx) => (
+                    <div key={idx} className="activity-card">
+                      <span className="activity-icon">⚡</span>
+                      <span>{act.replace(/^\d+\.\s*/, '')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="club-info-section">
               <h3>Club Leadership</h3>
@@ -299,7 +341,13 @@ export default function ClubDetails() {
                     <span className="leader-role-badge">Club Head</span>
                     <p className="leader-name">{club.head_name || "Not Assigned"}</p>
                     {club.head_email && (
-                      <p className="leader-email">✉️ {club.head_email}</p>
+                      <p className="leader-email">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                          <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        {club.head_email}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -312,62 +360,91 @@ export default function ClubDetails() {
                     <span className="leader-role-badge mentor-badge">Club Mentor</span>
                     <p className="leader-name">{club.mentor_name || "Not Assigned"}</p>
                     {club.mentor_email && (
-                      <p className="leader-email">✉️ {club.mentor_email}</p>
+                      <p className="leader-email">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                          <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        {club.mentor_email}
+                      </p>
                     )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {club.members && [2, 4, 5].includes(user?.role_id) && (
+            {club.members && (
               <div className="club-info-section">
-                <h3>Members ({club.members.length})</h3>
-                <ul className="member-list">
-                  {club.members.map((m, i) => (
-                    <li key={i} className="member-item">
-                      {canManageClub ? (
-                        <span
-                          onClick={() => setSelectedMember(m)}
-                          style={{ cursor: "pointer", textDecoration: "underline", color: "#00ffff", fontWeight: "500" }}
-                          title="Click to view details"
-                        >
-                          {m.student_name || m.name}
-                        </span>
-                      ) : (
-                        <span>{m.student_name || m.name}</span>
-                      )}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <h3 style={{ margin: 0 }}>Enrolled Members ({club.members.length})</h3>
+                  <button 
+                    onClick={() => setShowMembersModal(true)}
+                    style={{
+                      background: "rgba(99, 102, 241, 0.15)",
+                      color: "#818cf8",
+                      border: "1px solid rgba(99, 102, 241, 0.3)",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    👥 View All Members ({club.members.length})
+                  </button>
+                </div>
+                {club.members.length === 0 ? (
+                  <p className="empty-text">No student members enrolled yet.</p>
+                ) : (
+                  <ul className="member-list">
+                    {club.members.slice(0, 5).map((m, i) => (
+                      <li key={i} className="member-item">
+                        {canManageClub ? (
+                          <span
+                            onClick={() => setSelectedMember(m)}
+                            className="member-name-clickable"
+                            title="Click to view details"
+                          >
+                            👤 {m.student_name || m.name} {m.branch ? `(${m.branch})` : ""}
+                          </span>
+                        ) : (
+                          <span>👤 {m.student_name || m.name} {m.branch ? `(${m.branch})` : ""}</span>
+                        )}
 
-                      {canManageClub && (
-                        <button
-                          className="remove-btn"
-                          onClick={() => {
-                            setRemoveEmail(m.email);
-                            setShowRemoveStudent(true);
-                          }}
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                        {canManageClub && (
+                          <button
+                            className="remove-btn"
+                            onClick={() => {
+                              setRemoveEmail(m.email);
+                              setShowRemoveStudent(true);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
-
           </>
         )}
 
         {/* Dual-Action Buttons for Non-Club-Head Users */}
         {!canManageClub && user && (
           <div className="club-action-section">
-            {/* Check if user is already a member */}
-            {club.members && club.members.some(m => m.user_id === user.id || m.email === user.email) ? (
+            {applicationStatus === "approved" ? (
               <button className="is-member-btn" disabled>
                 ✅ You are a Member
               </button>
-            ) : applicationStatus === 'Pending' ? (
-              <button className="is-member-btn pending-btn" disabled style={{ background: '#f59e0b', cursor: 'not-allowed' }}>
-                ⏳ Application Pending
+            ) : applicationStatus === "pending" ? (
+              <button className="is-member-btn pending-btn" disabled style={{ background: "rgba(245, 158, 11, 0.2)", color: "#fbbf24", border: "1px solid rgba(245, 158, 11, 0.4)", cursor: "not-allowed" }}>
+                ⏳ Application Pending (Awaiting Approval)
               </button>
             ) : (
               <button
@@ -388,15 +465,27 @@ export default function ClubDetails() {
 
         {canManageClub && (
           <div className="club-admin-buttons">
-            <button onClick={() => setEditing(true)}>Edit Club</button>
+            <button
+              onClick={() => navigate(`/clubs/${clubId}/applications`)}
+              style={{ background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)", boxShadow: "0 4px 14px rgba(59, 130, 246, 0.35)" }}
+            >
+              📩 View Applications
+            </button>
+            <button onClick={() => {
+              if (club) {
+                setFormData({
+                  name: club.name || "",
+                  description: club.description || "",
+                  tagline: club.tagline || "",
+                  category: club.category || "",
+                  activities: club.activities || "",
+                  club_head_id: club.club_head_id || "",
+                  club_mentor_id: club.club_mentor_id || "",
+                });
+              }
+              setEditing(true);
+            }}>Edit Club</button>
             <button className="delete-btn" onClick={() => setShowConfirm(true)}>Delete Club</button>
-            {/* Add Student and Create Event hidden for Club Head (2) and Club Mentor (5) — use My Events page */}
-            {![2, 4, 5].includes(user?.role_id) && (
-              <>
-                <button onClick={() => setShowAddStudent(true)}>Add Student</button>
-                <button onClick={() => setShowCreateEvent(true)} style={{ backgroundColor: '#8e44ad' }}>Create Event</button>
-              </>
-            )}
           </div>
         )}
       </div>
@@ -630,6 +719,96 @@ export default function ClubDetails() {
 
             <div className="modal-actions" style={{ marginTop: "24px" }}>
               <button className="cancel-btn" onClick={() => setSelectedMember(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* All Enrolled Members Modal for Students & All Users */}
+      {showMembersModal && (
+        <div className="modal-overlay" onClick={() => setShowMembersModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "650px", width: "90%" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ margin: 0, fontSize: "1.4rem", color: "#f8fafc" }}>
+                👥 Approved Club Members ({club?.members?.length || 0})
+              </h2>
+              <button 
+                onClick={() => setShowMembersModal(false)}
+                style={{ background: "none", border: "none", color: "#94a3b8", fontSize: "1.5rem", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {(!club?.members || club.members.length === 0) ? (
+              <p style={{ textAlign: "center", color: "#94a3b8", padding: "30px 0" }}>No approved student members found for this club.</p>
+            ) : (
+              <div style={{ maxHeight: "400px", overflowY: "auto", display: "grid", gap: "12px", paddingRight: "4px" }}>
+                {club.members.map((m, idx) => (
+                  <div 
+                    key={idx} 
+                    style={{
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "10px",
+                      padding: "14px 16px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                      <div style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#fff",
+                        fontWeight: "700",
+                        fontSize: "1.1rem"
+                      }}>
+                        {(m.student_name || m.name || "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 style={{ margin: "0 0 4px 0", color: "#f8fafc", fontSize: "1rem" }}>
+                          {m.student_name || m.name}
+                        </h4>
+                        <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.85rem" }}>
+                          🎓 {m.branch || m.department || "Department N/A"} {m.year ? `| Year ${m.year}` : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    {canManageClub && (
+                      <button
+                        onClick={() => {
+                          setShowMembersModal(false);
+                          setSelectedMember(m);
+                        }}
+                        style={{
+                          background: "rgba(59, 130, 246, 0.15)",
+                          color: "#60a5fa",
+                          border: "1px solid rgba(59, 130, 246, 0.3)",
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          fontSize: "0.8rem",
+                          fontWeight: "600",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Details
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="modal-actions" style={{ marginTop: "20px" }}>
+              <button className="cancel-btn" onClick={() => setShowMembersModal(false)}>Close</button>
             </div>
           </div>
         </div>

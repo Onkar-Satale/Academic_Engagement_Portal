@@ -10,7 +10,7 @@ export default function EventCard({ event, isRegistered }) {
   // button ONLY for events that belong to THEIR club
   const isClubManager = user && (user.role_id === 2 || user.role_id === 5);
   const isTheirClubEvent = isClubManager && event.club_id && event.club_id === user.club_id;
-  const isAdmin = user && user.role_id === 4;
+  const isAdmin = user && user.role_id === 3;
 
   // Hide register button if: organizer, OR managing their own club's event, OR Admin, OR already registered
   const hideRegister = isOrganizer || isTheirClubEvent || isAdmin || isRegistered;

@@ -14,11 +14,11 @@ INSERT IGNORE INTO role (role_id, role_name) VALUES
 (1, 'Student'),
 (2, 'Club Head'),
 (3, 'Admin'),
-(4, 'Admin (System)'),
 (5, 'Club Mentor'),
 (6, 'Estate Manager'),
 (7, 'Principal'),
-(8, 'Director');
+(8, 'Director'),
+(9, 'Teacher');
 
 -- 2. User Table
 CREATE TABLE IF NOT EXISTS user (
@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS club (
 CREATE TABLE IF NOT EXISTS club_member (
   club_id INT NOT NULL,
   user_id INT NOT NULL,
-  status VARCHAR(20) DEFAULT 'approved',
+  status VARCHAR(20) DEFAULT 'pending',
+  reason TEXT DEFAULT NULL,
   joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (club_id, user_id),
   FOREIGN KEY (club_id) REFERENCES club(club_id) ON DELETE CASCADE,
@@ -187,8 +188,28 @@ CREATE TABLE IF NOT EXISTS volunteer (
   UNIQUE KEY unique_volunteer (event_id, student_id)
 );
 
+-- 14. Role Invite Key Table
+CREATE TABLE IF NOT EXISTS role_invite_key (
+  key_id INT PRIMARY KEY AUTO_INCREMENT,
+  secret_key VARCHAR(100) NOT NULL UNIQUE,
+  role_id INT NOT NULL,
+  is_used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (role_id) REFERENCES role(role_id) ON DELETE CASCADE
+);
+
+-- 12. User Feedback / Testimonials Table
+CREATE TABLE IF NOT EXISTS feedback (
+  feedback_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  message TEXT NOT NULL,
+  rating INT DEFAULT 5,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
+);
+
 -- ===================================================
--- SAMPLE SEED DATA (CLUBS & EVENTS)
+-- SAMPLE SEED DATA (CLUBS, EVENTS & ROLE KEYS)
 -- ===================================================
 
 INSERT IGNORE INTO club (club_id, name, description, club_mentor_key, club_head_key) VALUES
@@ -200,3 +221,8 @@ INSERT IGNORE INTO event (event_id, title, description, date, venue, status, clu
 (1, 'Annual University Hackathon 2026', '24-hour coding challenge with exciting prize pools and mentor support.', '2026-09-15', 'Main Auditorium', 'Upcoming', 1),
 (2, 'RoboWars Championship', 'Autonomous and remote-controlled robot battle tournament.', '2026-10-01', 'Indoor Sports Complex', 'Upcoming', 2),
 (3, 'Campus Unplugged Night', 'An evening of acoustic music, poetry, and live band performances.', '2026-08-25', 'Open Air Theater', 'Upcoming', 3);
+
+INSERT IGNORE INTO role_invite_key (key_id, secret_key, role_id, is_used) VALUES
+(1, 'ESTATE_KEY_2026', 6, FALSE),
+(2, 'PRINCIPAL_KEY_2026', 7, FALSE),
+(3, 'DIRECTOR_KEY_2026', 8, FALSE);

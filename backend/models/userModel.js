@@ -10,6 +10,14 @@ export const UserModel = {
     return row;
   },
 
+  findById: async (userId) => {
+    const [[row]] = await db.query(
+      "SELECT u.*, r.role_name FROM user u JOIN role r ON u.role_id = r.role_id WHERE u.user_id = ?",
+      [userId]
+    );
+    return row;
+  },
+
   create: async (data) => {
     const { name, email, password, password_hash, department, year, role_id } = data;
     const finalHash = password_hash || (password ? await bcrypt.hash(password, 10) : "");
@@ -31,6 +39,14 @@ export const UserModel = {
       [role_id]
     );
     return rows[0];
+  },
+
+  updateRole: async (userId, roleId) => {
+    const [res] = await db.query(
+      "UPDATE user SET role_id = ? WHERE user_id = ?",
+      [roleId, userId]
+    );
+    return res.affectedRows > 0;
   },
 
   delete: async (userId) => {

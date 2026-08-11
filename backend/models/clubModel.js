@@ -1,10 +1,11 @@
 import { db } from "../config/db.js";
 
 export const ClubModel = {
-  create: async ({ name, description, club_head_id, club_mentor_id, secret_key, permission_emails, club_mentor_key }) => {
+  create: async ({ name, description, club_head_id, club_mentor_id, secret_key, club_head_key, permission_emails, club_mentor_key }) => {
+    const headKey = club_head_key || secret_key;
     const [res] = await db.query(
-      "INSERT INTO club (name, description, club_head_id, club_mentor_id, secret_key, permission_emails, club_mentor_key) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [name, description, club_head_id, club_mentor_id, secret_key, permission_emails || null, club_mentor_key || null]
+      "INSERT INTO club (name, description, club_head_id, club_mentor_id, secret_key, club_head_key, permission_emails, club_mentor_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [name, description, club_head_id || null, club_mentor_id || null, headKey, headKey, permission_emails || null, club_mentor_key || null]
     );
     return res.insertId;
   },
@@ -17,7 +18,7 @@ export const ClubModel = {
         mentor.email as mentor_email,
         head.name as head_name,
         head.email as head_email,
-        (SELECT COUNT(*) FROM club_member cm WHERE cm.club_id = c.club_id) + 1 as active_members
+        (SELECT COUNT(*) FROM club_member cm WHERE cm.club_id = c.club_id AND cm.status = 'approved') as active_members
       FROM club c
       LEFT JOIN user mentor ON c.club_mentor_id = mentor.user_id
       LEFT JOIN user head ON c.club_head_id = head.user_id
@@ -33,7 +34,7 @@ export const ClubModel = {
           mentor.email as mentor_email,
           head.name as head_name,
           head.email as head_email,
-          (SELECT COUNT(*) FROM club_member cm WHERE cm.club_id = c.club_id) + 1 as active_members
+          (SELECT COUNT(*) FROM club_member cm WHERE cm.club_id = c.club_id AND cm.status = 'approved') as active_members
        FROM club c
        LEFT JOIN user mentor ON c.club_mentor_id = mentor.user_id
        LEFT JOIN user head ON c.club_head_id = head.user_id
@@ -49,6 +50,18 @@ export const ClubModel = {
       [key, key, key]
     );
     return clubs[0];
+  },
+
+  revokeClubKey: async (key) => {
+    const [res] = await db.query(
+      `UPDATE club 
+       SET club_head_key = CASE WHEN club_head_key = ? THEN NULL ELSE club_head_key END,
+           club_mentor_key = CASE WHEN club_mentor_key = ? THEN NULL ELSE club_mentor_key END,
+           secret_key = CASE WHEN secret_key = ? THEN NULL ELSE secret_key END
+       WHERE club_head_key = ? OR club_mentor_key = ? OR secret_key = ?`,
+      [key, key, key, key, key, key]
+    );
+    return res.affectedRows > 0;
   },
 
   assignHead: async (clubKey, userId) => {

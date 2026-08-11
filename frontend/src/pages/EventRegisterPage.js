@@ -16,6 +16,7 @@ export default function EventRegisterPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -24,17 +25,32 @@ export default function EventRegisterPage() {
     department: "",
     year: "",
     rollNo: "",
-    tshirt: "",
     notes: ""
   });
 
-  // IMMEDIATE authentication check on mount
+  const getYearLabel = (y) => {
+    if (String(y) === "1") return "FE (First Year)";
+    if (String(y) === "2") return "SE (Second Year)";
+    if (String(y) === "3") return "TE (Third Year)";
+    if (String(y) === "4") return "BE (Final / Fourth Year)";
+    return y ? `${y} Year` : "Not Specified";
+  };
+
+  // IMMEDIATE authentication check on mount & prefill user info
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user) {
       navigate("/login", { replace: true });
     } else {
       setIsAuthenticated(true);
+      setUserProfile(user);
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        department: user.department || "",
+        year: user.year || ""
+      }));
     }
     setIsChecking(false);
   }, [navigate]);
@@ -70,12 +86,14 @@ export default function EventRegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const requiredFields = ["name", "email", "phone", "department", "year", "rollNo"];
-    for (let field of requiredFields) {
-      if (!formData[field]) {
-        toast.error(`Please fill ${field}`);
-        return;
-      }
+    const nameToSubmit = userProfile?.name || formData.name;
+    const emailToSubmit = userProfile?.email || formData.email;
+    const deptToSubmit = userProfile?.department || formData.department;
+    const yearToSubmit = userProfile?.year || formData.year;
+
+    if (!formData.phone || !formData.rollNo) {
+      toast.error("Please fill Phone Number and Roll Number");
+      return;
     }
 
     if (!event) {
@@ -86,70 +104,60 @@ export default function EventRegisterPage() {
     setIsSubmitting(true);
 
     try {
-      // 1️⃣ Send to your backend
+      // 1️⃣ Send to backend
       await api.post(
         "/event-registrations/register",
         {
           event_id: event.event_id,
-          full_name: formData.name,
-          email: formData.email,
+          full_name: nameToSubmit,
+          email: emailToSubmit,
           phone: formData.phone,
-          department: formData.department,
-          year: formData.year,
+          department: deptToSubmit,
+          year: yearToSubmit,
           roll_no: formData.rollNo,
           notes: formData.notes
         },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
 
-      // 2️⃣ Then send to Web3Forms (optional)
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify({
-          access_key: process.env.REACT_APP_WEB3FORMS_KEY || "7c30012f-a14c-4141-b8af-64707af29229",
-          subject: `New Event Registration - ${event.title}`,
-          event_name: event.title,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          department: formData.department,
-          year: formData.year,
-          notes: formData.notes
-        })
-      });
-
-      const result = await response.json();
-
-      if (response.status !== 200) {
-        console.warn("Web3Forms failed:", result.message);
+      // 2️⃣ Optional Web3Forms submission
+      try {
+        await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          body: JSON.stringify({
+            access_key: process.env.REACT_APP_WEB3FORMS_KEY || "7c30012f-a14c-4141-b8af-64707af29229",
+            subject: `New Event Registration - ${event.title}`,
+            event_name: event.title,
+            name: nameToSubmit,
+            email: emailToSubmit,
+            phone: formData.phone,
+            department: deptToSubmit,
+            year: yearToSubmit,
+            notes: formData.notes
+          })
+        });
+      } catch (wErr) {
+        console.warn("Web3Forms error ignored:", wErr);
       }
 
-      // ✅ Success toast only once
       toast.success(`Registered successfully for ${event.title} 🎉`);
 
-      // Clear form
-      setFormData({
-        name: "",
-        email: "",
+      // Clear editable fields
+      setFormData(prev => ({
+        ...prev,
         phone: "",
-        department: "",
-        year: "",
         rollNo: "",
         notes: ""
-      });
+      }));
 
     } catch (err) {
       console.error('Registration error:', err);
-
-      // Handle specific error responses from backend
       if (err.response) {
         const errorMessage = err.response.data?.message || 'Failed to register';
-
-        // Handle specific error codes
         if (err.response.status === 409) {
           toast.warning(errorMessage + ' ⚠️');
         } else if (err.response.status === 401) {
@@ -159,16 +167,10 @@ export default function EventRegisterPage() {
             localStorage.removeItem('user');
             navigate('/login');
           }, 2000);
-        } else if (err.response.status === 400) {
-          toast.error(errorMessage + ' ❌');
         } else {
           toast.error(errorMessage + ' ❌');
         }
-      } else if (err.request) {
-        // Request was made but no response received
-        toast.error('Cannot connect to server. Please check if backend is running ❌');
       } else {
-        // Something else happened
         toast.error('Failed to register ❌');
       }
     } finally {
@@ -176,19 +178,17 @@ export default function EventRegisterPage() {
     }
   };
 
-  // Don't render anything until authentication is verified
   if (isChecking || !isAuthenticated) {
     return null;
   }
 
-  // Show already registered message
   if (isAlreadyRegistered) {
     return (
       <div className="event-register-container">
         <ToastContainer position="top-right" autoClose={4000} />
         <div className="event-register-form" style={{ textAlign: 'center', padding: '40px' }}>
           <h2>✅ Already Registered!</h2>
-          <p style={{ marginTop: '16px', color: '#6b7280' }}>
+          <p style={{ marginTop: '16px', color: '#94a3b8' }}>
             You have already registered for <strong>{event?.title || 'this event'}</strong>.
           </p>
           <button
@@ -208,18 +208,69 @@ export default function EventRegisterPage() {
 
       {event ? (
         <form className="event-register-form" onSubmit={handleSubmit}>
-          <h2>Register for Event: {event.title}</h2>
+          <h2>Register for {event.title}</h2>
 
-          <input name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
-          <input name="email" type="email" placeholder="Email ID" value={formData.email} onChange={handleChange} required />
-          <input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} required />
-          <input name="department" placeholder="Department" value={formData.department} onChange={handleChange} required />
-          <input name="year" type="number" placeholder="Year (1-4)" value={formData.year} onChange={handleChange} required />
-          <input name="rollNo" placeholder="College Roll Number" value={formData.rollNo} onChange={handleChange} required />
-          <textarea name="notes" placeholder="Any notes or questions" value={formData.notes} onChange={handleChange}></textarea>
+          {/* Read-Only Student Account Profile Summary */}
+          <div className="applicant-details-card">
+            <div className="applicant-detail-item">
+              <span className="detail-label">Full Name</span>
+              <span className="detail-value">{userProfile?.name || "Student"}</span>
+            </div>
+            <div className="applicant-detail-item">
+              <span className="detail-label">College Email</span>
+              <span className="detail-value">{userProfile?.email || "N/A"}</span>
+            </div>
+            <div className="applicant-detail-item">
+              <span className="detail-label">Department</span>
+              <span className="detail-value badge-highlight">{userProfile?.department || "N/A"}</span>
+            </div>
+            <div className="applicant-detail-item">
+              <span className="detail-label">Year of Study</span>
+              <span className="detail-value badge-highlight">{getYearLabel(userProfile?.year)}</span>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#a5b4fc', fontWeight: '600' }}>
+              Phone Number *
+            </label>
+            <input
+              name="phone"
+              placeholder="e.g. +91 9876543210"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#a5b4fc', fontWeight: '600' }}>
+              College Roll Number *
+            </label>
+            <input
+              name="rollNo"
+              placeholder="e.g. 31105"
+              value={formData.rollNo}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#a5b4fc', fontWeight: '600' }}>
+              Notes / Special Remarks (Optional)
+            </label>
+            <textarea
+              name="notes"
+              rows="3"
+              placeholder="Any questions or special requirements..."
+              value={formData.notes}
+              onChange={handleChange}
+            ></textarea>
+          </div>
 
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Register"}
+            {isSubmitting ? "Submitting..." : "Confirm Event Registration"}
           </button>
         </form>
       ) : (

@@ -13,6 +13,7 @@ import clubMemberRoutes from "./routes/clubMemberRoutes.js";
 import clubInterestRoutes from "./routes/clubInterestRoutes.js";
 import clubRegistrationRoutes from "./routes/clubRegistrationRoutes.js";
 import eventRegistrationRoutes from "./routes/eventRegistrationRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
 import { errorMiddleware } from "./middlewares/errorMiddleware.js";
 
 dotenv.config();
@@ -61,6 +62,7 @@ app.use("/api/club-members", clubMemberRoutes);
 app.use("/api/club-interests", clubInterestRoutes);
 app.use("/api/club-registrations", clubRegistrationRoutes);
 app.use("/api/event-registrations", eventRegistrationRoutes);
+app.use("/api/feedbacks", feedbackRoutes);
 
 app.get("/", (req, res) => {
   res.json({ success: true, message: "Academic Engagement Portal Backend API Server is running securely" });

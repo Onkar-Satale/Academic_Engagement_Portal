@@ -93,7 +93,7 @@ export default function Clubs() {
         <h2>All Clubs</h2>
 
         {/* Admin Add Club Section */}
-        {user?.role_id === 4 && (
+        {(user?.role_id === 3 || user?.role_name === "Admin") && (
           <div className="add-club-form">
             <h3>Add New Club</h3>
 

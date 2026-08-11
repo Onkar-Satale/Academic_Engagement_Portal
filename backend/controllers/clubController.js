@@ -3,8 +3,20 @@ import ApiError from "../utils/ApiError.js";
 
 export const createClub = async (req, res, next) => {
   try {
-    if (req.user.role !== 4) return next(new ApiError(403, "Forbidden"));
-    const clubId = await clubService.createClub(req.body);
+    const allowedRoles = [2, 3];
+    if (!allowedRoles.includes(req.user.role)) return next(new ApiError(403, "Only Admins can create clubs"));
+
+    const { name, description, secretKey, clubHeadKey, clubMentorKey } = req.body;
+    const headKey = clubHeadKey || secretKey;
+
+    const clubId = await clubService.createClub({
+      name,
+      description,
+      secret_key: headKey,
+      club_head_key: headKey,
+      club_mentor_key: clubMentorKey
+    });
+
     res.status(201).json({ success: true, message: "Club created successfully", clubId });
   } catch (err) {
     next(err);

@@ -4,7 +4,7 @@ import './Card.css';
 export default function ClubCard({ club, onJoin, isEnrolled }) {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
-  const isAdmin = user?.role_id === 4;
+  const isAdmin = user?.role_id === 3;
 
   const handleJoin = () => {
     if (onJoin) {

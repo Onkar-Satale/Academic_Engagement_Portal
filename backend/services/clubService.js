@@ -1,5 +1,7 @@
 import { ClubModel } from "../models/clubModel.js";
 import { ClubMemberModel } from "../models/clubMemberModel.js";
+import { NotificationModel } from "../models/notificationModel.js";
+import { UserModel } from "../models/userModel.js";
 
 export const clubService = {
   getAllClubs: async () => {
@@ -50,8 +52,76 @@ export const clubService = {
     return await ClubMemberModel.getUserInterests(userId);
   },
 
-  joinClub: async (clubId, userId) => {
-    return await ClubMemberModel.join(clubId, userId);
+  joinClub: async (clubId, userId, reason) => {
+    const res = await ClubMemberModel.join(clubId, userId, reason);
+    try {
+      const club = await ClubModel.getByIdWithDetails(clubId);
+      const student = await UserModel.findById(userId);
+      if (club && student) {
+        const studentInfo = `${student.name} (${student.email})`;
+        const motivationStr = reason ? ` Motivation: "${reason}"` : "";
+        if (club.club_head_id) {
+          await NotificationModel.createNotification({
+            user_id: club.club_head_id,
+            title: "📩 New Membership Application",
+            message: `${studentInfo} applied to join ${club.name}.${motivationStr}`,
+            type: "info",
+            link: `/clubs/${clubId}/applications`
+          });
+        }
+        if (club.club_mentor_id && club.club_mentor_id !== club.club_head_id) {
+          await NotificationModel.createNotification({
+            user_id: club.club_mentor_id,
+            title: "📩 New Membership Application",
+            message: `${studentInfo} applied to join ${club.name}.${motivationStr}`,
+            type: "info",
+            link: `/clubs/${clubId}/applications`
+          });
+        }
+      }
+    } catch (nErr) {
+      console.warn("Notification creation warning in joinClub:", nErr);
+    }
+    return res;
+  },
+
+  getPendingApplications: async (clubId) => {
+    return await ClubMemberModel.getPendingApplications(clubId);
+  },
+
+  processApplication: async (clubId, userId, action) => {
+    const status = (action === 'approve' || action === 'accept') ? 'approved' : 'rejected';
+    await ClubMemberModel.updateApplicationStatus(clubId, userId, status);
+
+    try {
+      const club = await ClubModel.getByIdWithDetails(clubId);
+      if (club) {
+        if (status === 'approved') {
+          await NotificationModel.createNotification({
+            user_id: userId,
+            title: "🎉 Membership Application Accepted!",
+            message: `Congratulations! Your application to join ${club.name} has been approved by the Club Head.`,
+            type: "success",
+            link: `/clubs/${clubId}`
+          });
+        } else {
+          await NotificationModel.createNotification({
+            user_id: userId,
+            title: "❌ Membership Application Status",
+            message: `Your application to join ${club.name} was not accepted at this time.`,
+            type: "warning",
+            link: `/clubs/${clubId}`
+          });
+        }
+      }
+    } catch (nErr) {
+      console.warn("Notification error in processApplication:", nErr);
+    }
+    return true;
+  },
+
+  getMemberStatus: async (clubId, userId) => {
+    return await ClubMemberModel.getMemberStatus(clubId, userId);
   },
 
   leaveClub: async (clubId, userId) => {

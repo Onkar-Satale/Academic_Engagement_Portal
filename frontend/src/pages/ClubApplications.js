@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import axios from "../api/axios";
+import api from "../api/axios";
 import { toast } from "react-toastify";
 import "./ClubApplications.css";
 
@@ -16,7 +16,7 @@ const ClubApplications = () => {
 
   const fetchApplications = async () => {
     try {
-      const res = await axios.get(`/clubs/${clubId}/applications`);
+      const res = await api.get(`/clubs/${clubId}/applications`);
       setApplications(res.data);
     } catch (err) {
       console.error(err);
@@ -28,7 +28,7 @@ const ClubApplications = () => {
 
   const handleAction = async (userId, action) => {
     try {
-      await axios.post(`/clubs/${clubId}/applications/${userId}`, { action });
+      await api.post(`/clubs/${clubId}/applications/${userId}`, { action });
       toast.success(`Application ${action}d!`);
       setApplications((prev) => prev.filter((a) => a.user_id !== userId));
     } catch (err) {
@@ -53,6 +53,11 @@ const ClubApplications = () => {
                 <h3>{app.name}</h3>
                 <p>📧 {app.email}</p>
                 <p>🎓 {app.department} | Year {app.year}</p>
+                {app.reason && (
+                  <div className="app-reason">
+                    <strong>Motivation:</strong> "{app.reason}"
+                  </div>
+                )}
               </div>
 
               <div className="card-actions">

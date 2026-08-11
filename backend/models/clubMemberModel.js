@@ -1,10 +1,11 @@
 import { db } from "../config/db.js";
 
 export const ClubMemberModel = {
-  join: async (club_id, user_id) => {
+  join: async (club_id, user_id, reason) => {
     await db.query(
-      `INSERT INTO club_member (club_id, user_id) VALUES (?, ?)`,
-      [club_id, user_id]
+      `INSERT INTO club_member (club_id, user_id, status, reason) VALUES (?, ?, 'pending', ?)
+       ON DUPLICATE KEY UPDATE status = 'pending', reason = VALUES(reason), joined_at = CURRENT_TIMESTAMP`,
+      [club_id, user_id, reason || null]
     );
   },
 
@@ -17,7 +18,7 @@ export const ClubMemberModel = {
 
   getEnrolledClubs: async (userId) => {
     const [rows] = await db.query(
-      "SELECT DISTINCT club_id FROM club_member WHERE user_id = ?",
+      "SELECT DISTINCT club_id FROM club_member WHERE user_id = ? AND status = 'approved'",
       [userId]
     );
     return rows.map(r => r.club_id);
@@ -25,13 +26,41 @@ export const ClubMemberModel = {
 
   getClubMembers: async (clubId) => {
     const [members] = await db.query(
-      `SELECT cm.user_id, u.name as student_name, u.email, u.year, u.department as branch
+      `SELECT cm.user_id, cm.status, u.name as student_name, u.email, u.year, u.department as branch
        FROM club_member cm
        JOIN user u ON cm.user_id = u.user_id
-       WHERE cm.club_id = ?`,
+       WHERE cm.club_id = ? AND cm.status = 'approved'`,
       [clubId]
     );
     return members;
+  },
+
+  getPendingApplications: async (clubId) => {
+    const [rows] = await db.query(
+      `SELECT cm.club_id, cm.user_id, cm.status, cm.reason, cm.joined_at, u.name, u.email, u.department, u.year
+       FROM club_member cm
+       JOIN user u ON cm.user_id = u.user_id
+       WHERE cm.club_id = ? AND cm.status = 'pending'
+       ORDER BY cm.joined_at DESC`,
+      [clubId]
+    );
+    return rows;
+  },
+
+  updateApplicationStatus: async (clubId, userId, status) => {
+    const [res] = await db.query(
+      "UPDATE club_member SET status = ? WHERE club_id = ? AND user_id = ?",
+      [status, clubId, userId]
+    );
+    return res.affectedRows > 0;
+  },
+
+  getMemberStatus: async (clubId, userId) => {
+    const [[row]] = await db.query(
+      "SELECT status FROM club_member WHERE club_id = ? AND user_id = ?",
+      [clubId, userId]
+    );
+    return row ? row.status : null;
   },
 
   addStudent: async (clubId, studentData) => {

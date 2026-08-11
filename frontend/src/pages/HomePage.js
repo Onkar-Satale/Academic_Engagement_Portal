@@ -36,12 +36,33 @@ export default function HomePage() {
     const studentCount = useCounter(500, 2000, statsVisible);
     const regCount = useCounter(1200, 2200, statsVisible);
 
+    const [feedbacks, setFeedbacks] = useState([]);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [showAllFeedbacksModal, setShowAllFeedbacksModal] = useState(false);
+    const [feedbackText, setFeedbackText] = useState("");
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
+    const [expandedFeedbacks, setExpandedFeedbacks] = useState({});
+
+    const toggleExpandFeedback = (idKey) => {
+        setExpandedFeedbacks(prev => ({
+            ...prev,
+            [idKey]: !prev[idKey]
+        }));
+    };
+
+    const defaultTestimonials = [
+        { name: "Priya S.", role_name: "Student", department: "CSE", message: "Finding and joining clubs was never this easy! I registered for 3 events in under 5 minutes.", user_name: "Priya S." },
+        { name: "Prof. Mehta", role_name: "Club Mentor", department: "IT", message: "Managing event permissions used to take days. Now it's done in minutes with full transparency.", user_name: "Prof. Mehta" },
+        { name: "Rahul K.", role_name: "Club Head", department: "CSI", message: "Creating events and tracking student enrollments is seamless. Our club activity doubled!", user_name: "Rahul K." }
+    ];
+
     useEffect(() => {
         const storedUser = JSON.parse(localStorage.getItem("user"));
         setUser(storedUser);
 
         api.get("/clubs").then(res => setClubs(res.data.slice(0, 3))).catch(() => { });
         api.get("/events").then(res => setEvents(res.data.slice(0, 3))).catch(() => { });
+        fetchFeedbacks();
 
         // Scroll reveal
         const observer = new IntersectionObserver((entries) => {
@@ -63,6 +84,54 @@ export default function HomePage() {
 
         return () => { observer.disconnect(); statsObserver.disconnect(); };
     }, []);
+
+    const fetchFeedbacks = async () => {
+        try {
+            const res = await api.get("/feedbacks");
+            setFeedbacks(res.data || []);
+        } catch (err) {
+            console.error("Failed to fetch feedbacks", err);
+        }
+    };
+
+    const handleSubmitFeedback = async (e) => {
+        e.preventDefault();
+        if (!feedbackText.trim()) return showToast("Please enter your feedback message.", "error");
+        setSubmittingFeedback(true);
+        try {
+            await api.post("/feedbacks", { message: feedbackText.trim() });
+            showToast("Feedback submitted successfully! 🎉 Thank you for your thoughts.");
+            setFeedbackText("");
+            setShowFeedbackModal(false);
+            fetchFeedbacks();
+        } catch (err) {
+            showToast(err.response?.data?.message || "Failed to submit feedback.", "error");
+        } finally {
+            setSubmittingFeedback(false);
+        }
+    };
+
+    const [showDeleteFeedbackConfirm, setShowDeleteFeedbackConfirm] = useState(false);
+    const [feedbackToDelete, setFeedbackToDelete] = useState(null);
+
+    const askDeleteFeedback = (feedbackId) => {
+        setFeedbackToDelete(feedbackId);
+        setShowDeleteFeedbackConfirm(true);
+    };
+
+    const confirmDeleteFeedback = async () => {
+        if (!feedbackToDelete) return;
+        try {
+            await api.delete(`/feedbacks/${feedbackToDelete}`);
+            showToast("Feedback deleted successfully! 🗑️");
+            fetchFeedbacks();
+        } catch (err) {
+            showToast(err.response?.data?.message || "Failed to delete feedback.", "error");
+        } finally {
+            setShowDeleteFeedbackConfirm(false);
+            setFeedbackToDelete(null);
+        }
+    };
 
     const showToast = (msg, type = "success") => {
         setToast(msg); setToastType(type);
@@ -111,7 +180,7 @@ export default function HomePage() {
                             <span>🎯</span> Explore Events
                         </button>
                         <button className="hp-btn hp-btn-secondary" onClick={() => navigate("/clubs")}>
-                            <span>🏛️</span> Join Clubs
+                            <span>🏛️</span> Explore Clubs
                         </button>
                         {!user && (
                             <button className="hp-btn hp-btn-ghost" onClick={() => navigate("/login")}>
@@ -362,7 +431,7 @@ export default function HomePage() {
                                 <h3 className="hp-club-name">{club.name}</h3>
                                 <p className="hp-club-desc">{club.description || "A vibrant college club."}</p>
                                 <div className="hp-club-meta">
-                                    <span>👥 {club.active_members || 0} members</span>
+                                    <span>👥 {club.active_members || 0} {Number(club.active_members) === 1 ? "member" : "members"}</span>
                                 </div>
                                 <div className="hp-club-actions">
                                     <button className="hp-card-btn secondary" onClick={() => navigate(`/clubs/${club.club_id}`)}>
@@ -447,26 +516,87 @@ export default function HomePage() {
             ═══════════════════════════════════════════════════════ */}
             <section className="hp-section fade-up">
                 <div className="hp-section-inner">
-                    <div className="hp-section-label">Voices</div>
-                    <h2 className="hp-section-title">What People Say</h2>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
+                        <div>
+                            <div className="hp-section-label">Voices</div>
+                            <h2 className="hp-section-title" style={{ margin: 0 }}>What People Say</h2>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            {user ? (
+                                <button 
+                                    className="hp-btn hp-btn-primary"
+                                    onClick={() => setShowFeedbackModal(true)}
+                                    style={{ padding: "10px 18px", fontSize: "0.9rem" }}
+                                >
+                                    💬 Give Feedback
+                                </button>
+                            ) : (
+                                <button 
+                                    className="hp-btn hp-btn-primary"
+                                    onClick={() => navigate("/login")}
+                                    style={{ padding: "10px 18px", fontSize: "0.9rem" }}
+                                >
+                                    💬 Log In to Give Feedback
+                                </button>
+                            )}
+
+                            <button 
+                                className="hp-btn hp-btn-outline"
+                                onClick={() => setShowAllFeedbacksModal(true)}
+                                style={{ padding: "10px 18px", fontSize: "0.9rem" }}
+                            >
+                                See All Testimonials ({feedbacks.length + defaultTestimonials.length})
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="hp-testimonials">
-                        {[
-                            { name: "Priya S.", role: "Student, CSE", text: "Finding and joining clubs was never this easy! I registered for 3 events in under 5 minutes.", avatar: "P" },
-                            { name: "Prof. Mehta", role: "Club Mentor", text: "Managing event permissions used to take days. Now it's done in minutes with full transparency.", avatar: "M" },
-                            { name: "Rahul K.", role: "Club Head, CSI", text: "Creating events and tracking student enrollments is seamless. Our club activity doubled!", avatar: "R" },
-                        ].map(t => (
-                            <div key={t.name} className="hp-testimonial-card">
-                                <div className="hp-testimonial-quote">"</div>
-                                <p className="hp-testimonial-text">{t.text}</p>
-                                <div className="hp-testimonial-author">
-                                    <div className="hp-testimonial-avatar">{t.avatar}</div>
-                                    <div>
-                                        <div className="hp-testimonial-name">{t.name}</div>
-                                        <div className="hp-testimonial-role">{t.role}</div>
+                        {[...feedbacks, ...defaultTestimonials].slice(0, 3).map((t, idx) => {
+                            const displayName = t.user_name || t.name;
+                            const displayRole = `${t.role_name || t.role}${t.department ? `, ${t.department}` : ''}`;
+                            const avatarInitial = (displayName || "?").charAt(0).toUpperCase();
+                            const fullText = t.message || t.text || "";
+                            const canDelete = t.feedback_id && user && Number(user.id) === Number(t.user_id);
+                            
+                            const key = t.feedback_id ? `f_${t.feedback_id}` : `d_${idx}`;
+                            const isExpanded = !!expandedFeedbacks[key];
+                            const isLong = fullText.length > 120;
+                            const displayText = (isLong && !isExpanded) ? `${fullText.substring(0, 120)}...` : fullText;
+
+                            return (
+                                <div key={key} className="hp-testimonial-card" style={{ position: "relative" }}>
+                                    {canDelete && (
+                                        <button 
+                                            className="hp-delete-feedback-btn"
+                                            onClick={() => askDeleteFeedback(t.feedback_id)}
+                                            title="Delete Your Feedback"
+                                        >
+                                            🗑️
+                                        </button>
+                                    )}
+                                    <div className="hp-testimonial-quote">"</div>
+                                    <p className="hp-testimonial-text">
+                                        {displayText}
+                                        {isLong && (
+                                            <button 
+                                                onClick={() => toggleExpandFeedback(key)}
+                                                className="hp-read-more-btn"
+                                            >
+                                                {isExpanded ? " Read Less" : " Read More"}
+                                            </button>
+                                        )}
+                                    </p>
+                                    <div className="hp-testimonial-author">
+                                        <div className="hp-testimonial-avatar">{avatarInitial}</div>
+                                        <div>
+                                            <div className="hp-testimonial-name">{displayName}</div>
+                                            <div className="hp-testimonial-role">{displayRole}</div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>
@@ -487,7 +617,7 @@ export default function HomePage() {
                         {user ? (
                             <>
                                 <button className="hp-btn hp-btn-white" onClick={() => navigate("/events")}>🎯 Explore Events</button>
-                                <button className="hp-btn hp-btn-ghost-white" onClick={() => navigate("/clubs")}>🏛️ Browse Clubs</button>
+                                <button className="hp-btn hp-btn-ghost-white" onClick={() => navigate("/clubs")}>🏛️ Explore Clubs</button>
                             </>
                         ) : (
                             <>
@@ -498,6 +628,148 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
+
+            {/* 💬 GIVE FEEDBACK MODAL */}
+            {showFeedbackModal && (
+                <div className="hp-modal-overlay" onClick={() => setShowFeedbackModal(false)}>
+                    <div className="hp-modal-card" onClick={(e) => e.stopPropagation()}>
+                        <div className="hp-modal-header">
+                            <h3>💬 Share Your Feedback</h3>
+                            <button className="hp-modal-close" onClick={() => setShowFeedbackModal(false)}>✕</button>
+                        </div>
+                        <p style={{ color: "#94a3b8", fontSize: "0.88rem", marginBottom: "16px" }}>
+                            Your feedback will be featured on the portal Home Page for everyone to see!
+                        </p>
+                        <form onSubmit={handleSubmitFeedback}>
+                            <div className="hp-form-group">
+                                <label style={{ fontSize: "0.85rem", color: "#cbd5e1", fontWeight: 600, display: "block", marginBottom: "6px" }}>Your Name & Role</label>
+                                <input 
+                                    type="text" 
+                                    value={`${user?.name || 'User'} (${user?.role_name || 'Member'}${user?.department ? `, ${user.department}` : ''})`}
+                                    disabled
+                                    style={{ width: "100%", padding: "10px 14px", background: 'rgba(255,255,255,0.05)', border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: '#94a3b8', cursor: 'not-allowed' }}
+                                />
+                            </div>
+
+                            <div className="hp-form-group" style={{ marginTop: "14px" }}>
+                                <label style={{ fontSize: "0.85rem", color: "#cbd5e1", fontWeight: 600, display: "block", marginBottom: "6px" }}>Your Message / Thoughts *</label>
+                                <textarea 
+                                    rows={4}
+                                    placeholder="Tell us what you love about the platform or how it helped your college experience..."
+                                    value={feedbackText}
+                                    onChange={(e) => setFeedbackText(e.target.value)}
+                                    required
+                                    style={{ width: "100%", padding: "12px", background: "rgba(15, 23, 42, 0.8)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#fff", outline: "none", boxSizing: "border-box" }}
+                                />
+                            </div>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+                                <button 
+                                    type="button" 
+                                    className="hp-btn hp-btn-outline" 
+                                    onClick={() => setShowFeedbackModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="hp-btn hp-btn-primary" 
+                                    disabled={submittingFeedback}
+                                >
+                                    {submittingFeedback ? "Submitting..." : "Submit Feedback"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* 📜 SEE ALL TESTIMONIALS MODAL */}
+            {showAllFeedbacksModal && (
+                <div className="hp-modal-overlay" onClick={() => setShowAllFeedbacksModal(false)}>
+                    <div className="hp-modal-card hp-modal-large" onClick={(e) => e.stopPropagation()}>
+                        <div className="hp-modal-header">
+                            <h3>Voices — All Community Testimonials ({feedbacks.length + defaultTestimonials.length})</h3>
+                            <button className="hp-modal-close" onClick={() => setShowAllFeedbacksModal(false)}>✕</button>
+                        </div>
+                        <div className="hp-all-feedbacks-list">
+                            {[...feedbacks, ...defaultTestimonials].map((f, i) => {
+                                const displayName = f.user_name || f.name;
+                                const avatar = (displayName || "?").charAt(0).toUpperCase();
+                                const roleStr = `${f.role_name || f.role}${f.department ? `, ${f.department}` : ''}`;
+                                const canDelete = f.feedback_id && user && Number(user.id) === Number(f.user_id);
+                                const fullText = f.message || f.text || "";
+
+                                const key = f.feedback_id ? `modal_f_${f.feedback_id}` : `modal_d_${i}`;
+                                const isExpanded = !!expandedFeedbacks[key];
+                                const isLong = fullText.length > 140;
+                                const displayText = (isLong && !isExpanded) ? `${fullText.substring(0, 140)}...` : fullText;
+
+                                return (
+                                    <div key={key} className="hp-testimonial-card-full" style={{ position: "relative" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                            <div className="hp-testimonial-author">
+                                                <div className="hp-testimonial-avatar">{avatar}</div>
+                                                <div>
+                                                    <div className="hp-testimonial-name">{displayName}</div>
+                                                    <div className="hp-testimonial-role">{roleStr}</div>
+                                                </div>
+                                            </div>
+                                            {canDelete && (
+                                                <button 
+                                                    className="hp-delete-feedback-btn-pill"
+                                                    onClick={() => askDeleteFeedback(f.feedback_id)}
+                                                    title="Delete Your Feedback"
+                                                >
+                                                    🗑️ Delete
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="hp-testimonial-text-full">
+                                            "{displayText}"
+                                            {isLong && (
+                                                <button 
+                                                    onClick={() => toggleExpandFeedback(key)}
+                                                    className="hp-read-more-btn"
+                                                >
+                                                    {isExpanded ? " Read Less" : " Read More"}
+                                                </button>
+                                            )}
+                                        </p>
+                                        <div className="hp-testimonial-date">
+                                            {f.created_at ? new Date(f.created_at).toLocaleDateString() : "Featured Testimonial"}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+                            <button className="hp-btn hp-btn-outline" onClick={() => setShowAllFeedbacksModal(false)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 🗑️ DELETE FEEDBACK CONFIRMATION OVERLAY */}
+            {showDeleteFeedbackConfirm && (
+                <div className="confirm-toast">
+                    <p>🗑️ Are you sure you want to <b>delete your feedback</b>? This action cannot be undone!</p>
+                    <div className="confirm-actions">
+                        <button className="yes-btn" style={{ background: '#ef4444' }} onClick={confirmDeleteFeedback}>
+                            Yes, Delete
+                        </button>
+                        <button
+                            className="no-btn"
+                            onClick={() => {
+                                setShowDeleteFeedbackConfirm(false);
+                                setFeedbackToDelete(null);
+                            }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <Footer />
 

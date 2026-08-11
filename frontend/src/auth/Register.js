@@ -109,7 +109,7 @@ export default function RegisterPage() {
       return setMessage(msg);
     }
 
-    const rolesRequiringKeys = ["Club Head", "Admin", "Faculty", "Club Mentor", "Estate Manager", "Principal", "Director"];
+    const rolesRequiringKeys = ["Club Head", "Admin", "Club Mentor", "Estate Manager", "Principal", "Director"];
     if (rolesRequiringKeys.includes(selectedRole?.role_name) && !secretKey) {
       const msg = `${selectedRole.role_name} role requires a secret key`;
       setType("error");
@@ -153,12 +153,16 @@ export default function RegisterPage() {
   };
 
   const currentRoleName = roles.find(r => r.role_id === roleId)?.role_name;
-  const rolesRequiringKeys = ["Club Head", "Admin", "Faculty", "Club Mentor", "Estate Manager", "Principal", "Director"];
+  const rolesRequiringKeys = ["Club Head", "Admin", "Club Mentor", "Estate Manager", "Principal", "Director"];
   const requiresKey = rolesRequiringKeys.includes(currentRoleName);
 
-  const keyPlaceholder = currentRoleName === "Club Head"
-    ? "Enter Club Secret Key"
-    : `Enter ${currentRoleName} Key`;
+  const keyPlaceholder = currentRoleName === "Admin"
+    ? "Enter Admin Secret Key"
+    : currentRoleName === "Club Head"
+    ? "Enter Club Head Secret Key"
+    : currentRoleName === "Club Mentor"
+    ? "Enter Club Mentor Secret Key"
+    : `Enter ${currentRoleName} Secret Key`;
 
   const showYear = ["Student", "Club Head"].includes(currentRoleName);
 

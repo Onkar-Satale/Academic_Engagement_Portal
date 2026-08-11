@@ -14,13 +14,14 @@ import {
   toggleRegistration,
   getMyEnrolledClubs
 } from "../controllers/clubController.js";
+import { joinClub, getPendingApplications, processApplication, getMemberStatus } from "../controllers/clubMemberController.js";
 
 const router = express.Router();
 
 router.post(
   "/",
   authenticate,
-  authorizeRoles(2, 3, 4),
+  authorizeRoles(2, 3),
   validateCreateClub,
   createClub
 );
@@ -70,6 +71,30 @@ router.put(
   "/:clubId/toggle-registration",
   authenticate,
   toggleRegistration
+);
+
+router.post(
+  "/:clubId/join",
+  authenticate,
+  joinClub
+);
+
+router.get(
+  "/:clubId/applications",
+  authenticate,
+  getPendingApplications
+);
+
+router.post(
+  "/:clubId/applications/:userId",
+  authenticate,
+  processApplication
+);
+
+router.get(
+  "/:clubId/my-status",
+  authenticate,
+  getMemberStatus
 );
 
 export default router;
