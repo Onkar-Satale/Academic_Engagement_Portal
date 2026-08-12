@@ -121,27 +121,30 @@ export default function EventRegisterPage() {
       );
 
       // 2️⃣ Optional Web3Forms submission
-      try {
-        await fetch("https://api.web3forms.com/submit", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json"
-          },
-          body: JSON.stringify({
-            access_key: process.env.REACT_APP_WEB3FORMS_KEY || "7c30012f-a14c-4141-b8af-64707af29229",
-            subject: `New Event Registration - ${event.title}`,
-            event_name: event.title,
-            name: nameToSubmit,
-            email: emailToSubmit,
-            phone: formData.phone,
-            department: deptToSubmit,
-            year: yearToSubmit,
-            notes: formData.notes
-          })
-        });
-      } catch (wErr) {
-        console.warn("Web3Forms error ignored:", wErr);
+      const web3FormsKey = process.env.REACT_APP_WEB3FORMS_KEY;
+      if (web3FormsKey) {
+        try {
+          await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json"
+            },
+            body: JSON.stringify({
+              access_key: web3FormsKey,
+              subject: `New Event Registration - ${event.title}`,
+              event_name: event.title,
+              name: nameToSubmit,
+              email: emailToSubmit,
+              phone: formData.phone,
+              department: deptToSubmit,
+              year: yearToSubmit,
+              notes: formData.notes
+            })
+          });
+        } catch (wErr) {
+          console.warn("Web3Forms error ignored:", wErr);
+        }
       }
 
       toast.success(`Registered successfully for ${event.title} 🎉`);

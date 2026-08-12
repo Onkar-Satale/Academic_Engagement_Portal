@@ -14,7 +14,10 @@ export const authMiddleware = (req, res, next) => {
       return next(new ApiError(401, "No token found in Bearer string"));
     }
 
-    const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || "supersecretkey123";
+    const secret = process.env.JWT_ACCESS_SECRET;
+    if (!secret) {
+      return next(new ApiError(500, "JWT secret (JWT_ACCESS_SECRET or JWT_SECRET) is not configured in environment variables"));
+    }
     const decoded = jwt.verify(token, secret);
 
     req.userId = decoded.id;
