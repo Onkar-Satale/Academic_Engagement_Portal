@@ -54,6 +54,26 @@ export const authService = {
       club_id = await ClubModel.assignMentor(secret_key, userId);
     }
 
+    // Notify Admins when an authority registers using a secret key
+    if (["Estate Manager", "Principal", "Director"].includes(roleName)) {
+      try {
+        const { NotificationModel } = await import("../models/notificationModel.js");
+        const { db } = await import("../config/db.js");
+        const [adminRows] = await db.query("SELECT user_id FROM user WHERE role_id = 3");
+        for (const admin of adminRows) {
+          await NotificationModel.createNotification({
+            user_id: admin.user_id,
+            title: "🔑 New Authority Registered",
+            message: `${name} (${email}) registered as ${roleName} using a secret key.`,
+            type: "info",
+            link: "/account"
+          });
+        }
+      } catch (nErr) {
+        console.warn("Notification error in registerUser:", nErr);
+      }
+    }
+
     const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || "supersecretkey123";
     const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "15m";
     const token = jwt.sign({ id: userId, role_id }, secret, { expiresIn });
