@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
   entity_type VARCHAR(50),
   entity_id INT,
   target VARCHAR(255) DEFAULT NULL,
-  ip_address VARCHAR(45) DEFAULT NULL,
+  ip_address VARCHAR(45) DEFAULT NULL, 
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
