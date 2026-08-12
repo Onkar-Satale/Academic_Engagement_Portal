@@ -53,6 +53,8 @@ Academic Engagement Portal follows a modern decoupled architecture separating th
 Academic-Engagement-Portal-main/
 ├── assets/                     # Architecture diagram & application screenshots
 ├── backend/                    # Node.js + Express REST API Server
+│   ├── app.js                  # Express application setup, CORS & route registrations
+│   ├── server.js               # HTTP Server entry point
 │   ├── controllers/            # Auth, Club, Event, Permission, Approval & Notification controllers
 │   ├── database/               # Relational database schemas & seed data (schema.sql, 3.sql)
 │   ├── middlewares/            # JWT auth, role authorization, rate limiting, error handling
