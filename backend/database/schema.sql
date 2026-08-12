@@ -128,19 +128,7 @@ CREATE TABLE IF NOT EXISTS permission_approval (
   FOREIGN KEY (authority_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
--- 9. General Approval Table (legacy / event level)
-CREATE TABLE IF NOT EXISTS approval (
-  approval_id INT PRIMARY KEY AUTO_INCREMENT,
-  event_id INT,
-  authority_id INT,
-  status VARCHAR(50),
-  remarks TEXT,
-  action_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (event_id) REFERENCES event(event_id) ON DELETE CASCADE,
-  FOREIGN KEY (authority_id) REFERENCES user(user_id) ON DELETE CASCADE
-);
-
--- 10. Notification Table
+-- 9. Notification Table
 CREATE TABLE IF NOT EXISTS notification (
   notification_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -153,17 +141,7 @@ CREATE TABLE IF NOT EXISTS notification (
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
--- 11. Club Interest / Registrations
-CREATE TABLE IF NOT EXISTS club_interest (
-  interest_id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
-  club_id INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
-  FOREIGN KEY (club_id) REFERENCES club(club_id) ON DELETE CASCADE
-);
-
--- 12. Audit Log Table
+-- 10. Audit Log Table
 CREATE TABLE IF NOT EXISTS audit_log (
   log_id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
@@ -176,7 +154,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
 
--- 13. Volunteer Table
+-- 11. Volunteer Table
 CREATE TABLE IF NOT EXISTS volunteer (
   volunteer_id INT AUTO_INCREMENT PRIMARY KEY,
   event_id INT NOT NULL,
@@ -188,7 +166,7 @@ CREATE TABLE IF NOT EXISTS volunteer (
   UNIQUE KEY unique_volunteer (event_id, student_id)
 );
 
--- 14. Role Invite Key Table
+-- 12. Role Invite Key Table
 CREATE TABLE IF NOT EXISTS role_invite_key (
   key_id INT PRIMARY KEY AUTO_INCREMENT,
   secret_key VARCHAR(100) NOT NULL UNIQUE,
@@ -198,7 +176,7 @@ CREATE TABLE IF NOT EXISTS role_invite_key (
   FOREIGN KEY (role_id) REFERENCES role(role_id) ON DELETE CASCADE
 );
 
--- 15. User Feedback / Testimonials Table
+-- 13. User Feedback / Testimonials Table
 CREATE TABLE IF NOT EXISTS feedback (
   feedback_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
