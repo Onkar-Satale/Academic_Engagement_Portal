@@ -78,3 +78,19 @@
   color: var(--text-dim);
   margin-top: 40px;
 }
+
+@media (max-width: 600px) {
+  .footer-container {
+    padding: 40px 16px 20px 16px;
+  }
+  .footer-top {
+    gap: 24px;
+  }
+  .footer-links ul {
+    gap: 10px;
+  }
+  .footer-links ul li a {
+    font-size: 0.82rem;
+    padding: 5px 10px;
+  }
+}

@@ -20,7 +20,7 @@
 
 .requests-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
@@ -103,4 +103,21 @@
   padding: 60px 0;
   color: #94a3b8;
   font-size: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .requests-container {
+    padding: 24px 14px;
+  }
+  .requests-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .request-card {
+    padding: 20px 16px;
+  }
+  .card-header {
+    flex-direction: column;
+    gap: 6px;
+  }
 }

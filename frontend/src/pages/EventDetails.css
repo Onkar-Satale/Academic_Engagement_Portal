@@ -67,3 +67,26 @@
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+.attendees-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .event-details-container {
+    margin: 20px 12px;
+    padding: 24px 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .event-details-container {
+    padding: 18px 14px;
+    margin: 12px 8px;
+  }
+  .attendees-table th, .attendees-table td {
+    padding: 10px 10px;
+    font-size: 0.82rem;
+  }
+}

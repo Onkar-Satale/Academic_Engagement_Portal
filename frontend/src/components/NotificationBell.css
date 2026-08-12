@@ -115,3 +115,11 @@
   font-size: 0.7rem;
   color: #64748b;
 }
+
+@media (max-width: 400px) {
+  .notification-dropdown {
+    width: 290px;
+    max-width: calc(100vw - 32px);
+    right: -10px;
+  }
+}

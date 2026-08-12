@@ -96,3 +96,16 @@
   line-height: 1.5;
   font-style: italic;
 }
+
+@media (max-width: 600px) {
+  .club-apps-container {
+    padding: 24px 14px;
+  }
+  .apps-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .app-card {
+    padding: 20px 16px;
+  }
+}

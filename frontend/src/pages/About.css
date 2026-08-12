@@ -103,3 +103,21 @@
   font-size: 0.88rem;
   color: var(--text-muted);
 }
+
+@media (max-width: 600px) {
+  .about-page {
+    padding: 24px 14px;
+  }
+  .about-hero {
+    padding: 30px 16px;
+    margin-bottom: 24px;
+  }
+  .info-card {
+    flex: 1 1 100%;
+    padding: 20px 16px;
+  }
+  .team-card {
+    width: 100%;
+    min-width: unset;
+  }
+}

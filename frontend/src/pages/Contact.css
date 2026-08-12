@@ -68,3 +68,13 @@
 .contact-card a:hover {
   color: var(--primary-hover);
 }
+
+@media (max-width: 600px) {
+  .contact-page {
+    padding: 24px 14px;
+  }
+  .contact-card {
+    flex: 1 1 100%;
+    padding: 20px 16px;
+  }
+}

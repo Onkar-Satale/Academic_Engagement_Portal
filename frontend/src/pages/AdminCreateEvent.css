@@ -66,3 +66,12 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 18px var(--primary-glow);
 }
+
+@media (max-width: 480px) {
+  .admin-create-container {
+    padding: 20px 12px;
+  }
+  .admin-create-form {
+    padding: 24px 18px;
+  }
+}

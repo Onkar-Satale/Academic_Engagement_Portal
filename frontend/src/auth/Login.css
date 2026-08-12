@@ -134,3 +134,17 @@
   color: #f87171;
   border-color: rgba(239, 68, 68, 0.3);
 }
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 20px 12px;
+    min-height: 80vh;
+  }
+  .auth-form {
+    padding: 28px 20px;
+  }
+  .auth-form h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+}

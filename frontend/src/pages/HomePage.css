@@ -939,6 +939,7 @@
   .hp-hero {
     flex-direction: column;
     padding: 60px 20px 40px;
+    gap: 32px;
   }
   .hp-ps-grid {
     grid-template-columns: 1fr;
@@ -951,6 +952,59 @@
   }
   .hp-step-arrow {
     display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .hp-hero {
+    padding: 40px 16px 30px;
+  }
+  .hp-hero-title {
+    font-size: 2rem;
+  }
+  .hp-hero-sub {
+    font-size: 0.95rem;
+  }
+  .hp-hero-actions {
+    flex-direction: column;
+  }
+  .hp-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .hp-cards-grid, .hp-features-grid, .hp-testimonials, .hp-steps, .hp-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .hp-mock-body {
+    flex-direction: column;
+  }
+  .hp-mock-sidebar {
+    width: 100%;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid var(--hp-border);
+    justify-content: space-around;
+  }
+  .hp-cta-section {
+    padding: 40px 20px;
+    margin: 30px 12px;
+  }
+  .hp-stats-section {
+    padding: 40px 20px;
+    margin: 20px 12px;
+  }
+}
+
+@media (max-width: 400px) {
+  .hp-hero-title {
+    font-size: 1.7rem;
+  }
+  .hp-section {
+    padding: 36px 12px;
+  }
+  .hp-club-card, .hp-event-card, .hp-feature-card, .hp-testimonial-card {
+    padding: 20px 16px;
   }
 }
 

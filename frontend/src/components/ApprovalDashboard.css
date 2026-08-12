@@ -131,3 +131,27 @@
   color: #94a3b8;
   font-size: 1.1rem;
 }
+
+@media (max-width: 640px) {
+  .approval-dashboard-container {
+    padding: 24px 14px;
+  }
+  .approval-card {
+    padding: 20px 16px;
+  }
+  .approval-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 450px) {
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .action-buttons button {
+    width: 100%;
+  }
+}
