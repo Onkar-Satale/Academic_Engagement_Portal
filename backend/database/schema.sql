@@ -199,8 +199,3 @@ INSERT IGNORE INTO event (event_id, title, description, date, venue, status, clu
 (1, 'Annual University Hackathon 2026', '24-hour coding challenge with exciting prize pools and mentor support.', '2026-09-15', 'Main Auditorium', 'Upcoming', 1),
 (2, 'RoboWars Championship', 'Autonomous and remote-controlled robot battle tournament.', '2026-10-01', 'Indoor Sports Complex', 'Upcoming', 2),
 (3, 'Campus Unplugged Night', 'An evening of acoustic music, poetry, and live band performances.', '2026-08-25', 'Open Air Theater', 'Upcoming', 3);
-
-INSERT IGNORE INTO role_invite_key (key_id, secret_key, role_id, is_used) VALUES
-(1, 'ESTATE_KEY_2026', 6, FALSE),
-(2, 'PRINCIPAL_KEY_2026', 7, FALSE),
-(3, 'DIRECTOR_KEY_2026', 8, FALSE);
