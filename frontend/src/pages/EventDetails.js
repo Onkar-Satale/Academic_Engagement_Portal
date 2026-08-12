@@ -66,7 +66,7 @@ export default function EventDetails() {
     user.id === event.club_head_id ||
     user.id === event.club_mentor_id ||
     user.role_name === "Admin" ||
-    user.role_id === 4;
+    user.role_id === 3;
 
   // Handle input changes in edit form
   const handleChange = (e) => {

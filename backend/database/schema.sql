@@ -12,13 +12,13 @@ CREATE TABLE IF NOT EXISTS role (
 
 INSERT IGNORE INTO role (role_id, role_name) VALUES
 (1, 'Student'),
-(2, 'Club Head'),
+(2, 'Teacher'),
 (3, 'Admin'),
+(4, 'Club Head'),
 (5, 'Club Mentor'),
 (6, 'Estate Manager'),
 (7, 'Principal'),
-(8, 'Director'),
-(9, 'Teacher');
+(8, 'Director');
 
 -- 2. User Table
 CREATE TABLE IF NOT EXISTS user (

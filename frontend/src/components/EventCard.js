@@ -6,9 +6,9 @@ export default function EventCard({ event, isRegistered }) {
   const user = JSON.parse(localStorage.getItem("user"));
   const isOrganizer = user && event.organizer_id === user.id;
 
-  // Club Heads (role 2) and Club Mentors (role 5) should NOT see Register
+  // Club Heads (role 4) and Club Mentors (role 5) should NOT see Register
   // button ONLY for events that belong to THEIR club
-  const isClubManager = user && (user.role_id === 2 || user.role_id === 5);
+  const isClubManager = user && (user.role_id === 4 || user.role_id === 5);
   const isTheirClubEvent = isClubManager && event.club_id && event.club_id === user.club_id;
   const isAdmin = user && user.role_id === 3;
 

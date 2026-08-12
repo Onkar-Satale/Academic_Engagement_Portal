@@ -117,7 +117,7 @@ export default function ClubDetails() {
     club.club_head_id === user.id ||
     club.club_mentor_id === user.id ||
     user.role_name === "Admin" ||
-    user.role_id === 4
+    user.role_id === 3
   );
 
   const deleteClub = async () => {

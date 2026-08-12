@@ -47,7 +47,7 @@ export const updateClub = async (req, res, next) => {
     const club = await clubService.getClubById(req.params.id);
     if (!club) return next(new ApiError(404, "Club not found"));
 
-    if (req.user.role !== 4 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
+    if (req.user.role !== 3 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
       return next(new ApiError(403, "Forbidden"));
     }
 
@@ -63,7 +63,7 @@ export const deleteClub = async (req, res, next) => {
     const club = await clubService.getClubById(req.params.id);
     if (!club) return next(new ApiError(404, "Club not found"));
 
-    if (req.user.role !== 4 && req.user.id !== club.club_head_id) {
+    if (req.user.role !== 3 && req.user.id !== club.club_head_id) {
       return next(new ApiError(403, "Forbidden"));
     }
 
@@ -119,7 +119,7 @@ export const toggleRegistration = async (req, res, next) => {
     const club = await clubService.getClubById(clubId);
     if (!club) return next(new ApiError(404, "Club not found"));
 
-    if (req.user.role !== 4 && req.user.id !== club.club_head_id) {
+    if (req.user.role !== 3 && req.user.id !== club.club_head_id) {
       return next(new ApiError(403, "Forbidden"));
     }
 

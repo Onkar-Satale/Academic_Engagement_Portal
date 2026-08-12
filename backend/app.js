@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import morgan from "morgan";
 import authRoutes from "./routes/authRoutes.js";
 import clubRoutes from "./routes/clubRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
@@ -13,10 +15,17 @@ import clubRegistrationRoutes from "./routes/clubRegistrationRoutes.js";
 import eventRegistrationRoutes from "./routes/eventRegistrationRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import { errorMiddleware } from "./middlewares/errorMiddleware.js";
+import { rateLimitMiddleware } from "./middlewares/rateLimitMiddleware.js";
+import { sanitizeMiddleware } from "./middlewares/sanitizeMiddleware.js";
 
 dotenv.config();
 
 const app = express();
+
+// Security Headers & Logging
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(morgan("dev"));
+app.use(rateLimitMiddleware);
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS;
 const frontendUrl = process.env.FRONTEND_URL;
@@ -47,6 +56,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(sanitizeMiddleware);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/clubs", clubRoutes);

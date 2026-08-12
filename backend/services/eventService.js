@@ -60,7 +60,7 @@ export const eventService = {
     const event = await EventModel.getById(eventId);
     if (!event) throw new ApiError(404, "Event not found");
 
-    if (reqUser.role !== 4) {
+    if (reqUser.role !== 3) {
       const club = await ClubModel.getByIdWithDetails(event.club_id);
       if (!club) throw new ApiError(404, "Club not found");
       const isClubHead = club.club_head_id === reqUser.id;

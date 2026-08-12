@@ -106,7 +106,7 @@ export const authService = {
     const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, secret, { expiresIn });
 
     let club_id = null;
-    if (user.role_id === 2 || user.role_id === 5) {
+    if (user.role_id === 4 || user.role_id === 5) {
       club_id = await ClubModel.findByUserRole(user.user_id);
     }
 

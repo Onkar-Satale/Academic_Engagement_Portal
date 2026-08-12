@@ -54,7 +54,7 @@ export const PermissionModel = {
         WHERE pr.current_level = 3 AND pr.status = 'pending'
         ORDER BY pr.created_at DESC
       `;
-    } else if (roleId === 8 || roleId === 3 || roleId === 4) {
+    } else if (roleId === 8 || roleId === 3) {
       query = `
         SELECT pr.*, c.name as club_name, u.name as requester_name
         FROM permission_request pr

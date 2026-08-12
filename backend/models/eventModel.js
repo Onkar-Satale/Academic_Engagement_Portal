@@ -5,7 +5,7 @@ export const EventModel = {
     let { title, description, date, venue, club_id, additional_info, conducted_by } = bodyData;
 
     if (!club_id) {
-      if (reqUser.role === 2) {
+      if (reqUser.role === 4) {
         const [[headClub]] = await db.query("SELECT club_id FROM club WHERE club_head_id = ?", [reqUser.id]);
         if (headClub) club_id = headClub.club_id;
       } else if (reqUser.role === 5) {
@@ -52,7 +52,7 @@ export const EventModel = {
     if (!event) return { status: 404, message: "Event not found" };
 
     const [[club]] = await db.query("SELECT club_head_id, club_mentor_id FROM club WHERE club_id = ?", [event.club_id]);
-    let isAuthorized = reqUser.role === 4 || (club && (club.club_head_id === reqUser.id || club.club_mentor_id === reqUser.id));
+    let isAuthorized = reqUser.role === 3 || (club && (club.club_head_id === reqUser.id || club.club_mentor_id === reqUser.id));
     if (!isAuthorized) return { status: 403, message: "Not allowed" };
 
     await db.query("DELETE FROM event WHERE event_id = ?", [eventId]);
@@ -65,7 +65,7 @@ export const EventModel = {
     if (!event) return { status: 404, message: "Event not found" };
 
     const [[club]] = await db.query("SELECT club_head_id, club_mentor_id FROM club WHERE club_id = ?", [event.club_id]);
-    let isAuthorized = reqUser.role === 4 || (club && (club.club_head_id === reqUser.id || club.club_mentor_id === reqUser.id));
+    let isAuthorized = reqUser.role === 3 || (club && (club.club_head_id === reqUser.id || club.club_mentor_id === reqUser.id));
     if (!isAuthorized) return { status: 403, message: "Not allowed. Only Club Head or Mentor of this club can edit." };
 
     await db.query(
