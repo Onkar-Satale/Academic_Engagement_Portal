@@ -9,5 +9,3 @@ export const roleMiddleware = (...allowedRoles) => {
   };
 };
 
-export const authorizeRoles = roleMiddleware;
-export default roleMiddleware;

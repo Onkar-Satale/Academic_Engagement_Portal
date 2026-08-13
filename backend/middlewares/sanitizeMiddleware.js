@@ -23,5 +23,3 @@ export const sanitizeMiddleware = (req, res, next) => {
   }
   next();
 };
-
-export default sanitizeMiddleware;

@@ -16,7 +16,7 @@ export const authMiddleware = (req, res, next) => {
 
     const secret = process.env.JWT_ACCESS_SECRET;
     if (!secret) {
-      return next(new ApiError(500, "JWT secret (JWT_ACCESS_SECRET or JWT_SECRET) is not configured in environment variables"));
+      return next(new ApiError(500, "JWT_ACCESS_SECRET is not configured in environment variables"));
     }
     const decoded = jwt.verify(token, secret);
 
@@ -35,5 +35,3 @@ export const authMiddleware = (req, res, next) => {
   }
 };
 
-export const authenticate = authMiddleware;
-export default authMiddleware;
