@@ -24,3 +24,6 @@ export const apiRateLimiter = rateLimit({
   },
 });
 
+export const rateLimitMiddleware = apiRateLimiter;
+
+
