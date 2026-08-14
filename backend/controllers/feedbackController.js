@@ -1,12 +1,9 @@
-import FeedbackModel from "../models/feedbackModel.js";
+import { FeedbackModel } from "../models/feedbackModel.js";
 import ApiError from "../utils/ApiError.js";
 
 export const createFeedback = async (req, res, next) => {
   try {
     const { message, rating } = req.body;
-    if (!message || !message.trim()) {
-      return next(new ApiError(400, "Feedback message is required"));
-    }
 
     const feedbackId = await FeedbackModel.create({
       user_id: req.user.id,

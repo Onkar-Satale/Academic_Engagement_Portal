@@ -24,5 +24,3 @@ export const NotificationModel = {
     );
   }
 };
-
-export default NotificationModel;

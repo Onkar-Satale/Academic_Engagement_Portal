@@ -153,5 +153,3 @@ export const ClubMemberModel = {
     return rows;
   }
 };
-
-export default ClubMemberModel;

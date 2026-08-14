@@ -3,10 +3,6 @@ import ApiError from "../utils/ApiError.js";
 
 export const createEvent = async (req, res, next) => {
   try {
-    const allowedRoles = [2, 3];
-    if (!allowedRoles.includes(req.user.role)) {
-      return next(new ApiError(403, "Only Club Heads and Admins can create events"));
-    }
     await eventService.createEvent(req.user, req.body);
     res.status(201).json({ success: true, message: "Event created successfully" });
   } catch (err) {

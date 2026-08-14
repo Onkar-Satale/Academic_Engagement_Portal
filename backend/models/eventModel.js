@@ -75,5 +75,3 @@ export const EventModel = {
     return { status: 200, message: "Event updated" };
   }
 };
-
-export default EventModel;

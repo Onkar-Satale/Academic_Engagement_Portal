@@ -41,5 +41,3 @@ export const FeedbackModel = {
     return res.affectedRows > 0;
   }
 };
-
-export default FeedbackModel;

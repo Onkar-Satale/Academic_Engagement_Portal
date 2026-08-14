@@ -21,7 +21,7 @@ const router = express.Router();
 router.post(
   "/",
   authenticate,
-  authorizeRoles(2, 3),
+  authorizeRoles(3),
   validateCreateClub,
   createClub
 );

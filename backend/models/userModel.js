@@ -70,5 +70,3 @@ export const UserModel = {
     return res.affectedRows > 0;
   }
 };
-
-export default UserModel;

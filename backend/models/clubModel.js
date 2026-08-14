@@ -112,5 +112,3 @@ export const ClubModel = {
     return result;
   }
 };
-
-export default ClubModel;

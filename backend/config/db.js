@@ -14,5 +14,3 @@ export const db = mysql.createPool({
   queueLimit: 0,
   ...(process.env.DB_SSL === "true" && { ssl: { rejectUnauthorized: false } })
 });
-
-export default db;

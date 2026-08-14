@@ -5,10 +5,6 @@ export const createPermissionRequest = async (req, res, next) => {
     const { title, description, event_date, venue, club_id } = req.body;
     const requester_id = req.user.id;
 
-    if (!title || !event_date || !venue || !club_id) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
     const requestId = await permissionService.createRequest({
       title,
       description,
@@ -46,10 +42,6 @@ export const handleApprovalAction = async (req, res, next) => {
   try {
     const { requestId } = req.params;
     const { status, remarks, level } = req.body;
-
-    if (!status || !["approved", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status action" });
-    }
 
     await permissionService.updateStatus(
       requestId,

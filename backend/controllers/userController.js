@@ -1,4 +1,6 @@
 import userService from "../services/userService.js";
+import { RoleKeyModel } from "../models/roleKeyModel.js";
+import { ClubModel } from "../models/clubModel.js";
 
 export const getRoles = async (req, res, next) => {
   try {
@@ -21,9 +23,6 @@ export const deleteAccount = async (req, res, next) => {
 export const generateRoleKey = async (req, res, next) => {
   try {
     const { role_id, secret_key } = req.body;
-    if (!role_id) return res.status(400).json({ message: "role_id is required" });
-
-    const { RoleKeyModel } = await import("../models/roleKeyModel.js");
 
     const existingKey = await RoleKeyModel.findActiveByRole(role_id);
     if (existingKey) {
@@ -55,9 +54,6 @@ export const revokeSecretKey = async (req, res, next) => {
     const { secret_key } = req.body;
     if (!secret_key) return res.status(400).json({ message: "secret_key is required" });
 
-    const { RoleKeyModel } = await import("../models/roleKeyModel.js");
-    const { ClubModel } = await import("../models/clubModel.js");
-
     const roleRevoked = await RoleKeyModel.revokeKey(secret_key);
     const clubRevoked = await ClubModel.revokeClubKey(secret_key);
 
@@ -76,7 +72,6 @@ export const revokeSecretKey = async (req, res, next) => {
 
 export const getAllSecretKeys = async (req, res, next) => {
   try {
-    const { RoleKeyModel } = await import("../models/roleKeyModel.js");
     const keys = await RoleKeyModel.getAllKeys();
     res.json(keys);
   } catch (err) {

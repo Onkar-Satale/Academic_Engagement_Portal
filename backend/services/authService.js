@@ -6,10 +6,6 @@ import { RoleKeyModel } from "../models/roleKeyModel.js";
 import ApiError from "../utils/ApiError.js";
 
 export const authService = {
-  findUserByEmail: async (email) => {
-    return await UserModel.findByEmail(email);
-  },
-
   registerUser: async ({ name, email, password, department, year, role_id, secret_key }) => {
     const existing = await UserModel.findByEmail(email);
     if (existing) throw new ApiError(400, "Email is already registered");
