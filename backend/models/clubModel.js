@@ -1,11 +1,10 @@
 import { db } from "../config/db.js";
 
 export const ClubModel = {
-  create: async ({ name, description, club_head_id, club_mentor_id, secret_key, club_head_key, permission_emails, club_mentor_key }) => {
-    const headKey = club_head_key || secret_key;
+  create: async ({ name, description, club_head_id, club_mentor_id, club_head_key, permission_emails, club_mentor_key }) => {
     const [res] = await db.query(
-      "INSERT INTO club (name, description, club_head_id, club_mentor_id, secret_key, club_head_key, permission_emails, club_mentor_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [name, description, club_head_id || null, club_mentor_id || null, headKey, headKey, permission_emails || null, club_mentor_key || null]
+      "INSERT INTO club (name, description, club_head_id, club_mentor_id, club_head_key, permission_emails, club_mentor_key) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [name, description, club_head_id || null, club_mentor_id || null, club_head_key || null, permission_emails || null, club_mentor_key || null]
     );
     return res.insertId;
   },
@@ -46,8 +45,8 @@ export const ClubModel = {
 
   findByKey: async (key) => {
     const [clubs] = await db.query(
-      "SELECT * FROM club WHERE club_head_key = ? OR secret_key = ? OR club_mentor_key = ?",
-      [key, key, key]
+      "SELECT * FROM club WHERE club_head_key = ? OR club_mentor_key = ?",
+      [key, key]
     );
     return clubs[0];
   },
@@ -56,18 +55,17 @@ export const ClubModel = {
     const [res] = await db.query(
       `UPDATE club 
        SET club_head_key = CASE WHEN club_head_key = ? THEN NULL ELSE club_head_key END,
-           club_mentor_key = CASE WHEN club_mentor_key = ? THEN NULL ELSE club_mentor_key END,
-           secret_key = CASE WHEN secret_key = ? THEN NULL ELSE secret_key END
-       WHERE club_head_key = ? OR club_mentor_key = ? OR secret_key = ?`,
-      [key, key, key, key, key, key]
+           club_mentor_key = CASE WHEN club_mentor_key = ? THEN NULL ELSE club_mentor_key END
+       WHERE club_head_key = ? OR club_mentor_key = ?`,
+      [key, key, key, key]
     );
     return res.affectedRows > 0;
   },
 
   assignHead: async (clubKey, userId) => {
     await db.query(
-      "UPDATE club SET club_head_id = ? WHERE club_head_key = ? OR secret_key = ?",
-      [userId, clubKey, clubKey]
+      "UPDATE club SET club_head_id = ? WHERE club_head_key = ?",
+      [userId, clubKey]
     );
     const [[c]] = await db.query("SELECT club_id FROM club WHERE club_head_id = ?", [userId]);
     return c ? c.club_id : null;
@@ -91,12 +89,12 @@ export const ClubModel = {
   },
 
   update: async (clubId, data) => {
-    const { name, description, secret_key, tagline, category, activities, club_head_id, club_mentor_id, permission_emails } = data;
+    const { name, description, tagline, category, activities, club_head_id, club_mentor_id, permission_emails } = data;
     const [result] = await db.query(
       `UPDATE club 
-     SET name = ?, description = ?, secret_key = ?, tagline = ?, category = ?, activities = ?, club_head_id = ?, club_mentor_id = ?, permission_emails = ?
+     SET name = ?, description = ?, tagline = ?, category = ?, activities = ?, club_head_id = ?, club_mentor_id = ?, permission_emails = ?
      WHERE club_id = ?`,
-      [name, description, secret_key, tagline, category, activities, club_head_id, club_mentor_id, permission_emails || null, clubId]
+      [name, description, tagline, category, activities, club_head_id, club_mentor_id, permission_emails || null, clubId]
     );
     return result;
   },

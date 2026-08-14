@@ -62,7 +62,7 @@ export default function Clubs() {
         {
           name: newClubName,
           description: newClubDesc,
-          secretKey: newClubKey,
+          clubHeadKey: newClubKey,
           clubMentorKey: newClubMentorKey
         },
         { headers: { Authorization: `Bearer ${token}` } }

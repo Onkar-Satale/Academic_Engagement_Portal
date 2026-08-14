@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS club (
   club_mentor_id INT,
   club_mentor_key VARCHAR(100) DEFAULT NULL,
   club_head_key VARCHAR(100) DEFAULT NULL,
-  secret_key VARCHAR(100) DEFAULT NULL,
   permission_emails TEXT DEFAULT NULL,
   tagline VARCHAR(255) DEFAULT NULL,
   category VARCHAR(100) DEFAULT NULL,
