@@ -3,7 +3,7 @@ import ApiError from "../utils/ApiError.js";
 
 export const joinClub = async (req, res, next) => {
   try {
-    const clubId = req.params.clubId || req.body.club_id;
+    const { clubId } = req.params;
     if (!clubId) return next(new ApiError(400, "Club ID is required"));
     await clubService.joinClub(clubId, req.user.id, req.body.reason);
     res.json({ success: true, message: "Application submitted successfully! ⏳ Waiting for Club Head approval." });
@@ -43,7 +43,9 @@ export const getMemberStatus = async (req, res, next) => {
 
 export const leaveClub = async (req, res, next) => {
   try {
-    await clubService.leaveClub(req.body.club_id, req.user.id);
+    const { club_id } = req.body;
+    if (!club_id) return next(new ApiError(400, "Club ID is required"));
+    await clubService.leaveClub(club_id, req.user.id);
     res.json({ success: true, message: "Left club successfully" });
   } catch (err) {
     next(err);
@@ -52,7 +54,7 @@ export const leaveClub = async (req, res, next) => {
 
 export const myClubs = async (req, res, next) => {
   try {
-    const clubs = await clubService.getUserAssociatedClubs(req.user.id, req.user.role_name);
+    const clubs = await clubService.getUserAssociatedClubs(req.user.id, req.user.role);
     res.json(clubs);
   } catch (err) {
     next(err);

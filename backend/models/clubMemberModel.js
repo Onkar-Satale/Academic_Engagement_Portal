@@ -105,7 +105,7 @@ export const ClubMemberModel = {
     let query;
     let params;
 
-    if (userRole === 'Student') {
+    if (userRole === 1) {
       query = `
         SELECT DISTINCT 
           c.*,
@@ -117,7 +117,7 @@ export const ClubMemberModel = {
         INNER JOIN club_member cm ON cm.club_id = c.club_id
         LEFT JOIN user mentor ON c.club_mentor_id = mentor.user_id
         LEFT JOIN user head ON c.club_head_id = head.user_id
-        WHERE cm.user_id = ?
+        WHERE cm.user_id = ? AND cm.status = 'approved'
       `;
       params = [userId];
     } else {
@@ -132,7 +132,7 @@ export const ClubMemberModel = {
         LEFT JOIN club_member cm ON cm.club_id = c.club_id AND cm.user_id = ?
         LEFT JOIN user mentor ON c.club_mentor_id = mentor.user_id
         LEFT JOIN user head ON c.club_head_id = head.user_id
-        WHERE cm.user_id = ? OR c.club_head_id = ? OR c.club_mentor_id = ?
+        WHERE (cm.user_id = ? AND cm.status = 'approved') OR c.club_head_id = ? OR c.club_mentor_id = ?
       `;
       params = [userId, userId, userId, userId];
     }
