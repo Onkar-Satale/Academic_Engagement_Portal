@@ -1,17 +1,16 @@
-import ApiError from "../utils/ApiError.js";
+import { body } from "express-validator";
+import { validateRequest } from "../middlewares/validateRequest.js";
 
-export const validateCreateClub = (req, res, next) => {
-  const { name, description, secretKey } = req.body;
-  if (!name || !description || !secretKey) {
-    return next(new ApiError(400, "Club name, description, and secretKey are required"));
-  }
-  next();
-};
+export const validateCreateClub = [
+  body("name").notEmpty().withMessage("Club name is required").isString(),
+  body("description").notEmpty().withMessage("Description is required").isString(),
+  body("secretKey").notEmpty().withMessage("secretKey is required").isString(),
+  validateRequest,
+];
 
-export const validateAddStudent = (req, res, next) => {
-  const { name, email } = req.body;
-  if (!name || !email) {
-    return next(new ApiError(400, "Student name and email are required"));
-  }
-  next();
-};
+export const validateAddStudent = [
+  body("name").notEmpty().withMessage("Student name is required").isString(),
+  body("email").notEmpty().withMessage("Email is required").isEmail().withMessage("Invalid email format"),
+  validateRequest,
+];
+

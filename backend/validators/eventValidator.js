@@ -1,17 +1,17 @@
-import ApiError from "../utils/ApiError.js";
+import { body } from "express-validator";
+import { validateRequest } from "../middlewares/validateRequest.js";
 
-export const validateCreateEvent = (req, res, next) => {
-  const { title, date, venue } = req.body;
-  if (!title || !date || !venue) {
-    return next(new ApiError(400, "Event title, date, and venue are required"));
-  }
-  next();
-};
+export const validateCreateEvent = [
+  body("title").notEmpty().withMessage("Event title is required").isString(),
+  body("date").notEmpty().withMessage("Event date is required"),
+  body("venue").notEmpty().withMessage("Venue is required").isString(),
+  validateRequest,
+];
 
-export const validateRegisterEvent = (req, res, next) => {
-  const { event_id, full_name, email } = req.body;
-  if (!event_id || !full_name || !email) {
-    return next(new ApiError(400, "event_id, full_name, and email are required for registration"));
-  }
-  next();
-};
+export const validateRegisterEvent = [
+  body("event_id").notEmpty().withMessage("event_id is required"),
+  body("full_name").notEmpty().withMessage("full_name is required").isString(),
+  body("email").notEmpty().withMessage("email is required").isEmail().withMessage("Invalid email format"),
+  validateRequest,
+];
+

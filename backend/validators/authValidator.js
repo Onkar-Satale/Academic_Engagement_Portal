@@ -1,30 +1,16 @@
-import ApiError from "../utils/ApiError.js";
+import { body } from "express-validator";
+import { validateRequest } from "../middlewares/validateRequest.js";
 
-export const validateRegister = (req, res, next) => {
-  const { name, email, password } = req.body;
+export const validateRegister = [
+  body("name").notEmpty().withMessage("Name is required").isString(),
+  body("email").notEmpty().withMessage("Email is required").isEmail().withMessage("Invalid email format"),
+  body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters long"),
+  validateRequest,
+];
 
-  if (!name || !email || !password) {
-    return next(new ApiError(400, "Name, email, and password are required"));
-  }
+export const validateLogin = [
+  body("email").notEmpty().withMessage("Email is required").isEmail().withMessage("Invalid email format"),
+  body("password").notEmpty().withMessage("Password is required"),
+  validateRequest,
+];
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return next(new ApiError(400, "Invalid email format"));
-  }
-
-  if (password.length < 8) {
-    return next(new ApiError(400, "Password must be at least 8 characters long"));
-  }
-
-  next();
-};
-
-export const validateLogin = (req, res, next) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return next(new ApiError(400, "Email and password are required"));
-  }
-
-  next();
-};

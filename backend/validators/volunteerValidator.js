@@ -1,9 +1,8 @@
-import ApiError from "../utils/ApiError.js";
+import { body } from "express-validator";
+import { validateRequest } from "../middlewares/validateRequest.js";
 
-export const validateVolunteerEvent = (req, res, next) => {
-  const { event_id } = req.body;
-  if (!event_id) {
-    return next(new ApiError(400, "event_id is required to register as a volunteer"));
-  }
-  next();
-};
+export const validateVolunteerEvent = [
+  body("event_id").notEmpty().withMessage("event_id is required to register as a volunteer"),
+  validateRequest,
+];
+

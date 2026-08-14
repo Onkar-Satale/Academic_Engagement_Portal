@@ -1,9 +1,8 @@
-import ApiError from "../utils/ApiError.js";
+import { body } from "express-validator";
+import { validateRequest } from "../middlewares/validateRequest.js";
 
-export const validateGenerateKey = (req, res, next) => {
-  const { role_id } = req.body;
-  if (!role_id) {
-    return next(new ApiError(400, "role_id is required to generate a secret key"));
-  }
-  next();
-};
+export const validateGenerateKey = [
+  body("role_id").notEmpty().withMessage("role_id is required to generate a secret key"),
+  validateRequest,
+];
+
