@@ -3,12 +3,11 @@ import ApiError from "../utils/ApiError.js";
 
 export const createFeedback = async (req, res, next) => {
   try {
-    const { message, rating } = req.body;
+    const { message } = req.body;
 
     const feedbackId = await FeedbackModel.create({
       user_id: req.user.id,
-      message: message.trim(),
-      rating: rating || 5
+      message: message.trim()
     });
 
     res.status(201).json({

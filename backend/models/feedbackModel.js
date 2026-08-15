@@ -1,10 +1,10 @@
 import { db } from "../config/db.js";
 
 export const FeedbackModel = {
-  create: async ({ user_id, message, rating }) => {
+  create: async ({ user_id, message }) => {
     const [res] = await db.query(
-      "INSERT INTO feedback (user_id, message, rating) VALUES (?, ?, ?)",
-      [user_id, message, rating || 5]
+      "INSERT INTO feedback (user_id, message) VALUES (?, ?)",
+      [user_id, message]
     );
     return res.insertId;
   },
