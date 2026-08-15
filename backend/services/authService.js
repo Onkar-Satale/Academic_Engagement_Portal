@@ -34,7 +34,7 @@ export const authService = {
       }
     } else if (["Estate Manager", "Principal", "Director"].includes(roleName)) {
       if (!secret_key) throw new ApiError(400, `${roleName} Secret Key is required`);
-      
+
       // Allow System Admin master key override OR check database dynamic single-use invite key
       const masterAdminKey = process.env.SYSTEM_ADMIN_SECRET_KEY;
       if (!masterAdminKey) {
@@ -77,11 +77,11 @@ export const authService = {
 
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     if (!accessSecret) {
-      throw new ApiError(500, "JWT secret (JWT_ACCESS_SECRET or JWT_SECRET) is not configured in environment variables");
+      throw new ApiError(500, "JWT_ACCESS_SECRET is not configured in environment variables");
     }
-    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "1h";
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || accessSecret;
-    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN;
 
     const token = jwt.sign({ id: userId, role_id }, accessSecret, { expiresIn: accessExpiresIn });
     const refreshToken = jwt.sign({ id: userId, role_id }, refreshSecret, { expiresIn: refreshExpiresIn });
@@ -112,11 +112,11 @@ export const authService = {
 
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     if (!accessSecret) {
-      throw new ApiError(500, "JWT secret (JWT_ACCESS_SECRET or JWT_SECRET) is not configured in environment variables");
+      throw new ApiError(500, "JWT_ACCESS_SECRET is not configured in environment variables");
     }
-    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "1h";
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || accessSecret;
-    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN;
 
     const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, accessSecret, { expiresIn: accessExpiresIn });
     const refreshToken = jwt.sign({ id: user.user_id, role_id: user.role_id }, refreshSecret, { expiresIn: refreshExpiresIn });
@@ -162,8 +162,8 @@ export const authService = {
     }
 
     const accessSecret = process.env.JWT_ACCESS_SECRET;
-    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "1h";
-    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN;
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN;
 
     const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, accessSecret, { expiresIn: accessExpiresIn });
     const newRefreshToken = jwt.sign({ id: user.user_id, role_id: user.role_id }, refreshSecret, { expiresIn: refreshExpiresIn });
