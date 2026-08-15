@@ -18,10 +18,10 @@ export const myRegistrations = async (req, res, next) => {
   }
 };
 
-export const getEventAttendees = async (req, res, next) => {
+export const getEventRegistrations = async (req, res, next) => {
   try {
-    const attendees = await eventService.getAttendees(req.params.eventId, req.user);
-    res.json(attendees);
+    const registrations = await eventService.getEventRegistrations(req.params.eventId, req.user);
+    res.json(registrations);
   } catch (err) {
     next(err);
   }

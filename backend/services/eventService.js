@@ -56,7 +56,7 @@ export const eventService = {
     return await EventRegistrationModel.myEvents(userId, userRole);
   },
 
-  getAttendees: async (eventId, reqUser) => {
+  getEventRegistrations: async (eventId, reqUser) => {
     const event = await EventModel.getById(eventId);
     if (!event) throw new ApiError(404, "Event not found");
 
@@ -66,11 +66,11 @@ export const eventService = {
       const isClubHead = club.club_head_id === reqUser.id;
       const isClubMentor = club.club_mentor_id === reqUser.id;
       if (!isClubHead && !isClubMentor) {
-        throw new ApiError(403, "Access denied. Only Club Head or Mentor can view attendees.");
+        throw new ApiError(403, "Access denied. Only Club Head or Mentor can view event registrations.");
       }
     }
 
-    return await EventRegistrationModel.getAttendees(eventId);
+    return await EventRegistrationModel.getEventRegistrations(eventId);
   }
 };
 

@@ -12,8 +12,8 @@ export default function EventDetails() {
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [attendees, setAttendees] = useState([]);
-  const [showAttendees, setShowAttendees] = useState(false);
+  const [registrations, setRegistrations] = useState([]);
+  const [showRegistrations, setShowRegistrations] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
   // Load logged-in user
@@ -40,10 +40,10 @@ export default function EventDetails() {
     }
   }, [eventId]);
 
-  const fetchAttendees = useCallback(async () => {
+  const fetchRegistrations = useCallback(async () => {
     try {
-      const res = await api.get(`/event-registrations/${eventId}/attendees`);
-      setAttendees(res.data);
+      const res = await api.get(`/event-registrations/${eventId}/registrations`);
+      setRegistrations(res.data);
     } catch (err) {
       // User likely not authorized, ignore
     }
@@ -55,9 +55,9 @@ export default function EventDetails() {
 
   useEffect(() => {
     if (user && event) {
-      fetchAttendees();
+      fetchRegistrations();
     }
-  }, [user, event, fetchAttendees]);
+  }, [user, event, fetchRegistrations]);
 
   if (!event || !user) return <p>Loading Events/Sessions...</p>;
 
@@ -262,48 +262,50 @@ export default function EventDetails() {
         </div>
       )}
 
-      {/* Registered Attendees Section for Admins/Organizers */}
+      {/* Registered Students Section for Admins/Organizers */}
       {canManageEvent && (
-        <div className="attendees-section">
+        <div className="registrations-section">
           <button
-            className="btn-toggle-attendees"
-            onClick={() => setShowAttendees(!showAttendees)}
+            className="btn-toggle-registrations"
+            onClick={() => setShowRegistrations(!showRegistrations)}
           >
-            {showAttendees ? "🙈 Hide Registered Students" : "👥 View Registered Students"} ({attendees.length})
+            {showRegistrations ? "🙈 Hide Registered Students" : "👥 View Registered Students"} ({registrations.length})
           </button>
 
-          {showAttendees && (
-            <div className="attendees-list">
-              <h4>Registered Students ({attendees.length})</h4>
-              {attendees.length === 0 ? (
+          {showRegistrations && (
+            <div className="registrations-list">
+              <h4>Registered Students ({registrations.length})</h4>
+              {registrations.length === 0 ? (
                 <p>No students registered yet.</p>
               ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Department</th>
-                      <th>Year</th>
-                      <th>Registered At</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendees.map((attendee) => (
-                      <tr
-                        key={attendee.registration_id}
-                        onClick={() => setSelectedStudent(attendee)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <td>{attendee.full_name}</td>
-                        <td>{attendee.email}</td>
-                        <td>{attendee.department}</td>
-                        <td>{attendee.year}</td>
-                        <td>{new Date(attendee.registered_at).toLocaleDateString()}</td>
+                <div className="registrations-table-wrapper">
+                  <table className="registrations-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Year</th>
+                        <th>Registered At</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {registrations.map((student) => (
+                        <tr
+                          key={student.registration_id}
+                          onClick={() => setSelectedStudent(student)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <td>{student.full_name}</td>
+                          <td>{student.email}</td>
+                          <td>{student.department}</td>
+                          <td>{student.year}</td>
+                          <td>{new Date(student.registered_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}

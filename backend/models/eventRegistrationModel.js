@@ -51,7 +51,7 @@ export const EventRegistrationModel = {
     return rows;
   },
 
-  async getAttendees(eventId) {
+  async getEventRegistrations(eventId) {
     const [rows] = await db.query(
       "SELECT * FROM event_registration WHERE event_id = ? ORDER BY registered_at DESC",
       [eventId]
