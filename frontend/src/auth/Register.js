@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import api from "../api/axios";
+import CustomSelect from "../components/CustomSelect";
 import "./Login.css";
 
 export default function RegisterPage() {
@@ -135,6 +136,9 @@ export default function RegisterPage() {
 
       if (res.data.token && res.data.user) {
         localStorage.setItem("token", res.data.token);
+        if (res.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.refreshToken);
+        }
         localStorage.setItem("user", JSON.stringify(res.data.user));
         window.dispatchEvent(new Event("authChange"));
       }
@@ -177,17 +181,12 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <select
+        <CustomSelect
           value={roleId}
-          onChange={(e) => setRoleId(Number(e.target.value))}
-          className="role-select"
-        >
-          {roles.map((role) => (
-            <option key={role.role_id} value={role.role_id}>
-              {role.role_name}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => setRoleId(Number(val))}
+          options={roles.map((r) => ({ value: r.role_id, label: r.role_name }))}
+          placeholder="Select Role"
+        />
 
         <input
           type="text"
@@ -233,32 +232,32 @@ export default function RegisterPage() {
         </div>
 
         {!["Estate Manager", "Principal", "Director"].includes(currentRoleName) && (
-          <select
+          <CustomSelect
             value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            className="role-select"
-          >
-            <option value="">Select Department</option>
-            <option value="CS">CS (Computer Science)</option>
-            <option value="IT">IT (Information Technology)</option>
-            <option value="AIDS">AIDS (AI & Data Science)</option>
-            <option value="ECE">ECE (Electronics & Communication)</option>
-            <option value="ENTC">ENTC (Electronics & Telecommunication)</option>
-          </select>
+            onChange={(val) => setDepartment(val)}
+            options={[
+              { value: "CS", label: "CS (Computer Science)" },
+              { value: "IT", label: "IT (Information Technology)" },
+              { value: "AIDS", label: "AIDS (AI & Data Science)" },
+              { value: "ECE", label: "ECE (Electronics & Communication)" },
+              { value: "ENTC", label: "ENTC (Electronics & Telecommunication)" }
+            ]}
+            placeholder="Select Department"
+          />
         )}
 
         {showYear && (
-          <select
+          <CustomSelect
             value={year}
-            onChange={(e) => setYear(e.target.value)}
-            className="role-select"
-          >
-            <option value="">Select Year</option>
-            <option value="1">FE (First Year)</option>
-            <option value="2">SE (Second Year)</option>
-            <option value="3">TE (Third Year)</option>
-            <option value="4">BE (Final / Fourth Year)</option>
-          </select>
+            onChange={(val) => setYear(val)}
+            options={[
+              { value: "1", label: "FE (First Year)" },
+              { value: "2", label: "SE (Second Year)" },
+              { value: "3", label: "TE (Third Year)" },
+              { value: "4", label: "BE (Final / Fourth Year)" }
+            ]}
+            placeholder="Select Year"
+          />
         )}
 
         {requiresKey && (

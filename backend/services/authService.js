@@ -76,15 +76,20 @@ export const authService = {
       }
     }
 
-    const secret = process.env.JWT_ACCESS_SECRET;
-    if (!secret) {
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    if (!accessSecret) {
       throw new ApiError(500, "JWT secret (JWT_ACCESS_SECRET or JWT_SECRET) is not configured in environment variables");
     }
-    const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN;
-    const token = jwt.sign({ id: userId, role_id }, secret, { expiresIn });
+    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "1h";
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || accessSecret;
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+    const token = jwt.sign({ id: userId, role_id }, accessSecret, { expiresIn: accessExpiresIn });
+    const refreshToken = jwt.sign({ id: userId, role_id }, refreshSecret, { expiresIn: refreshExpiresIn });
 
     return {
       token,
+      refreshToken,
       user: {
         id: userId,
         user_id: userId,
@@ -106,12 +111,16 @@ export const authService = {
     const isMatch = await UserModel.verifyPassword(password, user.password_hash);
     if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
-    const secret = process.env.JWT_ACCESS_SECRET;
-    if (!secret) {
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    if (!accessSecret) {
       throw new ApiError(500, "JWT secret (JWT_ACCESS_SECRET or JWT_SECRET) is not configured in environment variables");
     }
-    const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN;
-    const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, secret, { expiresIn });
+    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "1h";
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || accessSecret;
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+    const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, accessSecret, { expiresIn: accessExpiresIn });
+    const refreshToken = jwt.sign({ id: user.user_id, role_id: user.role_id }, refreshSecret, { expiresIn: refreshExpiresIn });
 
     let club_id = null;
     if (user.role_id === 4 || user.role_id === 5) {
@@ -120,6 +129,54 @@ export const authService = {
 
     return {
       token,
+      refreshToken,
+      user: {
+        id: user.user_id,
+        user_id: user.user_id,
+        name: user.name,
+        email: user.email,
+        department: user.department,
+        year: user.year,
+        role_id: user.role_id,
+        role_name: user.role_name,
+        club_id
+      }
+    };
+  },
+
+  refreshToken: async (providedRefreshToken) => {
+    if (!providedRefreshToken) {
+      throw new ApiError(400, "Refresh token is required");
+    }
+
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_ACCESS_SECRET;
+    let decoded;
+    try {
+      decoded = jwt.verify(providedRefreshToken, refreshSecret);
+    } catch (err) {
+      throw new ApiError(401, "Invalid or expired refresh token. Please log in again.");
+    }
+
+    const user = await UserModel.findById(decoded.id);
+    if (!user) {
+      throw new ApiError(401, "User not found. Please log in again.");
+    }
+
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    const accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "1h";
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+    const token = jwt.sign({ id: user.user_id, role_id: user.role_id }, accessSecret, { expiresIn: accessExpiresIn });
+    const newRefreshToken = jwt.sign({ id: user.user_id, role_id: user.role_id }, refreshSecret, { expiresIn: refreshExpiresIn });
+
+    let club_id = null;
+    if (user.role_id === 4 || user.role_id === 5) {
+      club_id = await ClubModel.findByUserRole(user.user_id);
+    }
+
+    return {
+      token,
+      refreshToken: newRefreshToken,
       user: {
         id: user.user_id,
         user_id: user.user_id,

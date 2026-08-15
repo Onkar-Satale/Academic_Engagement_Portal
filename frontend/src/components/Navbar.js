@@ -43,6 +43,7 @@ export default function Navbar() {
   const confirmLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     setUser(null);
     setShowLogoutConfirm(false);
     setIsMobileMenuOpen(false);
@@ -153,8 +154,8 @@ export default function Navbar() {
         <div className="confirm-toast">
           <p>Are you sure you want to log out?</p>
           <div className="confirm-actions">
-            <button className="yes-btn" onClick={confirmLogout}>
-              Logout
+            <button className="yes-btn danger" style={{ background: "#ef4444" }} onClick={confirmLogout}>
+              Yes, Logout
             </button>
             <button className="no-btn" onClick={() => setShowLogoutConfirm(false)}>
               Cancel

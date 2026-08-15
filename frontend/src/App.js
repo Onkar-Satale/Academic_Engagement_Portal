@@ -23,7 +23,7 @@ import MyEvents from "./pages/MyEvents";
 function App() {
   return (
     <BrowserRouter>
-      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
       <Navbar /> {/* <-- navbar here */}
       <Routes>
         <Route path="/" element={<HomePage />} />

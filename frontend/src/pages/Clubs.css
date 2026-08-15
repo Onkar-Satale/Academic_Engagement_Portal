@@ -45,8 +45,8 @@
 }
 
 .input-field:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+  border-color: var(--primary-hover);
+  box-shadow: none;
 }
 
 .add-club-btn {
@@ -59,12 +59,13 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: none;
+  transition: transform 0.2s ease;
 }
 
 .add-club-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--primary-glow);
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .clubs-grid {

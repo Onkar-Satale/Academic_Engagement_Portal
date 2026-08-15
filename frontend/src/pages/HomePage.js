@@ -659,7 +659,7 @@ export default function HomePage() {
                                     value={feedbackText}
                                     onChange={(e) => setFeedbackText(e.target.value)}
                                     required
-                                    style={{ width: "100%", padding: "12px", background: "rgba(15, 23, 42, 0.8)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#fff", outline: "none", boxSizing: "border-box" }}
+                                    style={{ width: "100%", padding: "12px", background: "#141418", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#fff", outline: "none", boxSizing: "border-box" }}
                                 />
                             </div>
 

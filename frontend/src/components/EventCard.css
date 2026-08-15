@@ -40,7 +40,7 @@
   display: inline-block;
   background: var(--primary-glow);
   color: var(--primary-light);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  border: 1px solid rgba(124, 58, 237, 0.35);
   padding: 3px 10px;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -69,12 +69,12 @@
 .register-btn {
   background: var(--primary-gradient);
   color: #ffffff;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  box-shadow: none;
 }
 
 .register-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--primary-glow);
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .details-btn {

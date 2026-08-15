@@ -43,8 +43,8 @@
 
 .event-register-form input:focus,
 .event-register-form textarea:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+  border-color: var(--primary-hover);
+  box-shadow: none;
 }
 
 .event-register-form button {
@@ -57,13 +57,13 @@
   cursor: pointer;
   background: var(--primary-gradient);
   color: #ffffff;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  box-shadow: none;
   transition: transform 0.2s ease;
 }
 
 .event-register-form button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px var(--primary-glow);
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .event-register-form button:disabled {
@@ -95,7 +95,7 @@
 .detail-label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -108,7 +108,7 @@
 }
 
 .badge-highlight {
-  color: #818cf8;
+  color: var(--primary-light);
 }
 
 @media (max-width: 600px) {

@@ -18,3 +18,13 @@ export const login = async (req, res, next) => {
     next(err);
   }
 };
+
+export const refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken: token } = req.body;
+    const result = await authService.refreshToken(token);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+};

@@ -380,9 +380,9 @@ export default function ClubDetails() {
                   <button 
                     onClick={() => setShowMembersModal(true)}
                     style={{
-                      background: "rgba(99, 102, 241, 0.15)",
-                      color: "#818cf8",
-                      border: "1px solid rgba(99, 102, 241, 0.3)",
+                      background: "var(--primary-glow)",
+                      color: "var(--primary-light)",
+                      border: "1px solid var(--border-color)",
                       padding: "8px 16px",
                       borderRadius: "8px",
                       fontSize: "0.85rem",
@@ -494,8 +494,8 @@ export default function ClubDetails() {
         <div className="confirm-toast">
           <p>Delete this club permanently?</p>
           <div className="confirm-actions">
-            <button className="yes-btn" onClick={deleteClub}>Yes</button>
-            <button className="no-btn" onClick={() => setShowConfirm(false)}>No</button>
+            <button className="yes-btn danger" style={{ background: '#ef4444' }} onClick={deleteClub}>Yes, Delete</button>
+            <button className="no-btn" onClick={() => setShowConfirm(false)}>Cancel</button>
           </div>
         </div>
       )}
@@ -624,8 +624,8 @@ export default function ClubDetails() {
           />
 
           <div className="confirm-actions">
-            <button className="yes-btn" onClick={removeStudent}>
-              Confirm
+            <button className="yes-btn danger" style={{ background: '#ef4444' }} onClick={removeStudent}>
+              Remove Student
             </button>
             <button
               className="no-btn"
@@ -762,7 +762,7 @@ export default function ClubDetails() {
                         width: "40px",
                         height: "40px",
                         borderRadius: "50%",
-                        background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                        background: "var(--primary-gradient)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",

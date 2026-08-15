@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import userService from "../services/userService.js";
 import { RoleKeyModel } from "../models/roleKeyModel.js";
 import { ClubModel } from "../models/clubModel.js";
@@ -32,8 +33,10 @@ export const generateRoleKey = async (req, res, next) => {
       });
     }
 
-    // Generate random key if not provided
-    const keyToUse = secret_key || `KEY_${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    // Generate cryptographically secure random key if not provided (128 bits of cryptographic entropy)
+    const keyToUse = secret_key && secret_key.trim()
+      ? secret_key.trim()
+      : `KEY_${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
 
     const keyId = await RoleKeyModel.create({ secret_key: keyToUse, role_id });
 

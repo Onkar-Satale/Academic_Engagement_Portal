@@ -1,24 +1,24 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOMEPAGE CSS — OFFICIAL COLLEGE 3-COLOR DARK THEME
+   HOMEPAGE CSS — MODERN 3-COLOR DARK THEME
    Palette:
-   1. Base Dark: #090d16 (Deep Slate Black) & #0f172a (Card Slate)
-   2. Royal Accent: #4f46e5 / #6366f1 (University Royal Indigo)
-   3. Text / Contrast: #f8fafc (Crisp White) & #94a3b8 (Muted Slate)
+   1. Base Dark: #000000 (Pure Black) & rgba(16, 16, 20, 0.85) (Card Surface)
+   2. Vibrant Purple: #7c3aed / #8b5cf6 / #a855f7 (Purple Glow & Accents)
+   3. Crisp White: #ffffff & #a1a1aa (Neutral Grey Text)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --hp-bg: #090d16;
-  --hp-bg-card: rgba(15, 23, 42, 0.75);
-  --hp-border: rgba(255, 255, 255, 0.08);
-  --hp-primary: #6366f1;
-  --hp-primary-dark: #4f46e5;
-  --hp-primary-light: #818cf8;
-  --hp-primary-glow: rgba(99, 102, 241, 0.25);
-  --hp-text: #f8fafc;
-  --hp-text-muted: #94a3b8;
+  --hp-bg: #000000;
+  --hp-bg-card: rgba(16, 16, 20, 0.85);
+  --hp-border: rgba(255, 255, 255, 0.12);
+  --hp-primary: #8b5cf6;
+  --hp-primary-dark: #7c3aed;
+  --hp-primary-light: #a78bfa;
+  --hp-primary-glow: rgba(124, 58, 237, 0.35);
+  --hp-text: #ffffff;
+  --hp-text-muted: #a1a1aa;
   --hp-radius: 12px;
   --hp-radius-lg: 16px;
-  --hp-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --hp-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .hp-root {
@@ -391,18 +391,19 @@
 .hp-btn-primary {
   background: linear-gradient(135deg, var(--hp-primary-dark), var(--hp-primary));
   color: #ffffff;
-  box-shadow: 0 4px 14px var(--hp-primary-glow);
+  box-shadow: none;
 }
 
 .hp-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--hp-primary-glow);
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .hp-btn-secondary, .hp-btn-ghost, .hp-btn-outline {
   background: rgba(255, 255, 255, 0.04);
   color: #ffffff;
   border: 1px solid var(--hp-border);
+  box-shadow: none;
 }
 
 .hp-btn-secondary:hover, .hp-btn-ghost:hover, .hp-btn-outline:hover {
@@ -412,13 +413,14 @@
 
 .hp-btn-white {
   background: #ffffff;
-  color: #0f172a;
+  color: #000000;
   font-weight: 700;
+  box-shadow: none;
 }
 
 .hp-btn-white:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .hp-btn-ghost-white {
@@ -435,7 +437,7 @@
    PROBLEM → SOLUTION (Paired Grid Rows)
 ══════════════════════════════════════════════════════════════════════════ */
 .hp-problem-section {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(14, 14, 18, 0.6);
   border-radius: var(--hp-radius-lg);
   border: 1px solid var(--hp-border);
 }
@@ -642,7 +644,7 @@
    STATS COUNTER SECTION
 ══════════════════════════════════════════════════════════════════════════ */
 .hp-stats-section {
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(14, 14, 18, 0.7);
   border-radius: var(--hp-radius-lg);
   border: 1px solid var(--hp-border);
   padding: 60px 40px;
@@ -781,11 +783,12 @@
 .hp-card-btn.primary {
   background: linear-gradient(135deg, var(--hp-primary-dark), var(--hp-primary));
   color: #ffffff;
-  box-shadow: 0 4px 12px var(--hp-primary-glow);
+  box-shadow: none;
 }
 
 .hp-card-btn.primary:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .hp-card-btn.secondary {
@@ -894,7 +897,7 @@
 ══════════════════════════════════════════════════════════════════════════ */
 .hp-cta-section {
   position: relative;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(14, 14, 18, 0.85);
   border: 1px solid var(--hp-border);
   border-radius: var(--hp-radius-lg);
   padding: 80px 40px;
@@ -1017,7 +1020,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -1027,9 +1030,9 @@
 }
 
 .hp-modal-card {
-  background: #0f172a;
+  background: #0e0e12;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
   border-radius: 16px;
   padding: 24px;
   width: 100%;

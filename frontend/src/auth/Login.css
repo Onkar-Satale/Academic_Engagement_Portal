@@ -72,17 +72,27 @@
   border-color: var(--primary) !important;
   color: #ffffff !important;
   font-weight: 600;
+  accent-color: #7c3aed !important;
+  color-scheme: dark;
 }
 
 .role-select option {
-  background: #0f172a;
+  background: #121215;
   color: #ffffff;
+}
+
+.role-select option:hover,
+.role-select option:focus,
+.role-select option:checked {
+  background-color: #7c3aed !important;
+  background: #7c3aed !important;
+  color: #ffffff !important;
 }
 
 .auth-form input:focus,
 .auth-form select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+  border-color: var(--primary-hover);
+  box-shadow: none;
 }
 
 .auth-form button[type="submit"] {
@@ -94,13 +104,14 @@
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  transition: transform 0.2s ease;
+  box-shadow: none;
 }
 
 .auth-form button[type="submit"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--primary-glow);
+  transform: translateY(-1px);
+  color: #ffffff !important;
+  box-shadow: none;
 }
 
 .auth-form a {
@@ -109,10 +120,11 @@
   font-size: 0.9rem;
   text-align: center;
   margin-top: 16px;
+  transition: color 0.2s ease;
 }
 
 .auth-form a:hover {
-  color: var(--primary-hover);
+  color: #ffffff !important;
 }
 
 .auth-message {

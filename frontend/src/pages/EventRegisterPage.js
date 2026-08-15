@@ -188,7 +188,6 @@ export default function EventRegisterPage() {
   if (isAlreadyRegistered) {
     return (
       <div className="event-register-container">
-        <ToastContainer position="top-right" autoClose={4000} />
         <div className="event-register-form" style={{ textAlign: 'center', padding: '40px' }}>
           <h2>✅ Already Registered!</h2>
           <p style={{ marginTop: '16px', color: '#94a3b8' }}>
@@ -207,7 +206,6 @@ export default function EventRegisterPage() {
 
   return (
     <div className="event-register-container">
-      <ToastContainer position="top-right" autoClose={4000} />
 
       {event ? (
         <form className="event-register-form" onSubmit={handleSubmit}>
@@ -234,7 +232,7 @@ export default function EventRegisterPage() {
           </div>
 
           <div className="form-group">
-            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#a5b4fc', fontWeight: '600' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--primary-light)', fontWeight: '600' }}>
               Phone Number *
             </label>
             <input
@@ -247,7 +245,7 @@ export default function EventRegisterPage() {
           </div>
 
           <div className="form-group">
-            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#a5b4fc', fontWeight: '600' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--primary-light)', fontWeight: '600' }}>
               College Roll Number *
             </label>
             <input
@@ -260,7 +258,7 @@ export default function EventRegisterPage() {
           </div>
 
           <div className="form-group">
-            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#a5b4fc', fontWeight: '600' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--primary-light)', fontWeight: '600' }}>
               Notes / Special Remarks (Optional)
             </label>
             <textarea

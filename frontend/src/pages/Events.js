@@ -40,22 +40,21 @@ export default function Events() {
     <div style={{
       padding: "40px 32px",
       minHeight: "100vh",
-      background: "#111118",
-      backgroundImage: "radial-gradient(circle at 20% 30%, rgba(6,182,212,0.06) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(139,92,246,0.05) 0%, transparent 40%)",
-      color: "#e2e8f0"
+      background: "#000000",
+      backgroundImage: "radial-gradient(circle at 50% 15%, rgba(124, 58, 237, 0.1) 0%, transparent 60%)",
+      color: "#ffffff"
     }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <h1 style={{
-          fontSize: "2rem",
+          fontSize: "2.2rem",
           fontWeight: 700,
-          background: "linear-gradient(135deg, #06b6d4, #8b5cf6)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          marginBottom: "8px"
+          color: "#ffffff",
+          marginBottom: "8px",
+          letterSpacing: "-0.02em"
         }}>
           Campus Events & Competitions
         </h1>
-        <p style={{ color: "#94a3b8", fontSize: "0.95rem", marginBottom: "32px" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginBottom: "32px" }}>
           Discover upcoming workshops, hackathons, and activities organized by campus clubs.
         </p>
 
@@ -63,11 +62,11 @@ export default function Events() {
           <div style={{
             textAlign: "center",
             padding: "48px 24px",
-            background: "rgba(255, 255, 255, 0.02)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "rgba(18, 18, 22, 0.85)",
+            border: "1px solid var(--border-color)",
             borderRadius: "16px"
           }}>
-            <p style={{ color: "#94a3b8", fontSize: "1.05rem" }}>No events found at the moment.</p>
+            <p style={{ color: "var(--text-muted)", fontSize: "1.05rem" }}>No events found at the moment.</p>
           </div>
         ) : (
           <div style={{

@@ -1,7 +1,7 @@
 /* Official College Portal Footer - Clean 3-Color Design */
 .footer-container {
   width: 100%;
-  background: rgba(9, 13, 22, 0.95);
+  background: rgba(0, 0, 0, 0.96);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-color);
   color: var(--text-main);
@@ -19,11 +19,12 @@
 }
 
 .footer-top h3 {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-light);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  margin-bottom: 16px;
 }
 
 .footer-about p {
@@ -37,9 +38,10 @@
 .footer-links ul {
   list-style: none;
   padding: 0;
+  margin-top: 16px;
   display: flex;
   justify-content: center;
-  gap: 30px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
