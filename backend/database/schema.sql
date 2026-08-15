@@ -153,19 +153,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
 
--- 11. Volunteer Table
-CREATE TABLE IF NOT EXISTS volunteer (
-  volunteer_id INT AUTO_INCREMENT PRIMARY KEY,
-  event_id INT NOT NULL,
-  student_id INT NOT NULL,
-  task VARCHAR(100),
-  attendance BOOLEAN DEFAULT FALSE,
-  FOREIGN KEY (event_id) REFERENCES event(event_id) ON DELETE CASCADE,
-  FOREIGN KEY (student_id) REFERENCES user(user_id) ON DELETE CASCADE,
-  UNIQUE KEY unique_volunteer (event_id, student_id)
-);
-
--- 12. Role Invite Key Table
+-- 11. Role Invite Key Table
 CREATE TABLE IF NOT EXISTS role_invite_key (
   key_id INT PRIMARY KEY AUTO_INCREMENT,
   secret_key VARCHAR(100) NOT NULL UNIQUE,
@@ -175,7 +163,7 @@ CREATE TABLE IF NOT EXISTS role_invite_key (
   FOREIGN KEY (role_id) REFERENCES role(role_id) ON DELETE CASCADE
 );
 
--- 13. User Feedback / Testimonials Table
+-- 12. User Feedback / Testimonials Table
 CREATE TABLE IF NOT EXISTS feedback (
   feedback_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,

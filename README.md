@@ -7,7 +7,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 
-**Academic Engagement Portal** is an enterprise-grade, full-stack campus management and student engagement platform. Designed as an integrated digital ecosystem for universities and educational institutions, it streamlines club administration, event lifecycle management, multi-tier hierarchical permission request approvals, role-based access control across 8 distinct user tiers, volunteer management, real-time notifications, and security audit logging.
+**Academic Engagement Portal** is an enterprise-grade, full-stack campus management and student engagement platform. Designed as an integrated digital ecosystem for universities and educational institutions, it streamlines club administration, event lifecycle management, multi-tier hierarchical permission request approvals, role-based access control across 8 distinct user tiers, real-time notifications, and security audit logging.
 
 ---
 
@@ -25,7 +25,6 @@
 - 🏛️ **Multi-Tier Hierarchical Approval Workflow:** Multi-stage permission request routing across Club Head, Club Mentor, Estate Manager, Principal, and Director with interactive status updates and audit logs.
 - 🎪 **Campus Club Administration & Recruitment:** Centralized directory for campus clubs with secret-key registration for mentors and heads, member application reviews, and open/closed recruitment toggles.
 - 📅 **Event Lifecycle Management:** Full CRUD operations for academic and cultural events, including venue assignment, schedule tracking, and detailed event registration forms.
-- 🙋‍♂️ **Volunteer & Capacity Management:** Integrated volunteer enrollment system for event organizers with task assignment and attendance tracking.
 - 🔔 **Real-Time Notification Engine:** Automated target notifications delivered to users upon permission approval updates, club applications, and event registrations.
 - 🛡️ **Granular Role-Based Access Control (RBAC):** Custom authorization rules across 8 distinct roles: *Student, Club Head, Admin, System Admin, Club Mentor, Estate Manager, Principal,* and *Director*.
 - 📜 **Security & Activity Audit Logging:** Detailed logging of administrative events, IP address capture, system updates, and user action tracebacks.
@@ -177,7 +176,6 @@ npm start
 | `/api/permissions/my-requests` | `GET` | Yes | Fetch status of submitted permission requests |
 | `/api/approvals` | `POST` | Yes (Authority) | Approve/Reject permission request with remarks |
 | `/api/notifications` | `GET` | Yes | Retrieve unread notifications for active user |
-| `/api/volunteers` | `POST` | Yes | Apply for volunteer position for an event |
 
 ---
 

@@ -60,7 +60,6 @@ export const UserModel = {
     // 3. Delete dependent rows across all relational tables
     await db.query("DELETE FROM club_member WHERE user_id = ?", [userId]);
     await db.query("DELETE FROM event_registration WHERE student_id = ?", [userId]);
-    await db.query("DELETE FROM volunteer WHERE student_id = ?", [userId]);
     await db.query("DELETE FROM notification WHERE user_id = ?", [userId]);
     await db.query("DELETE FROM permission_approval WHERE authority_id = ?", [userId]);
     await db.query("DELETE FROM permission_request WHERE requester_id = ?", [userId]);
