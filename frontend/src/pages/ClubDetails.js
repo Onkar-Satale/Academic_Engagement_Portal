@@ -44,6 +44,74 @@ export default function ClubDetails() {
     club_head_id: "",
   });
 
+  const [visibleClubKeys, setVisibleClubKeys] = useState({ head: false, mentor: false });
+  const [copiedClubKeyType, setCopiedClubKeyType] = useState(null);
+  const [showRevokeClubKeyConfirm, setShowRevokeClubKeyConfirm] = useState(false);
+  const [keyTypeToRevoke, setKeyTypeToRevoke] = useState(null);
+
+  const toggleClubKeyVisibility = (type) => {
+    setVisibleClubKeys(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
+
+  const copyClubKey = (text, type) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedClubKeyType(type);
+    toast.info("Club secret key copied to clipboard! 📋");
+    setTimeout(() => {
+      setCopiedClubKeyType(curr => (curr === type ? null : curr));
+    }, 2000);
+  };
+
+  const generateCryptoClubKey = async (type) => {
+    try {
+      const array = new Uint8Array(16);
+      window.crypto.getRandomValues(array);
+      const randomHex = Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+      const clubPrefix = club?.name ? club.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() : "CLB";
+      const generatedKey = `KEY_${clubPrefix}_${type === 'mentor' ? 'MNTR' : 'HEAD'}_${randomHex}`;
+
+      const token = localStorage.getItem("token");
+      await api.post(`/clubs/${clubId}/generate-key`, {
+        key_type: type,
+        secret_key: generatedKey
+      }, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      toast.success(`Cryptographically secure ${type === 'mentor' ? 'Club Mentor' : 'Club Head'} key generated & activated 🛡️`);
+      fetchClub();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to generate key ❌");
+    }
+  };
+
+  const askRevokeClubKey = (type) => {
+    setKeyTypeToRevoke(type);
+    setShowRevokeClubKeyConfirm(true);
+  };
+
+  const confirmRevokeClubKey = async () => {
+    if (!keyTypeToRevoke) return;
+    try {
+      const token = localStorage.getItem("token");
+      await api.post(`/clubs/${clubId}/revoke-key`, {
+        key_type: keyTypeToRevoke
+      }, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      toast.success(`${keyTypeToRevoke === 'mentor' ? 'Club Mentor' : 'Club Head'} key revoked successfully 🚫`);
+      setShowRevokeClubKeyConfirm(false);
+      setKeyTypeToRevoke(null);
+      fetchClub();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to revoke key ❌");
+    }
+  };
+
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
@@ -463,6 +531,232 @@ export default function ClubDetails() {
           </div>
         )}
 
+        {/* 🔑 CLUB SECRET REGISTRATION KEYS MANAGEMENT */}
+        {canManageClub && club && (
+          <div className="club-keys-management-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <h3>🔑 Club Secret Keys Management</h3>
+            </div>
+            <p className="club-keys-subtitle">
+              Cryptographically secure single-use registration keys for the Club Head and Club Mentor. Keep them private until shared with the appointed authority.
+            </p>
+
+            <div className="club-keys-table-wrapper">
+              <table className="club-keys-table">
+                <thead>
+                  <tr>
+                    <th>Role</th>
+                    <th>Secret Key</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* 👑 Club Head Key Row */}
+                  <tr>
+                    <td>
+                      <span className="role-tag">👑 Club Head</span>
+                    </td>
+                    <td>
+                      {club.club_head_key ? (
+                        <div className="key-code-badge">
+                          <span className="key-badge-text">
+                            {visibleClubKeys.head ? club.club_head_key : "••••••••••••••••••••••••"}
+                          </span>
+                          <div className="key-badge-actions">
+                            <button
+                              type="button"
+                              className="key-badge-btn"
+                              onClick={() => toggleClubKeyVisibility("head")}
+                              title={visibleClubKeys.head ? "Hide Key" : "Show Key"}
+                            >
+                              {visibleClubKeys.head ? (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                  <line x1="1" y1="1" x2="23" y2="23" />
+                                </svg>
+                              ) : (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              className="key-badge-btn"
+                              onClick={() => copyClubKey(club.club_head_key, "head")}
+                              title="Copy Secret Key"
+                            >
+                              {copiedClubKeyType === "head" ? (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              ) : (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>No active key record</span>
+                      )}
+                    </td>
+                    <td>
+                      {club.club_head_id ? (
+                        <span className="status-badge status-used">
+                          👤 Assigned: {club.head_name || "Club Head"}
+                        </span>
+                      ) : club.club_head_key ? (
+                        <span className="status-badge status-active">
+                          ⚡ Active (Unclaimed)
+                        </span>
+                      ) : (
+                        <span className="status-badge status-empty">
+                          🚫 No Key Set
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="club-key-action-group">
+                        {club.club_head_key ? (
+                          <button
+                            type="button"
+                            className="club-key-revoke-btn"
+                            onClick={() => askRevokeClubKey("head")}
+                            title="Delete / revoke this secret key"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            <span>Delete Key</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="club-key-gen-action-btn"
+                            onClick={() => generateCryptoClubKey("head")}
+                            title="Auto-generate a new cryptographically secure key for Club Head"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
+                            </svg>
+                            <span>Auto-Gen Key</span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* 🎓 Club Mentor Key Row */}
+                  <tr>
+                    <td>
+                      <span className="role-tag">🎓 Club Mentor</span>
+                    </td>
+                    <td>
+                      {club.club_mentor_key ? (
+                        <div className="key-code-badge">
+                          <span className="key-badge-text">
+                            {visibleClubKeys.mentor ? club.club_mentor_key : "••••••••••••••••••••••••"}
+                          </span>
+                          <div className="key-badge-actions">
+                            <button
+                              type="button"
+                              className="key-badge-btn"
+                              onClick={() => toggleClubKeyVisibility("mentor")}
+                              title={visibleClubKeys.mentor ? "Hide Key" : "Show Key"}
+                            >
+                              {visibleClubKeys.mentor ? (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                  <line x1="1" y1="1" x2="23" y2="23" />
+                                </svg>
+                              ) : (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              className="key-badge-btn"
+                              onClick={() => copyClubKey(club.club_mentor_key, "mentor")}
+                              title="Copy Secret Key"
+                            >
+                              {copiedClubKeyType === "mentor" ? (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              ) : (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>No active key record</span>
+                      )}
+                    </td>
+                    <td>
+                      {club.club_mentor_id ? (
+                        <span className="status-badge status-used">
+                          👤 Assigned: {club.mentor_name || "Club Mentor"}
+                        </span>
+                      ) : club.club_mentor_key ? (
+                        <span className="status-badge status-active">
+                          ⚡ Active (Unclaimed)
+                        </span>
+                      ) : (
+                        <span className="status-badge status-empty">
+                          🚫 No Key Set
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="club-key-action-group">
+                        {club.club_mentor_key ? (
+                          <button
+                            type="button"
+                            className="club-key-revoke-btn"
+                            onClick={() => askRevokeClubKey("mentor")}
+                            title="Delete / revoke this secret key"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            <span>Delete Key</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="club-key-gen-action-btn"
+                            onClick={() => generateCryptoClubKey("mentor")}
+                            title="Auto-generate a new cryptographically secure key for Club Mentor"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
+                            </svg>
+                            <span>Auto-Gen Key</span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {canManageClub && (
           <div className="club-admin-buttons">
             <button
@@ -496,6 +790,27 @@ export default function ClubDetails() {
           <div className="confirm-actions">
             <button className="yes-btn danger" style={{ background: '#ef4444' }} onClick={deleteClub}>Yes, Delete</button>
             <button className="no-btn" onClick={() => setShowConfirm(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* 🗑️ REVOKE CLUB KEY CONFIRM MODAL */}
+      {showRevokeClubKeyConfirm && (
+        <div className="confirm-toast">
+          <p>🗑️ Are you sure you want to <b>delete the secret key for {keyTypeToRevoke === "mentor" ? "Club Mentor" : "Club Head"}</b>? This action cannot be undone!</p>
+          <div className="confirm-actions">
+            <button className="yes-btn danger" style={{ background: '#ef4444' }} onClick={confirmRevokeClubKey}>
+              Yes, Delete Key
+            </button>
+            <button
+              className="no-btn"
+              onClick={() => {
+                setShowRevokeClubKeyConfirm(false);
+                setKeyTypeToRevoke(null);
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
