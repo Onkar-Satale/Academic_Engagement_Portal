@@ -3,6 +3,7 @@ import { UserModel } from "../models/userModel.js";
 import { RoleModel } from "../models/roleModel.js";
 import { ClubModel } from "../models/clubModel.js";
 import { RoleKeyModel } from "../models/roleKeyModel.js";
+import { NotificationModel } from "../models/notificationModel.js";
 import ApiError from "../utils/ApiError.js";
 
 export const authService = {
@@ -59,9 +60,7 @@ export const authService = {
     // Notify Admins when an authority registers using a secret key
     if (["Estate Manager", "Principal", "Director"].includes(roleName)) {
       try {
-        const { NotificationModel } = await import("../models/notificationModel.js");
-        const { db } = await import("../config/db.js");
-        const [adminRows] = await db.query("SELECT user_id FROM user WHERE role_id = 3");
+        const adminRows = await UserModel.findByRoleId(3);
         for (const admin of adminRows) {
           await NotificationModel.createNotification({
             user_id: admin.user_id,

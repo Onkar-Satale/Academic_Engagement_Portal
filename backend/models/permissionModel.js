@@ -10,6 +10,17 @@ export const PermissionModel = {
     return result.insertId;
   },
 
+  async getByIdWithDetails(requestId) {
+    const [[row]] = await db.query(
+      `SELECT pr.*, c.name as club_name 
+       FROM permission_request pr 
+       JOIN club c ON pr.club_id = c.club_id 
+       WHERE pr.request_id = ?`,
+      [requestId]
+    );
+    return row;
+  },
+
   async getMyRequests(userId) {
     const [rows] = await db.query(
       `SELECT pr.*, c.name as club_name 

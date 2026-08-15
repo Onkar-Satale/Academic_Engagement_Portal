@@ -18,6 +18,14 @@ export const UserModel = {
     return row;
   },
 
+  findByRoleId: async (roleId) => {
+    const [rows] = await db.query(
+      "SELECT user_id, name, email, department, year, role_id FROM user WHERE role_id = ?",
+      [roleId]
+    );
+    return rows;
+  },
+
   create: async (data) => {
     const { name, email, password, password_hash, department, year, role_id } = data;
     const finalHash = password_hash || (password ? await bcrypt.hash(password, 10) : "");

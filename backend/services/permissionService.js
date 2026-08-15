@@ -1,7 +1,7 @@
 import { PermissionModel } from "../models/permissionModel.js";
 import { NotificationModel } from "../models/notificationModel.js";
 import { ClubModel } from "../models/clubModel.js";
-import { db } from "../config/db.js";
+import { UserModel } from "../models/userModel.js";
 
 export const permissionService = {
   createRequest: async (data) => {
@@ -37,18 +37,14 @@ export const permissionService = {
 
   updateStatus: async (requestId, authorityId, level, status, remarks) => {
     // Fetch current request state before updating
-    const [beforeRows] = await db.query(
-      "SELECT pr.*, c.name as club_name FROM permission_request pr JOIN club c ON pr.club_id = c.club_id WHERE pr.request_id = ?",
-      [requestId]
-    );
+    const reqInfo = await PermissionModel.getByIdWithDetails(requestId);
 
     // Update permission status in database
     const res = await PermissionModel.updateStatus(requestId, authorityId, level, status, remarks);
 
     // Dispatch detailed multi-level pipeline notifications
     try {
-      if (beforeRows && beforeRows.length > 0) {
-        const reqInfo = beforeRows[0];
+      if (reqInfo) {
         const requesterId = reqInfo.requester_id;
         const currentLevel = reqInfo.current_level;
         const actionTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -90,10 +86,7 @@ export const permissionService = {
 
             // Detailed Review Notification to Next-Level Authority users
             if (nextRoleId) {
-              const [nextAuthUsers] = await db.query(
-                "SELECT user_id FROM user WHERE role_id = ?",
-                [nextRoleId]
-              );
+              const nextAuthUsers = await UserModel.findByRoleId(nextRoleId);
               for (const authUser of nextAuthUsers) {
                 await NotificationModel.createNotification({
                   user_id: authUser.user_id,
