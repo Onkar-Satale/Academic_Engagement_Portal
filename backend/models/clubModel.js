@@ -62,6 +62,24 @@ export const ClubModel = {
     return res.affectedRows > 0;
   },
 
+  setClubKey: async (clubId, keyType, secretKey) => {
+    const column = keyType === "mentor" ? "club_mentor_key" : "club_head_key";
+    const [res] = await db.query(
+      `UPDATE club SET ${column} = ? WHERE club_id = ?`,
+      [secretKey, clubId]
+    );
+    return res.affectedRows > 0;
+  },
+
+  revokeClubKeyByType: async (clubId, keyType) => {
+    const column = keyType === "mentor" ? "club_mentor_key" : "club_head_key";
+    const [res] = await db.query(
+      `UPDATE club SET ${column} = NULL WHERE club_id = ?`,
+      [clubId]
+    );
+    return res.affectedRows > 0;
+  },
+
   assignHead: async (clubKey, userId) => {
     await db.query(
       "UPDATE club SET club_head_id = ? WHERE club_head_key = ?",

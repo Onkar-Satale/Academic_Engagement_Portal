@@ -24,6 +24,14 @@ export const clubService = {
     return await ClubModel.delete(clubId);
   },
 
+  setClubKey: async (clubId, keyType, secretKey) => {
+    return await ClubModel.setClubKey(clubId, keyType, secretKey);
+  },
+
+  revokeClubKey: async (clubId, keyType) => {
+    return await ClubModel.revokeClubKeyByType(clubId, keyType);
+  },
+
   getEnrolledClubs: async (userId) => {
     return await ClubMemberModel.getEnrolledClubs(userId);
   },

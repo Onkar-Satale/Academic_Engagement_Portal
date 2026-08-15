@@ -2,9 +2,8 @@ import { body } from "express-validator";
 import { validateRequest } from "../middlewares/validateRequest.js";
 
 export const validateCreateClub = [
-  body("name").notEmpty().withMessage("Club name is required").isString(),
-  body("description").notEmpty().withMessage("Description is required").isString(),
-  body("secretKey").notEmpty().withMessage("secretKey is required").isString(),
+  body("name").trim().notEmpty().withMessage("Club name is required"),
+  body("description").trim().notEmpty().withMessage("Description is required"),
   validateRequest,
 ];
 

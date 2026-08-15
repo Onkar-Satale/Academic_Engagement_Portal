@@ -12,7 +12,9 @@ import {
   removeStudentFromClub,
   getClubMembers,
   toggleRegistration,
-  getMyEnrolledClubs
+  getMyEnrolledClubs,
+  generateClubKey,
+  revokeClubKey
 } from "../controllers/clubController.js";
 import { joinClub, getPendingApplications, processApplication, getMemberStatus } from "../controllers/clubMemberController.js";
 
@@ -95,6 +97,18 @@ router.get(
   "/:clubId/my-status",
   authenticate,
   getMemberStatus
+);
+
+router.post(
+  "/:clubId/generate-key",
+  authenticate,
+  generateClubKey
+);
+
+router.post(
+  "/:clubId/revoke-key",
+  authenticate,
+  revokeClubKey
 );
 
 export default router;

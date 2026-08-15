@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import clubService from "../services/clubService.js";
 import ApiError from "../utils/ApiError.js";
 
@@ -5,11 +6,19 @@ export const createClub = async (req, res, next) => {
   try {
     const { name, description, clubHeadKey, clubMentorKey } = req.body;
 
+    const clubPrefix = name ? name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() : "CLB";
+    const headKey = clubHeadKey && clubHeadKey.trim()
+      ? clubHeadKey.trim()
+      : `KEY_${clubPrefix}_HEAD_${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
+    const mentorKey = clubMentorKey && clubMentorKey.trim()
+      ? clubMentorKey.trim()
+      : `KEY_${clubPrefix}_MNTR_${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
+
     const clubId = await clubService.createClub({
-      name,
-      description,
-      club_head_key: clubHeadKey,
-      club_mentor_key: clubMentorKey
+      name: name.trim(),
+      description: description.trim(),
+      club_head_key: headKey,
+      club_mentor_key: mentorKey
     });
 
     res.status(201).json({ success: true, message: "Club created successfully", clubId });
@@ -120,6 +129,46 @@ export const toggleRegistration = async (req, res, next) => {
 
     await clubService.toggleRegistration(clubId, is_registration_open);
     res.json({ success: true, message: `Registration ${is_registration_open ? 'opened' : 'closed'} successfully` });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const generateClubKey = async (req, res, next) => {
+  try {
+    const { clubId } = req.params;
+    const { key_type, secret_key } = req.body; // key_type: 'head' | 'mentor'
+    const club = await clubService.getClubById(clubId);
+    if (!club) return next(new ApiError(404, "Club not found"));
+
+    if (req.user.role !== 3 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
+      return next(new ApiError(403, "Forbidden"));
+    }
+
+    const keyToUse = secret_key && secret_key.trim()
+      ? secret_key.trim()
+      : `KEY_CLUB_${key_type.toUpperCase()}_${Date.now().toString(36).toUpperCase()}`;
+
+    await clubService.setClubKey(clubId, key_type, keyToUse);
+    res.json({ success: true, message: `${key_type === 'mentor' ? 'Club Mentor' : 'Club Head'} key generated successfully`, secret_key: keyToUse });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const revokeClubKey = async (req, res, next) => {
+  try {
+    const { clubId } = req.params;
+    const { key_type } = req.body;
+    const club = await clubService.getClubById(clubId);
+    if (!club) return next(new ApiError(404, "Club not found"));
+
+    if (req.user.role !== 3 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
+      return next(new ApiError(403, "Forbidden"));
+    }
+
+    await clubService.revokeClubKey(clubId, key_type);
+    res.json({ success: true, message: `${key_type === 'mentor' ? 'Club Mentor' : 'Club Head'} key deleted successfully` });
   } catch (err) {
     next(err);
   }
