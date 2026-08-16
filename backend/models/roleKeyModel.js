@@ -25,6 +25,14 @@ export const RoleKeyModel = {
     return row;
   },
 
+  markKeyAsUsed: async (key_id) => {
+    const [res] = await db.query(
+      "UPDATE role_invite_key SET is_used = TRUE WHERE key_id = ?",
+      [key_id]
+    );
+    return res.affectedRows > 0;
+  },
+
   validateAndConsume: async (secret_key, role_id) => {
     const [[keyRecord]] = await db.query(
       "SELECT * FROM role_invite_key WHERE secret_key = ?",

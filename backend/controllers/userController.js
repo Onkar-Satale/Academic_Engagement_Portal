@@ -31,6 +31,35 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
+export const elevateRole = async (req, res, next) => {
+  try {
+    const { secret_key } = req.body;
+    const result = await userService.elevateRole(req.user.id, secret_key);
+    res.json({
+      success: true,
+      message: `Role elevated successfully to ${result.user.role_name}! 🎉`,
+      ...result
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateUserRole = async (req, res, next) => {
+  try {
+    const targetUserId = req.params.id;
+    const { role_id } = req.body;
+    const updated = await userService.adminUpdateUserRole(req.user.id, targetUserId, role_id);
+    res.json({
+      success: true,
+      message: "User role updated successfully",
+      user: updated
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const deleteAccount = async (req, res, next) => {
   try {
     await userService.deleteAccount(req.user.id);

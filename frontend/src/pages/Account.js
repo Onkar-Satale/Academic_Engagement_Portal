@@ -90,6 +90,17 @@ export default function Account() {
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [deletingUser, setDeletingUser] = useState(false);
 
+  // ⚡ ADMIN DIRECT ROLE EDIT MODAL
+  const [roleEditUser, setRoleEditUser] = useState(null);
+  const [selectedNewRole, setSelectedNewRole] = useState("");
+  const [updatingRole, setUpdatingRole] = useState(false);
+  const [showRoleEditModal, setShowRoleEditModal] = useState(false);
+
+  // 🔑 IN-APP ROLE ELEVATION (REDEEM SECRET KEY)
+  const [elevateSecretKey, setElevateSecretKey] = useState("");
+  const [elevatingRole, setElevatingRole] = useState(false);
+  const [showElevateInputKey, setShowElevateInputKey] = useState(false);
+
   // Roles that should only see profile info (no student events/clubs cards on account page)
   const profileOnlyRoles = ["Admin", "Estate Manager", "Principal", "Director", "Club Mentor", "Club Head", "Teacher"];
   const isProfileOnly = profileOnlyRoles.includes(user?.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role_id) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role);
@@ -328,6 +339,61 @@ export default function Account() {
     return true;
   });
 
+  // 🔑 IN-APP ROLE ELEVATION (REDEEM SECRET KEY)
+  const handleElevateRole = async (e) => {
+    e.preventDefault();
+    if (!elevateSecretKey.trim()) {
+      toast.error("Please enter a valid secret key to elevate your role.");
+      return;
+    }
+    setElevatingRole(true);
+    try {
+      const res = await api.post("/users/elevate-role", {
+        secret_key: elevateSecretKey.trim()
+      });
+      const { token, refreshToken, user: updatedUser } = res.data;
+      if (token) localStorage.setItem("token", token);
+      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+      if (updatedUser) localStorage.setItem("user", JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event("authChange"));
+      toast.success(res.data.message || `Promoted to ${updatedUser?.role_name} successfully! 🎉`);
+      setElevateSecretKey("");
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to elevate role with this secret key ❌");
+    } finally {
+      setElevatingRole(false);
+    }
+  };
+
+  // ⚡ ADMIN DIRECT ROLE EDIT MODAL
+  const askEditRole = (u) => {
+    setRoleEditUser(u);
+    setSelectedNewRole(String(u.role_id));
+    setShowRoleEditModal(true);
+  };
+
+  const confirmUpdateRole = async (e) => {
+    e.preventDefault();
+    if (!roleEditUser || !selectedNewRole) return;
+    setUpdatingRole(true);
+    try {
+      await api.patch(`/users/${roleEditUser.user_id}/role`, {
+        role_id: Number(selectedNewRole)
+      });
+      toast.success(`Role for '${roleEditUser.name}' updated successfully! ⚡`);
+      fetchAllUsers();
+      setShowRoleEditModal(false);
+      setRoleEditUser(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update role ❌");
+    } finally {
+      setUpdatingRole(false);
+    }
+  };
+
   // 🔹 CONFIRM DELETE ACCOUNT
   const confirmDeleteAccount = async () => {
     try {
@@ -399,6 +465,46 @@ export default function Account() {
             🗑️ Delete Account
           </button>
         </div>
+
+        {/* 🔑 IN-APP ROLE ELEVATION / REDEEM SECRET KEY CARD */}
+        {user?.role_name !== "Admin" && Number(user?.role_id) !== 3 && (
+          <div className="account-card" style={{ border: "1px solid rgba(124, 58, 237, 0.35)", background: "rgba(14, 14, 18, 0.85)" }}>
+            <h3 style={{ color: "#c084fc", borderBottom: "none", marginBottom: "4px" }}>
+              🔑 Upgrade Role / Redeem Secret Key
+            </h3>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "16px" }}>
+              Appointed as a Club Head, Club Mentor, Estate Manager, Principal, or Director? Enter your secret key here to instantly upgrade your account while keeping your past history intact.
+            </p>
+            <form onSubmit={handleElevateRole} style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+              <div className="key-input-wrapper" style={{ flex: 1, minWidth: "260px" }}>
+                <input
+                  type={showElevateInputKey ? "text" : "password"}
+                  placeholder="Enter Secret Key (e.g. KEY_PRINCIPAL_... or Club Key)"
+                  value={elevateSecretKey}
+                  onChange={(e) => setElevateSecretKey(e.target.value)}
+                  className="key-input"
+                  style={{ width: "100%", padding: "10px 14px" }}
+                />
+                <button
+                  type="button"
+                  className="action-icon-btn"
+                  onClick={() => setShowElevateInputKey(!showElevateInputKey)}
+                  title={showElevateInputKey ? "Hide Key" : "Show Key"}
+                >
+                  {showElevateInputKey ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+              <button
+                type="submit"
+                className="hp-btn hp-btn-primary"
+                disabled={!elevateSecretKey.trim() || elevatingRole}
+                style={{ padding: "10px 20px", fontSize: "0.9rem", fontWeight: "600" }}
+              >
+                {elevatingRole ? "Upgrading..." : "⚡ Elevate Role"}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* 🔑 ADMIN SECRET KEYS MANAGEMENT SECTION */}
         {(user?.role_name === "Admin" || user?.role_id === 3) && (
@@ -766,15 +872,38 @@ export default function Account() {
                                 Current Admin
                               </span>
                             ) : (
-                              <button
-                                type="button"
-                                className="revoke-btn"
-                                onClick={() => askDeleteUser(u)}
-                                title={`Delete user ${u.name}`}
-                              >
-                                <TrashIcon />
-                                <span>Delete User</span>
-                              </button>
+                              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                <button
+                                  type="button"
+                                  className="club-key-gen-action-btn"
+                                  onClick={() => askEditRole(u)}
+                                  title={`Change role for ${u.name}`}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    padding: "5px 10px",
+                                    background: "rgba(56, 189, 248, 0.15)",
+                                    border: "1px solid rgba(56, 189, 248, 0.35)",
+                                    borderRadius: "6px",
+                                    color: "#38bdf8",
+                                    fontSize: "0.78rem",
+                                    fontWeight: "600",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  ⚡ Role
+                                </button>
+                                <button
+                                  type="button"
+                                  className="revoke-btn"
+                                  onClick={() => askDeleteUser(u)}
+                                  title={`Delete user ${u.name}`}
+                                >
+                                  <TrashIcon />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -922,6 +1051,75 @@ export default function Account() {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ⚡ ADMIN EDIT USER ROLE MODAL */}
+      {showRoleEditModal && roleEditUser && (
+        <div className="hp-modal-overlay" onClick={() => setShowRoleEditModal(false)}>
+          <div className="hp-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "460px" }}>
+            <div className="hp-modal-header">
+              <h3>⚡ Change User Role</h3>
+              <button className="hp-modal-close" onClick={() => setShowRoleEditModal(false)}>✕</button>
+            </div>
+
+            <form onSubmit={confirmUpdateRole} style={{ marginTop: "16px" }}>
+              <div style={{ marginBottom: "16px" }}>
+                <p style={{ color: "#f8fafc", fontWeight: "600", fontSize: "1rem", margin: "0 0 4px 0" }}>
+                  {roleEditUser.name}
+                </p>
+                <p style={{ color: "#94a3b8", fontSize: "0.85rem", margin: 0 }}>
+                  {roleEditUser.email} • Current Role: <span style={{ color: "#38bdf8", fontWeight: "600" }}>{roleEditUser.role_name}</span>
+                </p>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1", fontSize: "0.88rem", fontWeight: "600" }}>
+                  Select New Role
+                </label>
+                <select
+                  value={selectedNewRole}
+                  onChange={(e) => setSelectedNewRole(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    background: "rgba(0, 0, 0, 0.4)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    borderRadius: "8px",
+                    color: "#f8fafc",
+                    fontSize: "0.95rem"
+                  }}
+                >
+                  <option value="1" style={{ background: "#18181b" }}>🎓 Student (Role 1)</option>
+                  <option value="2" style={{ background: "#18181b" }}>👨‍🏫 Teacher (Role 2)</option>
+                  <option value="4" style={{ background: "#18181b" }}>👑 Club Head (Role 4)</option>
+                  <option value="5" style={{ background: "#18181b" }}>🎓 Club Mentor (Role 5)</option>
+                  <option value="6" style={{ background: "#18181b" }}>🏢 Estate Manager (Role 6)</option>
+                  <option value="7" style={{ background: "#18181b" }}>👑 Principal (Role 7)</option>
+                  <option value="8" style={{ background: "#18181b" }}>🎓 Director (Role 8)</option>
+                  <option value="3" style={{ background: "#18181b" }}>🛡️ Admin (Role 3)</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button
+                  type="button"
+                  className="hp-btn hp-btn-outline"
+                  onClick={() => setShowRoleEditModal(false)}
+                  disabled={updatingRole}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="hp-btn hp-btn-primary"
+                  disabled={updatingRole}
+                >
+                  {updatingRole ? "Saving..." : "Save Role Change"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
