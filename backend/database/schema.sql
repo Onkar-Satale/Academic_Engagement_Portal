@@ -172,16 +172,5 @@ CREATE TABLE IF NOT EXISTS feedback (
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
--- ===================================================
--- SAMPLE SEED DATA (CLUBS, EVENTS & ROLE KEYS)
--- ===================================================
+-- (No sample clubs or events: database starts 100% clean for fresh testing)
 
-INSERT IGNORE INTO club (club_id, name, description, club_mentor_key, club_head_key) VALUES
-(1, 'Coding & Open Source Club', 'Premier tech club focusing on full-stack development, open-source projects, and competitive programming.', 'MENTOR_KEY_CODING', 'HEAD_KEY_CODING'),
-(2, 'Robotics & Automation Society', 'Building autonomous bots, AI hardware projects, and competing in national robotics competitions.', 'MENTOR_KEY_ROBOTICS', 'HEAD_KEY_ROBOTICS'),
-(3, 'Cultural & Performing Arts Club', 'Fostering music, dance, drama, and creative arts across university campus events.', 'MENTOR_KEY_CULTURAL', 'HEAD_KEY_CULTURAL');
-
-INSERT IGNORE INTO event (event_id, title, description, date, venue, status, club_id) VALUES
-(1, 'Annual University Hackathon 2026', '24-hour coding challenge with exciting prize pools and mentor support.', '2026-09-15', 'Main Auditorium', 'Upcoming', 1),
-(2, 'RoboWars Championship', 'Autonomous and remote-controlled robot battle tournament.', '2026-10-01', 'Indoor Sports Complex', 'Upcoming', 2),
-(3, 'Campus Unplugged Night', 'An evening of acoustic music, poetry, and live band performances.', '2026-08-25', 'Open Air Theater', 'Upcoming', 3);
