@@ -50,11 +50,8 @@ export default function HomePage() {
         }));
     };
 
-    const defaultTestimonials = [
-        { name: "Priya S.", role_name: "Student", department: "CSE", message: "Finding and joining clubs was never this easy! I registered for 3 events in under 5 minutes.", user_name: "Priya S." },
-        { name: "Prof. Mehta", role_name: "Club Mentor", department: "IT", message: "Managing event permissions used to take days. Now it's done in minutes with full transparency.", user_name: "Prof. Mehta" },
-        { name: "Rahul K.", role_name: "Club Head", department: "CSI", message: "Creating events and tracking student enrollments is seamless. Our club activity doubled!", user_name: "Rahul K." }
-    ];
+    const defaultTestimonials = [];
+
 
     useEffect(() => {
         const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -447,14 +444,16 @@ export default function HomePage() {
                                 </div>
                             </div>
                         )) : (
-                            [1, 2, 3].map(i => (
-                                <div key={i} className="hp-club-card skeleton">
-                                    <div className="hp-skeleton-avatar" />
-                                    <div className="hp-skeleton-line wide" />
-                                    <div className="hp-skeleton-line" />
-                                    <div className="hp-skeleton-line short" />
-                                </div>
-                            ))
+                            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "48px 24px", background: "rgba(255, 255, 255, 0.02)", border: "1px dashed rgba(255, 255, 255, 0.12)", borderRadius: "16px", color: "#94a3b8" }}>
+                                <div style={{ fontSize: "2.5rem", marginBottom: "12px" }}>🏛️</div>
+                                <h4 style={{ color: "#f8fafc", fontSize: "1.15rem", marginBottom: "6px", fontWeight: "600" }}>No Clubs Published Yet</h4>
+                                <p style={{ fontSize: "0.9rem", maxWidth: "440px", margin: "0 auto 16px auto", color: "#64748b" }}>Clubs created by administrators will appear here.</p>
+                                {user?.role_name === "Admin" && (
+                                    <button className="hp-btn hp-btn-primary" onClick={() => navigate("/clubs")} style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
+                                        + Create First Club
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -499,13 +498,11 @@ export default function HomePage() {
                                 </div>
                             </div>
                         )) : (
-                            [1, 2, 3].map(i => (
-                                <div key={i} className="hp-event-card skeleton">
-                                    <div className="hp-skeleton-line wide" />
-                                    <div className="hp-skeleton-line" />
-                                    <div className="hp-skeleton-line short" />
-                                </div>
-                            ))
+                            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "48px 24px", background: "rgba(255, 255, 255, 0.02)", border: "1px dashed rgba(255, 255, 255, 0.12)", borderRadius: "16px", color: "#94a3b8" }}>
+                                <div style={{ fontSize: "2.5rem", marginBottom: "12px" }}>📅</div>
+                                <h4 style={{ color: "#f8fafc", fontSize: "1.15rem", marginBottom: "6px", fontWeight: "600" }}>No Upcoming Events</h4>
+                                <p style={{ fontSize: "0.9rem", maxWidth: "440px", margin: "0 auto", color: "#64748b" }}>Events approved through the 4-stage permission pipeline will automatically appear here.</p>
+                            </div>
                         )}
                     </div>
 
@@ -552,57 +549,65 @@ export default function HomePage() {
                                 onClick={() => setShowAllFeedbacksModal(true)}
                                 style={{ padding: "10px 18px", fontSize: "0.9rem" }}
                             >
-                                See All Testimonials ({feedbacks.length + defaultTestimonials.length})
+                                See All Testimonials ({feedbacks.length})
                             </button>
                         </div>
                     </div>
 
                     <div className="hp-testimonials">
-                        {[...feedbacks, ...defaultTestimonials].slice(0, 3).map((t, idx) => {
-                            const displayName = t.user_name || t.name;
-                            const displayRole = `${t.role_name || t.role}${t.department ? `, ${t.department}` : ''}`;
-                            const avatarInitial = (displayName || "?").charAt(0).toUpperCase();
-                            const fullText = t.message || t.text || "";
-                            const canDelete = t.feedback_id && user && Number(user.id) === Number(t.user_id);
-                            
-                            const key = t.feedback_id ? `f_${t.feedback_id}` : `d_${idx}`;
-                            const isExpanded = !!expandedFeedbacks[key];
-                            const isLong = fullText.length > 120;
-                            const displayText = (isLong && !isExpanded) ? `${fullText.substring(0, 120)}...` : fullText;
+                        {feedbacks.length > 0 ? (
+                            feedbacks.slice(0, 3).map((t, idx) => {
+                                const displayName = t.user_name || t.name;
+                                const displayRole = `${t.role_name || t.role}${t.department ? `, ${t.department}` : ''}`;
+                                const avatarInitial = (displayName || "?").charAt(0).toUpperCase();
+                                const fullText = t.message || t.text || "";
+                                const canDelete = t.feedback_id && user && Number(user.id) === Number(t.user_id);
+                                
+                                const key = `f_${t.feedback_id || idx}`;
+                                const isExpanded = !!expandedFeedbacks[key];
+                                const isLong = fullText.length > 120;
+                                const displayText = (isLong && !isExpanded) ? `${fullText.substring(0, 120)}...` : fullText;
 
-                            return (
-                                <div key={key} className="hp-testimonial-card" style={{ position: "relative" }}>
-                                    {canDelete && (
-                                        <button 
-                                            className="hp-delete-feedback-btn"
-                                            onClick={() => askDeleteFeedback(t.feedback_id)}
-                                            title="Delete Your Feedback"
-                                        >
-                                            🗑️
-                                        </button>
-                                    )}
-                                    <div className="hp-testimonial-quote">"</div>
-                                    <p className="hp-testimonial-text">
-                                        {displayText}
-                                        {isLong && (
+                                return (
+                                    <div key={key} className="hp-testimonial-card" style={{ position: "relative" }}>
+                                        {canDelete && (
                                             <button 
-                                                onClick={() => toggleExpandFeedback(key)}
-                                                className="hp-read-more-btn"
+                                                className="hp-delete-feedback-btn"
+                                                onClick={() => askDeleteFeedback(t.feedback_id)}
+                                                title="Delete Your Feedback"
                                             >
-                                                {isExpanded ? " Read Less" : " Read More"}
+                                                🗑️
                                             </button>
                                         )}
-                                    </p>
-                                    <div className="hp-testimonial-author">
-                                        <div className="hp-testimonial-avatar">{avatarInitial}</div>
-                                        <div>
-                                            <div className="hp-testimonial-name">{displayName}</div>
-                                            <div className="hp-testimonial-role">{displayRole}</div>
+                                        <div className="hp-testimonial-quote">"</div>
+                                        <p className="hp-testimonial-text">
+                                            {displayText}
+                                            {isLong && (
+                                                <button 
+                                                    onClick={() => toggleExpandFeedback(key)}
+                                                    className="hp-read-more-btn"
+                                                >
+                                                    {isExpanded ? " Read Less" : " Read More"}
+                                                </button>
+                                            )}
+                                        </p>
+                                        <div className="hp-testimonial-author">
+                                            <div className="hp-testimonial-avatar">{avatarInitial}</div>
+                                            <div>
+                                                <div className="hp-testimonial-name">{displayName}</div>
+                                                <div className="hp-testimonial-role">{displayRole}</div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })
+                        ) : (
+                            <div style={{ width: "100%", textAlign: "center", padding: "48px 24px", background: "rgba(255, 255, 255, 0.02)", border: "1px dashed rgba(255, 255, 255, 0.12)", borderRadius: "16px", color: "#94a3b8" }}>
+                                <div style={{ fontSize: "2.5rem", marginBottom: "12px" }}>💬</div>
+                                <h4 style={{ color: "#f8fafc", fontSize: "1.15rem", marginBottom: "6px", fontWeight: "600" }}>No Testimonials Yet</h4>
+                                <p style={{ fontSize: "0.9rem", maxWidth: "440px", margin: "0 auto", color: "#64748b" }}>Be the first to share your experience with the campus community!</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -695,18 +700,18 @@ export default function HomePage() {
                 <div className="hp-modal-overlay" onClick={() => setShowAllFeedbacksModal(false)}>
                     <div className="hp-modal-card hp-modal-large" onClick={(e) => e.stopPropagation()}>
                         <div className="hp-modal-header">
-                            <h3>Voices — All Community Testimonials ({feedbacks.length + defaultTestimonials.length})</h3>
+                            <h3>Voices — All Community Testimonials ({feedbacks.length})</h3>
                             <button className="hp-modal-close" onClick={() => setShowAllFeedbacksModal(false)}>✕</button>
                         </div>
                         <div className="hp-all-feedbacks-list">
-                            {[...feedbacks, ...defaultTestimonials].map((f, i) => {
+                            {feedbacks.length > 0 ? feedbacks.map((f, i) => {
                                 const displayName = f.user_name || f.name;
                                 const avatar = (displayName || "?").charAt(0).toUpperCase();
                                 const roleStr = `${f.role_name || f.role}${f.department ? `, ${f.department}` : ''}`;
                                 const canDelete = f.feedback_id && user && Number(user.id) === Number(f.user_id);
                                 const fullText = f.message || f.text || "";
 
-                                const key = f.feedback_id ? `modal_f_${f.feedback_id}` : `modal_d_${i}`;
+                                const key = `modal_f_${f.feedback_id || i}`;
                                 const isExpanded = !!expandedFeedbacks[key];
                                 const isLong = fullText.length > 140;
                                 const displayText = (isLong && !isExpanded) ? `${fullText.substring(0, 140)}...` : fullText;
@@ -747,7 +752,9 @@ export default function HomePage() {
                                         </div>
                                     </div>
                                 );
-                            })}
+                            }) : (
+                                <p style={{ textAlign: "center", color: "#94a3b8", padding: "30px 0" }}>No community testimonials submitted yet.</p>
+                            )}
                         </div>
                         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
                             <button className="hp-btn hp-btn-outline" onClick={() => setShowAllFeedbacksModal(false)}>Close</button>
