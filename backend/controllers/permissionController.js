@@ -2,7 +2,7 @@ import permissionService from "../services/permissionService.js";
 
 export const createPermissionRequest = async (req, res, next) => {
   try {
-    const { title, description, event_date, venue, club_id } = req.body;
+    const { title, description, event_date, venue, club_id, old_request_id } = req.body;
     const requester_id = req.user.id;
 
     const requestId = await permissionService.createRequest({
@@ -11,7 +11,8 @@ export const createPermissionRequest = async (req, res, next) => {
       event_date,
       venue,
       club_id,
-      requester_id
+      requester_id,
+      old_request_id: old_request_id ? Number(old_request_id) : null
     });
 
     res.status(201).json({ success: true, message: "Permission request created successfully", requestId });
@@ -52,6 +53,19 @@ export const handleApprovalAction = async (req, res, next) => {
     );
 
     res.json({ success: true, message: `Permission request ${status} successfully` });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deletePermissionRequest = async (req, res, next) => {
+  try {
+    const { requestId } = req.params;
+    const result = await permissionService.deleteRequest(requestId, req.user);
+    if (result.status !== 200) {
+      return res.status(result.status).json({ success: false, message: result.message });
+    }
+    res.json({ success: true, message: result.message });
   } catch (err) {
     next(err);
   }

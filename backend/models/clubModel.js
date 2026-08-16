@@ -51,6 +51,22 @@ export const ClubModel = {
     return clubs[0];
   },
 
+  findByHeadKey: async (key) => {
+    const [clubs] = await db.query(
+      "SELECT * FROM club WHERE club_head_key = ?",
+      [key]
+    );
+    return clubs[0];
+  },
+
+  findByMentorKey: async (key) => {
+    const [clubs] = await db.query(
+      "SELECT * FROM club WHERE club_mentor_key = ?",
+      [key]
+    );
+    return clubs[0];
+  },
+
   revokeClubKey: async (key) => {
     const [res] = await db.query(
       `UPDATE club 
@@ -81,8 +97,8 @@ export const ClubModel = {
   },
 
   assignHead: async (clubKey, userId) => {
-    await db.query(
-      "UPDATE club SET club_head_id = ? WHERE club_head_key = ?",
+    const [result] = await db.query(
+      "UPDATE club SET club_head_id = ?, club_head_key = NULL WHERE club_head_key = ? AND club_head_id IS NULL",
       [userId, clubKey]
     );
     const [[c]] = await db.query("SELECT club_id FROM club WHERE club_head_id = ?", [userId]);
@@ -90,8 +106,8 @@ export const ClubModel = {
   },
 
   assignMentor: async (mentorKey, userId) => {
-    await db.query(
-      "UPDATE club SET club_mentor_id = ? WHERE club_mentor_key = ?",
+    const [result] = await db.query(
+      "UPDATE club SET club_mentor_id = ?, club_mentor_key = NULL WHERE club_mentor_key = ? AND club_mentor_id IS NULL",
       [userId, mentorKey]
     );
     const [[c]] = await db.query("SELECT club_id FROM club WHERE club_mentor_id = ?", [userId]);

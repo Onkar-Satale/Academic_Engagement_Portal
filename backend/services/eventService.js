@@ -14,7 +14,26 @@ export const eventService = {
   },
 
   createEvent: async (reqUser, bodyData) => {
-    return await EventModel.createWithOrganizer(reqUser, bodyData);
+    const eventId = await EventModel.createWithOrganizer(reqUser, bodyData);
+    try {
+      const { title, date, venue, club_id } = bodyData;
+      let clubName = "";
+      if (club_id) {
+        const club = await ClubModel.getByIdWithDetails(club_id);
+        if (club) clubName = ` by ${club.name}`;
+      }
+      const formattedDate = date ? new Date(date).toLocaleDateString() : "TBA";
+      const venueStr = venue ? ` at ${venue}` : "";
+      await NotificationModel.broadcastNotification({
+        title: "🎉 New Campus Event Announced!",
+        message: `"${title}"${clubName} has been scheduled for ${formattedDate}${venueStr}. Check it out and explore details!`,
+        type: "info",
+        link: `/events/${eventId}`
+      });
+    } catch (nErr) {
+      console.warn("Broadcast notification warning for new event:", nErr);
+    }
+    return eventId;
   },
 
   deleteEvent: async (eventId, reqUser) => {

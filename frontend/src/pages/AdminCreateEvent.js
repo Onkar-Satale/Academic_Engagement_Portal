@@ -13,8 +13,17 @@ export default function AdminCreateEvent({ onEventCreated }) {
 
   const submit = async (e) => {
     e.preventDefault();
+    if (!form.title.trim() || !form.date || !form.venue.trim()) {
+      toast.error("Event title, date, and venue are required");
+      return;
+    }
     try {
-      await api.post("/events", form);
+      await api.post("/events", {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        date: form.date,
+        venue: form.venue.trim()
+      });
       toast.success("Event created successfully 🚀");
 
       if (onEventCreated) {

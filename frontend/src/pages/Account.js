@@ -4,6 +4,7 @@ import ClubCard from "../components/ClubCard";
 import api from "../api/axios";
 import "./Account.css";
 import EventCard from "../components/EventCard";
+import CustomSelect from "../components/CustomSelect";
 
 // Clean SVG Icons
 const EyeIcon = () => (
@@ -78,9 +79,9 @@ export default function Account() {
   const [visibleKeys, setVisibleKeys] = useState({});
   const [copiedKeyId, setCopiedKeyId] = useState(null);
 
-  // Roles that should only see profile info (no events/clubs)
-  const profileOnlyRoles = ["Estate Manager", "Principal", "Director", "Club Mentor"];
-  const isProfileOnly = profileOnlyRoles.includes(user?.role_name);
+  // Roles that should only see profile info (no student events/clubs cards on account page)
+  const profileOnlyRoles = ["Admin", "Estate Manager", "Principal", "Director", "Club Mentor", "Club Head", "Teacher"];
+  const isProfileOnly = profileOnlyRoles.includes(user?.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role_id) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role);
 
   useEffect(() => {
     if (user?.role_name === "Admin" || user?.role_id === 3) {
@@ -167,11 +168,15 @@ export default function Account() {
       toast.warning(`A key record already exists for this role. Delete it from the table below to generate a new key!`);
       return;
     }
+    if (!customKeyInput.trim()) {
+      toast.error("Please click 'Auto-Gen Key' or type a secret key in the box before activating! 🔑");
+      return;
+    }
     setGeneratingKey(true);
     try {
       await api.post("/users/generate-key", {
         role_id: Number(selectedRoleForKey),
-        secret_key: customKeyInput.trim() || undefined
+        secret_key: customKeyInput.trim()
       });
       toast.success("Role invite key activated successfully! 🎉");
       setCustomKeyInput("");
@@ -331,21 +336,20 @@ export default function Account() {
             <form onSubmit={handleGenerateKey} className="generate-key-form">
               <div className="form-group role-select-group">
                 <label>Target Authority Role</label>
-                <select 
-                  value={selectedRoleForKey} 
-                  onChange={(e) => setSelectedRoleForKey(e.target.value)}
-                  className="key-role-select"
-                >
-                  {dbRoles.map((r) => {
+                <CustomSelect
+                  value={selectedRoleForKey}
+                  onChange={(val) => setSelectedRoleForKey(val)}
+                  options={dbRoles.map((r) => {
                     const existingKey = getKeyForRole(r.role_id);
                     const icon = r.role_name === "Principal" ? "👑" : r.role_name === "Director" ? "🎓" : "🏢";
-                    return (
-                      <option key={r.role_id} value={r.role_id} disabled={!!existingKey}>
-                        {icon} {r.role_name} {existingKey ? `- 🔴 Key Exists (${existingKey.is_used ? 'Used' : 'Active'})` : ""}
-                      </option>
-                    );
+                    return {
+                      value: r.role_id,
+                      label: `${icon} ${r.role_name} ${existingKey ? `(Key Exists: ${existingKey.is_used ? 'Used' : 'Active'})` : ''}`
+                    };
                   })}
-                </select>
+                  placeholder="Select Authority Role"
+                  className="account-custom-role-select"
+                />
               </div>
 
               <div className="form-group key-input-group">
@@ -353,6 +357,8 @@ export default function Account() {
                 <div className="key-input-wrapper">
                   <input 
                     type={showInputKey ? "text" : "password"} 
+                    name="authority_crypto_key_field"
+                    autoComplete="new-password"
                     placeholder={getKeyForRole(selectedRoleForKey) ? "A key already exists for this role (delete below first)" : "Click 'Auto-Gen Key' or type custom key..."}
                     value={customKeyInput}
                     onChange={(e) => setCustomKeyInput(e.target.value)}
@@ -396,8 +402,15 @@ export default function Account() {
                 <button 
                   type="submit" 
                   className="generate-btn" 
-                  disabled={!!getKeyForRole(selectedRoleForKey) || generatingKey}
-                  title={getKeyForRole(selectedRoleForKey) ? "A key record already exists for this role" : "Activate and save key"}
+                  disabled={!customKeyInput.trim() || !!getKeyForRole(selectedRoleForKey) || generatingKey}
+                  title={
+                    getKeyForRole(selectedRoleForKey)
+                      ? "A key record already exists for this role"
+                      : !customKeyInput.trim()
+                      ? "Please click 'Auto-Gen Key' or type a key first to activate"
+                      : "Activate and save key"
+                  }
+                  style={!customKeyInput.trim() ? { opacity: 0.5, cursor: "not-allowed" } : {}}
                 >
                   {generatingKey ? "Saving..." : "⚡ Activate Key"}
                 </button>
@@ -407,78 +420,132 @@ export default function Account() {
             {/* Keys List Table */}
             <div className="keys-list-container">
               <h4 style={{ color: "#f8fafc", margin: "20px 0 12px 0", fontSize: "1.1rem" }}>
-                Tracked Invite Secret Keys ({secretKeys.length})
+                Authority Registration Secret Keys
               </h4>
 
               {keysLoading ? (
                 <p style={{ color: "#94a3b8" }}>Loading secret keys...</p>
-              ) : secretKeys.length === 0 ? (
-                <p style={{ color: "#94a3b8" }}>No active or historical invite keys generated yet.</p>
               ) : (
                 <div className="keys-table-wrapper">
                   <table className="keys-table">
                     <thead>
                       <tr>
+                        <th>Role</th>
                         <th>Secret Key</th>
-                        <th>Target Role</th>
                         <th>Status</th>
-                        <th>Created At</th>
                         <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {secretKeys.filter(k => dbRoles.some(r => Number(r.role_id) === Number(k.role_id))).map((k) => {
-                        const isVisible = !!visibleKeys[k.key_id];
-                        const isCopied = copiedKeyId === k.key_id;
+                      {dbRoles.map((role) => {
+                        const k = getKeyForRole(role.role_id);
+                        const isVisible = k ? !!visibleKeys[k.key_id] : false;
+                        const isCopied = k ? copiedKeyId === k.key_id : false;
+                        const icon = role.role_name === "Principal" ? "👑" : role.role_name === "Director" ? "🎓" : "🏢";
+
                         return (
-                          <tr key={k.key_id}>
+                          <tr key={role.role_id}>
                             <td>
-                              <div className="key-code-badge">
-                                <span className="key-badge-text">
-                                  {isVisible ? k.secret_key : "••••••••••••••••••••••••"}
-                                </span>
-                                <div className="key-badge-actions">
-                                  <button 
-                                    type="button" 
-                                    className="key-badge-btn"
-                                    onClick={() => toggleKeyVisibility(k.key_id)}
-                                    title={isVisible ? "Hide Key" : "Show Key"}
-                                  >
-                                    {isVisible ? <EyeOffIcon /> : <EyeIcon />}
-                                  </button>
-                                  <button 
-                                    type="button" 
-                                    className="key-badge-btn"
-                                    onClick={() => copyToClipboard(k.secret_key, k.key_id)}
-                                    title="Copy Key"
-                                  >
-                                    {isCopied ? <CheckIcon /> : <CopyIcon />}
-                                  </button>
-                                </div>
-                              </div>
+                              <span className="role-tag">{icon} {role.role_name}</span>
                             </td>
                             <td>
-                              <span className="role-tag">{k.role_name}</span>
-                            </td>
-                            <td>
-                              {k.is_used ? (
-                                <span className="status-badge status-used">🔴 Used / Claimed</span>
+                              {k ? (
+                                k.is_used ? (
+                                  <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: "600" }}>
+                                    🔒 Single-Use Key Claimed
+                                  </span>
+                                ) : (
+                                  <div className="key-code-badge">
+                                    <span className="key-badge-text">
+                                      {isVisible ? k.secret_key : "••••••••••••••••••••••••"}
+                                    </span>
+                                    <div className="key-badge-actions">
+                                      <button 
+                                        type="button" 
+                                        className="key-badge-btn"
+                                        onClick={() => toggleKeyVisibility(k.key_id)}
+                                        title={isVisible ? "Hide Key" : "Show Key"}
+                                      >
+                                        {isVisible ? <EyeOffIcon /> : <EyeIcon />}
+                                      </button>
+                                      <button 
+                                        type="button" 
+                                        className="key-badge-btn"
+                                        onClick={() => copyToClipboard(k.secret_key, k.key_id)}
+                                        title="Copy Key"
+                                      >
+                                        {isCopied ? <CheckIcon /> : <CopyIcon />}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )
                               ) : (
-                                <span className="status-badge status-active">🟢 Active / Available</span>
+                                <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>
+                                  No key generated
+                                </span>
                               )}
                             </td>
-                            <td style={{ fontSize: "0.85rem", color: "#94a3b8" }}>
-                              {new Date(k.created_at).toLocaleDateString()} {new Date(k.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <td>
+                              {k ? (
+                                k.is_used ? (
+                                  <span className="status-badge status-used">👤 Assigned / Claimed</span>
+                                ) : (
+                                  <span className="status-badge status-active">⚡ Active (Unclaimed)</span>
+                                )
+                              ) : (
+                                <span className="status-badge status-empty">🚫 No Key Set</span>
+                              )}
                             </td>
                             <td>
-                              <button 
-                                className="revoke-btn"
-                                onClick={() => askRevokeKey(k.secret_key, k.role_name)}
-                                title="Delete Key Record"
-                              >
-                                <TrashIcon />
-                                <span>Delete</span>
-                              </button>
+                              {k ? (
+                                <button 
+                                  className="revoke-btn"
+                                  onClick={() => askRevokeKey(k.secret_key, role.role_name)}
+                                  title="Delete Key Record"
+                                >
+                                  <TrashIcon />
+                                  <span>Delete Key</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="club-key-gen-action-btn"
+                                  onClick={async () => {
+                                    const rolePrefix = role.role_name.replace(/\s+/g, "_").toUpperCase();
+                                    const array = new Uint8Array(16);
+                                    window.crypto.getRandomValues(array);
+                                    const randomHex = Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+                                    const newKey = `KEY_${rolePrefix}_${randomHex}`;
+                                    try {
+                                      await api.post("/users/generate-key", {
+                                        role_id: Number(role.role_id),
+                                        secret_key: newKey
+                                      });
+                                      toast.success(`${role.role_name} secret key generated & activated 🛡️`);
+                                      fetchSecretKeys();
+                                    } catch (err) {
+                                      toast.error(err.response?.data?.message || "Failed to generate key ❌");
+                                    }
+                                  }}
+                                  title={`Auto-generate a new cryptographically secure key for ${role.role_name}`}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    padding: "6px 12px",
+                                    background: "rgba(124, 58, 237, 0.18)",
+                                    border: "1px solid rgba(124, 58, 237, 0.4)",
+                                    borderRadius: "8px",
+                                    color: "#c084fc",
+                                    fontSize: "0.82rem",
+                                    fontWeight: "600",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  <SparklesIcon />
+                                  <span>Auto-Gen Key</span>
+                                </button>
+                              )}
                             </td>
                           </tr>
                         );

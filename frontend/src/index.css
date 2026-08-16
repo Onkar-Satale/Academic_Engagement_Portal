@@ -59,6 +59,21 @@ body {
   color-scheme: dark;
 }
 
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #18181f;
+  color: #ffffff;
+}
+
+select option:checked,
+select option:hover {
+  background-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
 ::selection {
   background-color: #7c3aed !important;
   color: #ffffff !important;

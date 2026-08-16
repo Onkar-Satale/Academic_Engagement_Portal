@@ -2,9 +2,26 @@ import { db } from "../config/db.js";
 
 export const ClubMemberModel = {
   join: async (club_id, user_id, reason) => {
+    const [[existing]] = await db.query(
+      "SELECT status FROM club_member WHERE club_id = ? AND user_id = ?",
+      [club_id, user_id]
+    );
+
+    if (existing) {
+      if (existing.status === 'approved') {
+        const err = new Error("You are already an approved member of this club!");
+        err.statusCode = 400;
+        throw err;
+      }
+      if (existing.status === 'pending') {
+        const err = new Error("You have already submitted an application for this club. Please wait for the Club Head/Mentor to review.");
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
     await db.query(
-      `INSERT INTO club_member (club_id, user_id, status, reason) VALUES (?, ?, 'pending', ?)
-       ON DUPLICATE KEY UPDATE status = 'pending', reason = VALUES(reason), joined_at = CURRENT_TIMESTAMP`,
+      "INSERT INTO club_member (club_id, user_id, status, reason) VALUES (?, ?, 'pending', ?)",
       [club_id, user_id, reason || null]
     );
   },
@@ -18,7 +35,7 @@ export const ClubMemberModel = {
 
   getEnrolledClubs: async (userId) => {
     const [rows] = await db.query(
-      "SELECT DISTINCT club_id FROM club_member WHERE user_id = ? AND status = 'approved'",
+      "SELECT DISTINCT club_id FROM club_member WHERE user_id = ? AND (status = 'approved' OR status = 'pending')",
       [userId]
     );
     return rows.map(r => r.club_id);

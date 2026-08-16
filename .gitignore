@@ -12,6 +12,8 @@ backend/node_modules/
 /build
 frontend/build/
 /dist
+frontend/dist/
+dist/
 
 # Environment variables & Local configuration
 .env

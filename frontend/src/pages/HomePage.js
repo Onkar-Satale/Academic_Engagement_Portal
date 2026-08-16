@@ -96,7 +96,9 @@ export default function HomePage() {
 
     const handleSubmitFeedback = async (e) => {
         e.preventDefault();
-        if (!feedbackText.trim()) return showToast("Please enter your feedback message.", "error");
+        if (!feedbackText.trim() || feedbackText.trim().length < 5) {
+            return showToast("Please enter a meaningful feedback message (at least 5 characters).", "error");
+        }
         setSubmittingFeedback(true);
         try {
             await api.post("/feedbacks", { message: feedbackText.trim() });
@@ -437,9 +439,11 @@ export default function HomePage() {
                                     <button className="hp-card-btn secondary" onClick={() => navigate(`/clubs/${club.club_id}`)}>
                                         Details
                                     </button>
-                                    <button className="hp-card-btn primary" onClick={() => handleJoinClub(club.club_id)}>
-                                        Join Club
-                                    </button>
+                                    {(!user || (user.role_name === "Student" || Number(user.role_id) === 1 || Number(user.role) === 1)) && (
+                                        <button className="hp-card-btn primary" onClick={() => handleJoinClub(club.club_id)}>
+                                            Join Club
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )) : (
@@ -487,9 +491,11 @@ export default function HomePage() {
                                     <button className="hp-card-btn secondary" onClick={() => navigate(`/events/${event.event_id}`)}>
                                         Details
                                     </button>
-                                    <button className="hp-card-btn primary" onClick={() => handleRegisterEvent(event.event_id)}>
-                                        Register
-                                    </button>
+                                    {(!user || (user.role_name === "Student" || Number(user.role_id) === 1 || Number(user.role) === 1)) && (
+                                        <button className="hp-card-btn primary" onClick={() => handleRegisterEvent(event.event_id)}>
+                                            Register
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )) : (

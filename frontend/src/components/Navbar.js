@@ -40,6 +40,22 @@ export default function Navbar() {
     };
   }, []);
 
+  // Auto-resolve club_id for Club Head & Mentor if not cached in user object
+  useEffect(() => {
+    if (user && (user.role_name === "Club Head" || user.role_name === "Club Mentor") && !user.club_id) {
+      import("../api/axios").then(({ default: api }) => {
+        api.get("/clubs").then((res) => {
+          const matched = res.data.find(c => c.club_head_id === user.id || c.club_mentor_id === user.id);
+          if (matched) {
+            const updated = { ...user, club_id: matched.club_id };
+            localStorage.setItem("user", JSON.stringify(updated));
+            setUser(updated);
+          }
+        }).catch(() => {});
+      });
+    }
+  }, [user]);
+
   const confirmLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -97,32 +113,37 @@ export default function Navbar() {
         <div className={`nav-menu-wrapper ${isMobileMenuOpen ? "active" : ""}`}>
           <div className="nav-center">
             <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
-
-            {/* Hide Events and Clubs for authorities and Club Head/Mentor */}
-            {!["Estate Manager", "Principal", "Director", "Club Mentor", "Club Head"].includes(user?.role_name) && (
-              <>
-                <Link to="/events" className={`nav-link ${isActive('/events') ? 'active' : ''}`}>Events</Link>
-                <Link to="/clubs" className={`nav-link ${isActive('/clubs') ? 'active' : ''}`}>Clubs</Link>
-              </>
-            )}
+            <Link to="/events" className={`nav-link ${isActive('/events') ? 'active' : ''}`}>Events</Link>
+            <Link to="/clubs" className={`nav-link ${isActive('/clubs') ? 'active' : ''}`}>Clubs</Link>
 
             {/* Club Head specific links */}
-            {user?.role_name === "Club Head" && user?.club_id && (
+            {user?.role_name === "Club Head" && (
               <>
-                <Link to={`/clubs/${user.club_id}`} className={`nav-link ${isActive(`/clubs/${user.club_id}`) ? 'active' : ''}`}>My Club</Link>
+                <Link 
+                  to={user?.club_id ? `/clubs/${user.club_id}` : '/clubs'} 
+                  className={`nav-link ${isActive(user?.club_id ? `/clubs/${user.club_id}` : '/clubs') ? 'active' : ''}`}
+                >
+                  My Club
+                </Link>
                 <Link to="/my-events" className={`nav-link ${isActive('/my-events') ? 'active' : ''}`}>My Events</Link>
                 <Link to="/my-requests" className={`nav-link ${isActive('/my-requests') ? 'active' : ''}`}>My Requests</Link>
               </>
             )}
 
             {/* Club Mentor specific links */}
-            {user?.role_name === "Club Mentor" && user?.club_id && (
+            {user?.role_name === "Club Mentor" && (
               <>
-                <Link to={`/clubs/${user.club_id}`} className={`nav-link ${isActive(`/clubs/${user.club_id}`) ? 'active' : ''}`}>My Club</Link>
+                <Link 
+                  to={user?.club_id ? `/clubs/${user.club_id}` : '/clubs'} 
+                  className={`nav-link ${isActive(user?.club_id ? `/clubs/${user.club_id}` : '/clubs') ? 'active' : ''}`}
+                >
+                  My Club
+                </Link>
                 <Link to="/my-events" className={`nav-link ${isActive('/my-events') ? 'active' : ''}`}>My Events</Link>
               </>
             )}
 
+            {/* Approvals for Authorities & Mentors */}
             {["Club Mentor", "Estate Manager", "Principal", "Director"].includes(user?.role_name) && (
               <Link to="/approvals" className={`nav-link ${isActive('/approvals') ? 'active' : ''}`}>Approvals</Link>
             )}

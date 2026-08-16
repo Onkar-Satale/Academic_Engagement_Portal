@@ -24,20 +24,24 @@ export const deleteAccount = async (req, res, next) => {
 export const generateRoleKey = async (req, res, next) => {
   try {
     const { role_id, secret_key } = req.body;
+    if (!role_id) return res.status(400).json({ success: false, message: "role_id is required" });
+
+    if (!secret_key || !secret_key.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "A secret key must be generated or provided before activating."
+      });
+    }
 
     const existingKey = await RoleKeyModel.findActiveByRole(role_id);
     if (existingKey) {
       return res.status(400).json({
         success: false,
-        message: `A secret key record ('${existingKey.secret_key}') already exists for this role. Delete the existing key record first before generating a new key.`
+        message: `A secret key record ('${existingKey.secret_key}') already exists for this role. Delete the existing key record first before creating a new key.`
       });
     }
 
-    // Generate cryptographically secure random key if not provided (128 bits of cryptographic entropy)
-    const keyToUse = secret_key && secret_key.trim()
-      ? secret_key.trim()
-      : `KEY_${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
-
+    const keyToUse = secret_key.trim();
     const keyId = await RoleKeyModel.create({ secret_key: keyToUse, role_id });
 
     res.status(201).json({

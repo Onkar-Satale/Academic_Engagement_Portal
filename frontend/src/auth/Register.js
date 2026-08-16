@@ -67,11 +67,44 @@ export default function RegisterPage() {
     }
 
     /* ==========================================================================
-       1. EMAIL VALIDATION
+       1. NAME VALIDATION
        ========================================================================== */
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      const msg = "Please enter a valid email address";
+    const nameRegex = /^[a-zA-Z\s.']{2,50}$/;
+    if (!nameRegex.test(name.trim())) {
+      const msg = "Name must only contain letters and spaces (no emojis or special characters, 2-50 characters)";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+
+    /* ==========================================================================
+       2. EMAIL STRICT VALIDATION & TYPO CHECK
+       ========================================================================== */
+    const emailTrimmed = email.trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9]+([._%+-][a-zA-Z0-9]+)*@[a-zA-Z0-9]+([.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
+    
+    if (!emailRegex.test(emailTrimmed)) {
+      const msg = "Please enter a valid email address (e.g. user@gmail.com or student@pict.edu)";
+      setType("error");
+      toast.error(msg);
+      return setMessage(msg);
+    }
+
+    // Common typo warnings
+    const typoDomains = {
+      "gail.com": "gmail.com",
+      "gmial.com": "gmail.com",
+      "gmai.com": "gmail.com",
+      "gamil.com": "gmail.com",
+      "yaho.com": "yahoo.com",
+      "yaho.co.in": "yahoo.co.in",
+      "hotmial.com": "hotmail.com",
+      "outlok.com": "outlook.com"
+    };
+    const domainPart = emailTrimmed.split("@")[1];
+    if (typoDomains[domainPart]) {
+      const suggestedEmail = emailTrimmed.replace(domainPart, typoDomains[domainPart]);
+      const msg = `Typo detected in email domain '@${domainPart}'. Did you mean '${suggestedEmail}'?`;
       setType("error");
       toast.error(msg);
       return setMessage(msg);

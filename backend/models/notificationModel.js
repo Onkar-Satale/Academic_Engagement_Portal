@@ -22,5 +22,23 @@ export const NotificationModel = {
       "INSERT INTO notification (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)",
       [user_id, title, message, type || 'info', link || null]
     );
+  },
+
+  async broadcastNotification(data, excludeUserId = null) {
+    const { title, message, type = 'info', link = null } = data;
+    const [users] = await db.query(
+      excludeUserId 
+        ? "SELECT user_id FROM user WHERE user_id != ?" 
+        : "SELECT user_id FROM user",
+      excludeUserId ? [excludeUserId] : []
+    );
+
+    if (!users || users.length === 0) return;
+
+    const values = users.map(u => [u.user_id, title, message, type, link]);
+    await db.query(
+      "INSERT INTO notification (user_id, title, message, type, link) VALUES ?",
+      [values]
+    );
   }
 };

@@ -230,6 +230,42 @@
   color: #ffffff;
 }
 
+.account-custom-role-select {
+  margin-bottom: 0 !important;
+}
+
+.account-custom-role-select .custom-select-trigger {
+  height: 44px;
+  background: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  padding: 0 14px;
+}
+
+.account-custom-role-select .custom-select-trigger:hover,
+.account-custom-role-select.open .custom-select-trigger {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+}
+
+.account-custom-role-select .custom-select-dropdown {
+  background: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.95);
+  z-index: 1100;
+}
+
+.account-custom-role-select .custom-select-option:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+.account-custom-role-select .custom-select-option.selected {
+  background: rgba(124, 58, 237, 0.25);
+  color: #c084fc;
+}
+
 .key-role-select,
 .key-input,
 .generate-btn {
@@ -246,13 +282,33 @@
   color: #ffffff;
   padding: 0 14px;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
+  color-scheme: dark;
+}
+
+.key-role-select {
+  cursor: pointer;
+  accent-color: #7c3aed;
+}
+
+.key-role-select option {
+  background-color: #18181f;
+  color: #ffffff;
+  padding: 10px 14px;
+}
+
+.key-role-select option:checked,
+.key-role-select option:hover,
+.key-role-select option:focus {
+  background-color: #7c3aed !important;
+  color: #ffffff !important;
 }
 
 .key-role-select:focus,
 .key-input:focus {
-  border-color: var(--primary);
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
 }
 
 .generate-btn {

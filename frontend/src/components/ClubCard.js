@@ -3,8 +3,9 @@ import './Card.css';
 
 export default function ClubCard({ club, onJoin, isEnrolled }) {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const isAdmin = user?.role_id === 3;
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const isStudent = user && (user.role_name === "Student" || Number(user.role_id) === 1 || Number(user.role) === 1);
+  const showJoin = isStudent && !isEnrolled;
 
   const handleJoin = () => {
     if (onJoin) {
@@ -15,8 +16,6 @@ export default function ClubCard({ club, onJoin, isEnrolled }) {
   const handleDetails = () => {
     navigate(`/clubs/${club.club_id}`, { state: { club } });
   };
-
-  const showJoin = !isAdmin && !isEnrolled;
 
   return (
     <div className="card">

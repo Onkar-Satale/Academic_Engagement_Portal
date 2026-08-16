@@ -135,6 +135,8 @@ export default function Clubs() {
               <label style={{ display: "block", fontSize: "0.85rem", color: "#cbd5e1", marginBottom: "6px", fontWeight: 600 }}>Club Name</label>
               <input
                 className="input-field"
+                name="new_club_title_field"
+                autoComplete="off"
                 placeholder="e.g. ACM Student Chapter"
                 value={newClubName}
                 onChange={(e) => setNewClubName(e.target.value)}
@@ -143,8 +145,12 @@ export default function Clubs() {
 
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", fontSize: "0.85rem", color: "#cbd5e1", marginBottom: "6px", fontWeight: 600 }}>Description</label>
-              <input
+              <textarea
                 className="input-field"
+                name="new_club_desc_field"
+                autoComplete="off"
+                rows="2"
+                style={{ resize: "vertical", minHeight: "44px" }}
                 placeholder="Short overview of club purpose and mission"
                 value={newClubDesc}
                 onChange={(e) => setNewClubDesc(e.target.value)}
@@ -170,6 +176,8 @@ export default function Clubs() {
               <div className="club-key-input-wrapper">
                 <input
                   type={showHeadKey ? "text" : "password"}
+                  name="club_head_secret_key_crypto"
+                  autoComplete="new-password"
                   className="input-field"
                   placeholder="Click 'Auto-Gen Key' or enter custom key..."
                   value={newClubKey}
@@ -236,6 +244,8 @@ export default function Clubs() {
               <div className="club-key-input-wrapper">
                 <input
                   type={showMentorKey ? "text" : "password"}
+                  name="club_mentor_secret_key_crypto"
+                  autoComplete="new-password"
                   className="input-field"
                   placeholder="Click 'Auto-Gen Key' or enter custom key..."
                   value={newClubMentorKey}

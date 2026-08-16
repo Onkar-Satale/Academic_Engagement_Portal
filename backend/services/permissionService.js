@@ -2,9 +2,22 @@ import { PermissionModel } from "../models/permissionModel.js";
 import { NotificationModel } from "../models/notificationModel.js";
 import { ClubModel } from "../models/clubModel.js";
 import { UserModel } from "../models/userModel.js";
+import { db } from "../config/db.js";
 
 export const permissionService = {
   createRequest: async (data) => {
+    // If replacing an existing rejected request, clean up the old request card first
+    if (data.old_request_id) {
+      try {
+        await db.query("DELETE FROM permission_request WHERE request_id = ? AND requester_id = ?", [
+          data.old_request_id,
+          data.requester_id
+        ]);
+      } catch (delErr) {
+        console.warn("Could not delete old request during resubmission:", delErr.message);
+      }
+    }
+
     const requestId = await PermissionModel.createRequest(data);
 
     try {
@@ -98,13 +111,43 @@ export const permissionService = {
               }
             }
           } else {
-            // Detailed Final Approval & Event Registration Confirmation to Requester (Club Head)
+            // Level 4 (Director) Final Approval -> Automatically Publish Event!
+            let newEventId = null;
+            try {
+              const [eventResult] = await db.query(
+                "INSERT INTO event (title, description, date, venue, status, club_id, organizer_id, additional_info, conducted_by) VALUES (?,?,?,?,?,?,?,?,?)",
+                [
+                  reqInfo.title,
+                  reqInfo.description,
+                  reqInfo.event_date,
+                  reqInfo.venue,
+                  "APPROVED",
+                  reqInfo.club_id,
+                  requesterId,
+                  null,
+                  reqInfo.club_name
+                ]
+              );
+              newEventId = eventResult.insertId;
+            } catch (evErr) {
+              console.error("Failed to auto-create event upon final approval:", evErr);
+            }
+
+            // Direct Notification to Requester (Club Head)
             await NotificationModel.createNotification({
               user_id: requesterId,
-              title: "🎉 EVENT OFFICIALLY APPROVED & REGISTERED!",
-              message: `Congratulations! Your event "${reqInfo.title}" for ${reqInfo.club_name} is officially approved and confirmed for ${formattedDate} at ${venue}! All 4 approval levels (Club Mentor ➔ Estate Manager ➔ Principal ➔ Director) are 100% complete.`,
+              title: "🎉 EVENT OFFICIALLY APPROVED & PUBLISHED!",
+              message: `Congratulations! Your event "${reqInfo.title}" for ${reqInfo.club_name} has received final Level 4 (Director) approval and is now LIVE on the Events page!`,
               type: "success",
-              link: "/my-requests"
+              link: newEventId ? `/events/${newEventId}` : "/my-events"
+            });
+
+            // Broadcast to Everyone on the Website!
+            await NotificationModel.broadcastNotification({
+              title: "🎉 New Campus Event Announced!",
+              message: `"${reqInfo.title}" by ${reqInfo.club_name} is officially approved for ${formattedDate} at ${venue}. Check it out and explore details!`,
+              type: "info",
+              link: newEventId ? `/events/${newEventId}` : "/events"
             });
           }
         }
@@ -114,6 +157,80 @@ export const permissionService = {
     }
 
     return res;
+  },
+
+  deleteRequest: async (requestId, reqUser) => {
+    const reqInfo = await PermissionModel.getByIdWithDetails(requestId);
+    if (!reqInfo) {
+      return { status: 404, message: "Permission request not found" };
+    }
+
+    const club = await ClubModel.getByIdWithDetails(reqInfo.club_id);
+    const isOwner = Number(reqInfo.requester_id) === Number(reqUser.id);
+    const isClubHead = club && (Number(club.club_head_id) === Number(reqUser.id));
+    const isAdmin = Number(reqUser.role) === 3;
+
+    if (!isOwner && !isClubHead && !isAdmin) {
+      return { status: 403, message: "Not authorized to delete this permission request" };
+    }
+
+    // Collect all authorities involved up to current level
+    try {
+      const formattedDate = reqInfo.event_date ? new Date(reqInfo.event_date).toISOString().split('T')[0] : 'N/A';
+      const venue = reqInfo.venue || 'TBD';
+      const club = await ClubModel.getByIdWithDetails(reqInfo.club_id);
+
+      const recipientUserIds = new Set();
+
+      // 1. Club Mentor (Level 1)
+      if (club && club.club_mentor_id) {
+        recipientUserIds.add(club.club_mentor_id);
+      }
+
+      // 2. Estate Manager (Level 2) if request reached Level 2 or above
+      if (reqInfo.current_level >= 2) {
+        const estateUsers = await UserModel.findByRoleId(6);
+        estateUsers.forEach(u => recipientUserIds.add(u.user_id));
+      }
+
+      // 3. Principal (Level 3) if request reached Level 3 or above
+      if (reqInfo.current_level >= 3) {
+        const principalUsers = await UserModel.findByRoleId(7);
+        principalUsers.forEach(u => recipientUserIds.add(u.user_id));
+      }
+
+      // 4. Director (Level 4) if request reached Level 4
+      if (reqInfo.current_level >= 4) {
+        const directorUsers = await UserModel.findByRoleId(8);
+        directorUsers.forEach(u => recipientUserIds.add(u.user_id));
+      }
+
+      // 5. Any authority who reviewed in permission_approval
+      const [pastApprovals] = await db.query(
+        "SELECT DISTINCT authority_id FROM permission_approval WHERE request_id = ?",
+        [requestId]
+      );
+      pastApprovals.forEach(p => recipientUserIds.add(p.authority_id));
+
+      recipientUserIds.delete(reqUser.id);
+
+      // Send withdrawal notification to all involved authorities
+      for (const authUserId of recipientUserIds) {
+        await NotificationModel.createNotification({
+          user_id: authUserId,
+          title: "🚫 Permission Request Withdrawn by Club Head",
+          message: `The event permission request "${reqInfo.title}" for ${reqInfo.club_name} (Date: ${formattedDate}, Venue: ${venue}) has been cancelled and withdrawn by the Club Head.`,
+          type: "warning",
+          link: "/approvals"
+        });
+      }
+    } catch (notifErr) {
+      console.warn("Notification warning on deleteRequest:", notifErr);
+    }
+
+    await db.query("DELETE FROM permission_request WHERE request_id = ?", [requestId]);
+
+    return { status: 200, message: "Permission request deleted successfully and authorities notified." };
   }
 };
 

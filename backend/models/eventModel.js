@@ -22,6 +22,20 @@ export const EventModel = {
   },
 
   getAll: async () => {
+    try {
+      await db.query(`
+        INSERT INTO event (title, description, date, venue, status, club_id, organizer_id, conducted_by)
+        SELECT pr.title, pr.description, pr.event_date, pr.venue, 'APPROVED', pr.club_id, pr.requester_id, c.name
+        FROM permission_request pr
+        JOIN club c ON pr.club_id = c.club_id
+        WHERE pr.status = 'approved'
+          AND NOT EXISTS (
+            SELECT 1 FROM event e WHERE e.title = pr.title AND e.club_id = pr.club_id
+          )
+      `);
+    } catch (syncErr) {
+      console.warn("Event auto-sync warning in getAll:", syncErr.message);
+    }
     const [rows] = await db.query("SELECT * FROM event ORDER BY date DESC");
     return rows;
   },

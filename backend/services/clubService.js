@@ -13,7 +13,18 @@ export const clubService = {
   },
 
   createClub: async (data) => {
-    return await ClubModel.create(data);
+    const clubId = await ClubModel.create(data);
+    try {
+      await NotificationModel.broadcastNotification({
+        title: "🏛️ New Club Established!",
+        message: `"${data.name}" has just been launched on PICT Portal! Check it out and explore upcoming activities.`,
+        type: "info",
+        link: `/clubs/${clubId}`
+      });
+    } catch (nErr) {
+      console.warn("Broadcast notification warning for new club:", nErr);
+    }
+    return clubId;
   },
 
   updateClub: async (clubId, data) => {

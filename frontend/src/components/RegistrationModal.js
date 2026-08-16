@@ -18,6 +18,11 @@ export default function RegistrationModal({ clubId, clubName, onClose, onSuccess
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!reason.trim() || reason.trim().length < 10) {
+      setError("Please provide a valid motivation / reason (at least 10 characters).");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -26,7 +31,7 @@ export default function RegistrationModal({ clubId, clubName, onClose, onSuccess
       await api.post(
         `/clubs/${clubId}/join`,
         {
-          reason,
+          reason: reason.trim(),
           department: user?.department || "General",
           year: user?.year || "1"
         },

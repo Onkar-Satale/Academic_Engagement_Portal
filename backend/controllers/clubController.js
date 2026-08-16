@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import clubService from "../services/clubService.js";
 import ApiError from "../utils/ApiError.js";
 
@@ -30,7 +31,14 @@ export const createClub = async (req, res, next) => {
 export const getAllClubs = async (req, res, next) => {
   try {
     const clubs = await clubService.getAllClubs();
-    res.json(clubs);
+    // Non-admins shouldn't receive secret keys in lists
+    const sanitized = clubs.map(c => {
+      const copy = { ...c };
+      delete copy.club_head_key;
+      delete copy.club_mentor_key;
+      return copy;
+    });
+    res.json(sanitized);
   } catch (err) {
     next(err);
   }
@@ -40,6 +48,29 @@ export const getClubById = async (req, res, next) => {
   try {
     const club = await clubService.getClubById(req.params.id);
     if (!club) return next(new ApiError(404, "Club not found"));
+
+    let isAdmin = false;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const secret = process.env.JWT_ACCESS_SECRET;
+        if (token && secret) {
+          const decoded = jwt.verify(token, secret);
+          if (Number(decoded.role_id) === 3) {
+            isAdmin = true;
+          }
+        }
+      } catch (e) {
+        // Not a valid admin token
+      }
+    }
+
+    if (!isAdmin) {
+      delete club.club_head_key;
+      delete club.club_mentor_key;
+    }
+
     res.json(club);
   } catch (err) {
     next(err);
@@ -52,7 +83,7 @@ export const updateClub = async (req, res, next) => {
     if (!club) return next(new ApiError(404, "Club not found"));
 
     if (req.user.role !== 3 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
-      return next(new ApiError(403, "Forbidden"));
+      return next(new ApiError(403, "Forbidden - Only Club Leadership or Admin can edit club"));
     }
 
     await clubService.updateClub(req.params.id, req.body);
@@ -67,8 +98,8 @@ export const deleteClub = async (req, res, next) => {
     const club = await clubService.getClubById(req.params.id);
     if (!club) return next(new ApiError(404, "Club not found"));
 
-    if (req.user.role !== 3 && req.user.id !== club.club_head_id) {
-      return next(new ApiError(403, "Forbidden"));
+    if (req.user.role !== 3 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
+      return next(new ApiError(403, "Forbidden - Only Club Leadership or Admin can delete club"));
     }
 
     await clubService.deleteClub(req.params.id);
@@ -141,8 +172,8 @@ export const generateClubKey = async (req, res, next) => {
     const club = await clubService.getClubById(clubId);
     if (!club) return next(new ApiError(404, "Club not found"));
 
-    if (req.user.role !== 3 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
-      return next(new ApiError(403, "Forbidden"));
+    if (req.user.role !== 3) {
+      return next(new ApiError(403, "Only Administrators can manage club secret keys"));
     }
 
     const keyToUse = secret_key && secret_key.trim()
@@ -163,8 +194,8 @@ export const revokeClubKey = async (req, res, next) => {
     const club = await clubService.getClubById(clubId);
     if (!club) return next(new ApiError(404, "Club not found"));
 
-    if (req.user.role !== 3 && req.user.id !== club.club_head_id && req.user.id !== club.club_mentor_id) {
-      return next(new ApiError(403, "Forbidden"));
+    if (req.user.role !== 3) {
+      return next(new ApiError(403, "Only Administrators can revoke club secret keys"));
     }
 
     await clubService.revokeClubKey(clubId, key_type);

@@ -3,17 +3,10 @@ import "./EventCard.css";
 
 export default function EventCard({ event, isRegistered }) {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const isOrganizer = user && event.organizer_id === user.id;
-
-  // Club Heads (role 4) and Club Mentors (role 5) should NOT see Register
-  // button ONLY for events that belong to THEIR club
-  const isClubManager = user && (user.role_id === 4 || user.role_id === 5);
-  const isTheirClubEvent = isClubManager && event.club_id && event.club_id === user.club_id;
-  const isAdmin = user && user.role_id === 3;
-
-  // Hide register button if: organizer, OR managing their own club's event, OR Admin, OR already registered
-  const hideRegister = isOrganizer || isTheirClubEvent || isAdmin || isRegistered;
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const isOrganizer = user && Number(event.organizer_id) === Number(user.id);
+  const isStudent = user && (user.role_name === "Student" || Number(user.role_id) === 1 || Number(user.role) === 1);
+  const showRegister = isStudent && !isRegistered;
 
 
 
@@ -41,7 +34,7 @@ export default function EventCard({ event, isRegistered }) {
         </div>
 
         <div className="event-buttons">
-          {!hideRegister && (
+          {showRegister && (
             <button className="register-btn" onClick={handleRegisterClick}>
               Register
             </button>

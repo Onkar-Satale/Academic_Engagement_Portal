@@ -151,7 +151,7 @@ export default function EventDetails() {
           <h3>Description</h3>
           <p className="event-description">{event.description}</p>
 
-          {event.additional_info && (
+          {event.additional_info && event.additional_info.trim() !== event.description?.trim() && (
             <>
               <h3>Additional Information</h3>
               <p className="event-additional-info">{event.additional_info}</p>
@@ -323,7 +323,6 @@ export default function EventDetails() {
             <p><strong>Department:</strong> {selectedStudent.department}</p>
             <p><strong>Year:</strong> {selectedStudent.year}</p>
             <p><strong>Roll No:</strong> {selectedStudent.roll_no || "N/A"}</p>
-            {selectedStudent.notes && <p><strong>Notes:</strong> {selectedStudent.notes}</p>}
             <div className="modal-actions">
               <button className="btn-cancel-modal" onClick={() => setSelectedStudent(null)}>
                 Close

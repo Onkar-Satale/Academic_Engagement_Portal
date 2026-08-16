@@ -75,12 +75,28 @@ const ApprovalDashboard = () => {
                 <p>📍 <strong>Venue:</strong> {req.venue}</p>
                 <p>📅 <strong>Event Date:</strong> {req.event_date ? new Date(req.event_date).toLocaleDateString() : "N/A"}</p>
                 {req.description && <p className="desc">📝 {req.description}</p>}
+
+                {/* Previous Level Remarks History */}
+                {req.approval_history && req.approval_history.length > 0 && (
+                  <div style={{ marginTop: "12px", background: "rgba(255, 255, 255, 0.04)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                    <span style={{ fontSize: "0.78rem", color: "#a78bfa", fontWeight: 700, display: "block", marginBottom: "6px" }}>
+                      📋 Previous Approvals & Remarks:
+                    </span>
+                    {req.approval_history.map((app, idx) => (
+                      <div key={idx} style={{ fontSize: "0.82rem", color: "#cbd5e1", marginBottom: "4px" }}>
+                        <span style={{ color: "#22c55e", fontWeight: 600 }}>✓ {app.authority_role} ({app.authority_name}):</span>{" "}
+                        <span style={{ fontStyle: "italic" }}>{app.remarks ? `"${app.remarks}"` : "Approved without remarks"}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="remarks-box">
+                <label style={{ fontSize: "0.82rem", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Your Remarks / Feedback for Club Head (Optional):</label>
                 <input
                   type="text"
-                  placeholder="Add optional remarks..."
+                  placeholder="e.g. Venue verified, or Hall not available - kindly change to Hall 2..."
                   value={remarks[req.request_id] || ""}
                   onChange={(e) => handleRemarksChange(req.request_id, e.target.value)}
                 />

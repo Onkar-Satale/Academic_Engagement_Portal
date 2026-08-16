@@ -30,6 +30,20 @@ export const PermissionModel = {
        ORDER BY pr.created_at DESC`,
       [userId]
     );
+
+    for (const req of rows) {
+      const [approvals] = await db.query(
+        `SELECT pa.*, u.name as authority_name, r.role_name as authority_role
+         FROM permission_approval pa
+         JOIN user u ON pa.authority_id = u.user_id
+         JOIN role r ON u.role_id = r.role_id
+         WHERE pa.request_id = ?
+         ORDER BY pa.level ASC`,
+        [req.request_id]
+      );
+      req.approval_history = approvals || [];
+    }
+
     return rows;
   },
 
@@ -65,7 +79,16 @@ export const PermissionModel = {
         WHERE pr.current_level = 3 AND pr.status = 'pending'
         ORDER BY pr.created_at DESC
       `;
-    } else if (roleId === 8 || roleId === 3) {
+    } else if (roleId === 8) {
+      query = `
+        SELECT pr.*, c.name as club_name, u.name as requester_name
+        FROM permission_request pr
+        JOIN club c ON pr.club_id = c.club_id
+        JOIN user u ON pr.requester_id = u.user_id
+        WHERE pr.current_level = 4 AND pr.status = 'pending'
+        ORDER BY pr.created_at DESC
+      `;
+    } else if (roleId === 3) {
       query = `
         SELECT pr.*, c.name as club_name, u.name as requester_name
         FROM permission_request pr
@@ -79,6 +102,20 @@ export const PermissionModel = {
     }
 
     const [rows] = await db.query(query, params);
+
+    for (const req of rows) {
+      const [approvals] = await db.query(
+        `SELECT pa.*, u.name as authority_name, r.role_name as authority_role
+         FROM permission_approval pa
+         JOIN user u ON pa.authority_id = u.user_id
+         JOIN role r ON u.role_id = r.role_id
+         WHERE pa.request_id = ?
+         ORDER BY pa.level ASC`,
+        [req.request_id]
+      );
+      req.approval_history = approvals || [];
+    }
+
     return rows;
   },
 

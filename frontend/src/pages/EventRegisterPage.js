@@ -80,7 +80,15 @@ export default function EventRegisterPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === "phone") {
+      const cleanDigits = value.replace(/\D/g, "").slice(0, 10);
+      setFormData(prev => ({ ...prev, phone: cleanDigits }));
+    } else if (name === "rollNo") {
+      const cleanDigits = value.replace(/\D/g, "").slice(0, 5);
+      setFormData(prev => ({ ...prev, rollNo: cleanDigits }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -93,6 +101,18 @@ export default function EventRegisterPage() {
 
     if (!formData.phone || !formData.rollNo) {
       toast.error("Please fill Phone Number and Roll Number");
+      return;
+    }
+
+    const cleanPhone = formData.phone.trim().replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      toast.error("Phone number must be exactly 10 valid digits starting with 6, 7, 8, or 9 (e.g. 9876543210) 📱");
+      return;
+    }
+
+    const cleanRoll = formData.rollNo.trim().replace(/\D/g, "");
+    if (!/^\d{5}$/.test(cleanRoll)) {
+      toast.error("College Roll Number must be exactly 5 digits (e.g. 31105) 🔢");
       return;
     }
 
@@ -111,11 +131,10 @@ export default function EventRegisterPage() {
           event_id: event.event_id,
           full_name: nameToSubmit,
           email: emailToSubmit,
-          phone: formData.phone,
+          phone: cleanPhone,
           department: deptToSubmit,
           year: yearToSubmit,
-          roll_no: formData.rollNo,
-          notes: formData.notes
+          roll_no: cleanRoll
         },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -156,6 +175,11 @@ export default function EventRegisterPage() {
         rollNo: "",
         notes: ""
       }));
+
+      // Navigate back to the event details page after a brief delay
+      setTimeout(() => {
+        navigate(`/events/${event.event_id}`, { replace: true });
+      }, 800);
 
     } catch (err) {
       console.error('Registration error:', err);
@@ -255,19 +279,6 @@ export default function EventRegisterPage() {
               onChange={handleChange}
               required
             />
-          </div>
-
-          <div className="form-group">
-            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--primary-light)', fontWeight: '600' }}>
-              Notes / Special Remarks (Optional)
-            </label>
-            <textarea
-              name="notes"
-              rows="3"
-              placeholder="Any questions or special requirements..."
-              value={formData.notes}
-              onChange={handleChange}
-            ></textarea>
           </div>
 
           <button type="submit" disabled={isSubmitting}>
