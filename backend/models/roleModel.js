@@ -2,7 +2,7 @@ import { db } from "../config/db.js";
 
 export const RoleModel = {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM role");
+    const [rows] = await db.query("SELECT * FROM role ORDER BY role_id ASC");
     return rows;
   },
 

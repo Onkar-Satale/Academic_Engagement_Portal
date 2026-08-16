@@ -22,7 +22,11 @@ export default function RegisterPage() {
 
   useEffect(() => {
     api.get("/users/roles")
-      .then((res) => setRoles(res.data))
+      .then((res) => {
+        const sorted = (res.data || []).sort((a, b) => Number(a.role_id) - Number(b.role_id));
+        setRoles(sorted);
+        if (sorted.length > 0) setRoleId(sorted[0].role_id);
+      })
       .catch(() => {
         const fallback = [{ role_id: 1, role_name: "Student" }];
         setRoles(fallback);
