@@ -12,6 +12,25 @@ export const getRoles = async (req, res, next) => {
   }
 };
 
+export const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.json(users);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const targetUserId = req.params.id;
+    await userService.deleteUserById(req.user.id, targetUserId);
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const deleteAccount = async (req, res, next) => {
   try {
     await userService.deleteAccount(req.user.id);

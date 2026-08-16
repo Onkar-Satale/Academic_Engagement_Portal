@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import ApiError from "../utils/ApiError.js";
+import { db } from "../config/db.js";
 
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -20,10 +21,20 @@ export const authenticate = (req, res, next) => {
     }
     const decoded = jwt.verify(token, secret);
 
+    // Verify user still exists in the database
+    const [[activeUser]] = await db.query(
+      "SELECT user_id, role_id FROM user WHERE user_id = ?",
+      [decoded.id]
+    );
+
+    if (!activeUser) {
+      return next(new ApiError(401, "User account has been deleted or no longer exists"));
+    }
+
     req.userId = decoded.id;
     req.user = {
       id: decoded.id,
-      role: Number(decoded.role_id)
+      role: Number(activeUser.role_id || decoded.role_id)
     };
 
     next();

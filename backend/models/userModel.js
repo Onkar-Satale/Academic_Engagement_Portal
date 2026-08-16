@@ -26,6 +26,16 @@ export const UserModel = {
     return rows;
   },
 
+  getAllUsers: async () => {
+    const [rows] = await db.query(
+      `SELECT u.user_id, u.name, u.email, u.department, u.year, u.role_id, r.role_name, u.profile_photo
+       FROM user u
+       LEFT JOIN role r ON u.role_id = r.role_id
+       ORDER BY u.role_id ASC, u.name ASC`
+    );
+    return rows;
+  },
+
   create: async (data) => {
     const { name, email, password, password_hash, department, year, role_id } = data;
     const finalHash = password_hash || (password ? await bcrypt.hash(password, 10) : "");

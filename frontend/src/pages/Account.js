@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ClubCard from "../components/ClubCard";
 import api from "../api/axios";
@@ -52,6 +53,7 @@ const TrashIcon = () => (
 );
 
 export default function Account() {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const clubsRef = useRef(null);
 
@@ -79,6 +81,15 @@ export default function Account() {
   const [visibleKeys, setVisibleKeys] = useState({});
   const [copiedKeyId, setCopiedKeyId] = useState(null);
 
+  // 👥 ADMIN ALL USERS DIRECTORY STATES
+  const [allUsers, setAllUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [selectedRoleCategory, setSelectedRoleCategory] = useState("all");
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
+
   // Roles that should only see profile info (no student events/clubs cards on account page)
   const profileOnlyRoles = ["Admin", "Estate Manager", "Principal", "Director", "Club Mentor", "Club Head", "Teacher"];
   const isProfileOnly = profileOnlyRoles.includes(user?.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role_id) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role);
@@ -87,6 +98,7 @@ export default function Account() {
     if (user?.role_name === "Admin" || user?.role_id === 3) {
       fetchSecretKeys();
       fetchDbRoles();
+      fetchAllUsers();
     }
     // Only fetch clubs and events if user is not a profile-only role
     if (!isProfileOnly) {
@@ -97,6 +109,18 @@ export default function Account() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchAllUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await api.get("/users");
+      setAllUsers(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch all users", err);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
 
   const fetchDbRoles = async () => {
     try {
@@ -253,6 +277,57 @@ export default function Account() {
     }
   };
 
+  // 👥 ADMIN USER DIRECTORY ACTIONS & FILTERING
+  const roleCategories = [
+    { key: "all", label: "All Users", icon: "👥" },
+    { key: "1", label: "Students", icon: "🎓", roleId: 1 },
+    { key: "2", label: "Teachers", icon: "👨‍🏫", roleId: 2 },
+    { key: "4", label: "Club Heads", icon: "👑", roleId: 4 },
+    { key: "5", label: "Club Mentors", icon: "🎓", roleId: 5 },
+    { key: "6", label: "Estate Managers", icon: "🏢", roleId: 6 },
+    { key: "7", label: "Principals", icon: "👑", roleId: 7 },
+    { key: "8", label: "Directors", icon: "🎓", roleId: 8 },
+    { key: "3", label: "Admins", icon: "🛡️", roleId: 3 },
+  ];
+
+  const askDeleteUser = (u) => {
+    setUserToDelete(u);
+    setShowDeleteUserModal(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    setDeletingUser(true);
+    try {
+      await api.delete(`/users/${userToDelete.user_id}`);
+      toast.success(`User '${userToDelete.name}' (${userToDelete.role_name || "User"}) deleted successfully! 🗑️`);
+      setAllUsers((prev) => prev.filter((u) => u.user_id !== userToDelete.user_id));
+      setShowDeleteUserModal(false);
+      setUserToDelete(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete user ❌");
+    } finally {
+      setDeletingUser(false);
+    }
+  };
+
+  const filteredUsers = allUsers.filter((u) => {
+    if (selectedRoleCategory !== "all") {
+      const targetRoleId = roleCategories.find(c => c.key === selectedRoleCategory)?.roleId;
+      if (Number(u.role_id) !== Number(targetRoleId)) return false;
+    }
+    if (userSearchQuery.trim()) {
+      const q = userSearchQuery.toLowerCase();
+      const matchName = u.name?.toLowerCase().includes(q);
+      const matchEmail = u.email?.toLowerCase().includes(q);
+      const matchDept = u.department?.toLowerCase().includes(q);
+      const matchRole = u.role_name?.toLowerCase().includes(q);
+      const matchYear = u.year && String(u.year).includes(q);
+      return matchName || matchEmail || matchDept || matchRole || matchYear;
+    }
+    return true;
+  });
+
   // 🔹 CONFIRM DELETE ACCOUNT
   const confirmDeleteAccount = async () => {
     try {
@@ -265,7 +340,7 @@ export default function Account() {
       localStorage.removeItem("refreshToken");
       window.dispatchEvent(new Event("authChange"));
       toast.success("Your account has been deleted successfully 👋");
-      window.location.href = "/login";
+      navigate("/");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete account ❌");
     } finally {
@@ -561,6 +636,157 @@ export default function Account() {
           </div>
         )}
 
+        {/* 👥 ADMIN USER DIRECTORY & ROLE MANAGEMENT SECTION */}
+        {(user?.role_name === "Admin" || user?.role_id === 3) && (
+          <div className="account-card admin-users-card">
+            <div className="admin-card-header">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", width: "100%" }}>
+                <div>
+                  <h3>👥 User Directory & Role Management</h3>
+                  <p className="subtitle-text">Inspect registered accounts across campus, filter by authority or student tiers, and delete users if needed.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchAllUsers}
+                  disabled={usersLoading}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "7px 14px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    borderRadius: "8px",
+                    color: "#f8fafc",
+                    fontSize: "0.85rem",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  🔄 {usersLoading ? "Refreshing..." : "Refresh Users"}
+                </button>
+              </div>
+            </div>
+
+            {/* Role Category Filter Chips */}
+            <div className="admin-role-filter-bar">
+              {roleCategories.map((cat) => {
+                const count = cat.key === "all" 
+                  ? allUsers.length 
+                  : allUsers.filter(u => Number(u.role_id) === cat.roleId).length;
+                const isSelected = selectedRoleCategory === cat.key;
+
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    className={`role-filter-chip ${isSelected ? "active" : ""}`}
+                    onClick={() => setSelectedRoleCategory(cat.key)}
+                  >
+                    <span>{cat.icon} {cat.label}</span>
+                    <span className="role-filter-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search Input */}
+            <div style={{ margin: "14px 0 20px 0" }}>
+              <input
+                type="text"
+                placeholder="🔍 Search by name, email, department, or role..."
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                className="user-search-input"
+              />
+            </div>
+
+            {/* Users Table */}
+            {usersLoading ? (
+              <p style={{ color: "#94a3b8", padding: "20px 0" }}>Loading user directory...</p>
+            ) : filteredUsers.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "36px 20px", background: "rgba(255, 255, 255, 0.02)", border: "1px dashed rgba(255, 255, 255, 0.12)", borderRadius: "12px", color: "#94a3b8" }}>
+                <p style={{ margin: 0 }}>No users found for the selected category or search filter.</p>
+              </div>
+            ) : (
+              <div className="keys-table-wrapper">
+                <table className="keys-table users-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Department / Year</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((u) => {
+                      const isCurrentUser = Number(u.user_id) === Number(user?.id);
+                      const roleName = u.role_name || "Member";
+                      const icon = roleName === "Student" ? "🎓" 
+                        : roleName === "Teacher" ? "👨‍🏫"
+                        : roleName === "Admin" ? "🛡️"
+                        : roleName === "Club Head" ? "👑"
+                        : roleName === "Club Mentor" ? "🎓"
+                        : roleName === "Estate Manager" ? "🏢"
+                        : roleName === "Principal" ? "👑"
+                        : roleName === "Director" ? "🎓"
+                        : "👤";
+
+                      return (
+                        <tr key={u.user_id}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <div className="user-avatar-circle">
+                                {u.name ? u.name.charAt(0).toUpperCase() : "?"}
+                              </div>
+                              <div>
+                                <span style={{ fontWeight: "600", color: "#f8fafc", display: "block" }}>
+                                  {u.name} {isCurrentUser && <span style={{ color: "#38bdf8", fontSize: "0.75rem", fontWeight: "700" }}>(You)</span>}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span style={{ color: "#94a3b8", fontSize: "0.88rem" }}>{u.email}</span>
+                          </td>
+                          <td>
+                            <span className="role-tag">{icon} {roleName}</span>
+                          </td>
+                          <td>
+                            <span style={{ color: "#cbd5e1", fontSize: "0.85rem" }}>
+                              {u.department ? u.department : "—"}
+                              {u.year ? ` • Year ${u.year}` : ""}
+                            </span>
+                          </td>
+                          <td>
+                            {isCurrentUser ? (
+                              <span style={{ color: "#64748b", fontSize: "0.82rem", fontStyle: "italic" }}>
+                                Current Admin
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="revoke-btn"
+                                onClick={() => askDeleteUser(u)}
+                                title={`Delete user ${u.name}`}
+                              >
+                                <TrashIcon />
+                                <span>Delete User</span>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Events & Sessions - Only show for non-profile-only roles */}
         {!isProfileOnly && (
           <>
@@ -660,6 +886,39 @@ export default function Account() {
                 setShowRevokeConfirm(false);
                 setKeyToRevoke(null);
               }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🗑️ DELETE USER BY ADMIN CONFIRM */}
+      {showDeleteUserModal && userToDelete && (
+        <div className="confirm-toast">
+          <p>
+            🗑️ Are you sure you want to <b>permanently delete</b> user <b>{userToDelete.name}</b> ({userToDelete.role_name || "User"})?
+            <br />
+            <span style={{ fontSize: "0.82rem", color: "#fca5a5" }}>
+              All their club memberships, registrations, and permissions will be cleared immediately.
+            </span>
+          </p>
+          <div className="confirm-actions">
+            <button
+              className="yes-btn"
+              style={{ background: '#ef4444' }}
+              onClick={confirmDeleteUser}
+              disabled={deletingUser}
+            >
+              {deletingUser ? "Deleting..." : "Yes, Delete User"}
+            </button>
+            <button
+              className="no-btn"
+              onClick={() => {
+                setShowDeleteUserModal(false);
+                setUserToDelete(null);
+              }}
+              disabled={deletingUser}
             >
               Cancel
             </button>
