@@ -124,11 +124,29 @@ export const ClubModel = {
 
   update: async (clubId, data) => {
     const { name, description, tagline, category, activities, club_head_id, club_mentor_id, permission_emails } = data;
+    
+    const sanitizeId = (val) => {
+      if (val === "" || val === null || val === undefined || val === "null" || isNaN(Number(val))) {
+        return null;
+      }
+      return Number(val);
+    };
+
     const [result] = await db.query(
       `UPDATE club 
      SET name = ?, description = ?, tagline = ?, category = ?, activities = ?, club_head_id = ?, club_mentor_id = ?, permission_emails = ?
      WHERE club_id = ?`,
-      [name, description, tagline, category, activities, club_head_id, club_mentor_id, permission_emails || null, clubId]
+      [
+        name,
+        description,
+        tagline || null,
+        category || null,
+        activities || null,
+        sanitizeId(club_head_id),
+        sanitizeId(club_mentor_id),
+        permission_emails || null,
+        clubId
+      ]
     );
     return result;
   },

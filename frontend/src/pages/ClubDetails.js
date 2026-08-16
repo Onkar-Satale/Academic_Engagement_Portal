@@ -210,7 +210,12 @@ export default function ClubDetails() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await api.put(`/clubs/${clubId}`, formData, {
+      const payload = {
+        ...formData,
+        club_head_id: formData.club_head_id ? Number(formData.club_head_id) : null,
+        club_mentor_id: formData.club_mentor_id ? Number(formData.club_mentor_id) : null,
+      };
+      await api.put(`/clubs/${clubId}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Club updated successfully ✔️");
