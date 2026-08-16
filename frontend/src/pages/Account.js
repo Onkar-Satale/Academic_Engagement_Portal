@@ -96,11 +96,6 @@ export default function Account() {
   const [updatingRole, setUpdatingRole] = useState(false);
   const [showRoleEditModal, setShowRoleEditModal] = useState(false);
 
-  // 🔑 IN-APP ROLE ELEVATION (REDEEM SECRET KEY)
-  const [elevateSecretKey, setElevateSecretKey] = useState("");
-  const [elevatingRole, setElevatingRole] = useState(false);
-  const [showElevateInputKey, setShowElevateInputKey] = useState(false);
-
   // Roles that should only see profile info (no student events/clubs cards on account page)
   const profileOnlyRoles = ["Admin", "Estate Manager", "Principal", "Director", "Club Mentor", "Club Head", "Teacher"];
   const isProfileOnly = profileOnlyRoles.includes(user?.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role_id) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role);
@@ -339,35 +334,6 @@ export default function Account() {
     return true;
   });
 
-  // 🔑 IN-APP ROLE ELEVATION (REDEEM SECRET KEY)
-  const handleElevateRole = async (e) => {
-    e.preventDefault();
-    if (!elevateSecretKey.trim()) {
-      toast.error("Please enter a valid secret key to elevate your role.");
-      return;
-    }
-    setElevatingRole(true);
-    try {
-      const res = await api.post("/users/elevate-role", {
-        secret_key: elevateSecretKey.trim()
-      });
-      const { token, refreshToken, user: updatedUser } = res.data;
-      if (token) localStorage.setItem("token", token);
-      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-      if (updatedUser) localStorage.setItem("user", JSON.stringify(updatedUser));
-      window.dispatchEvent(new Event("authChange"));
-      toast.success(res.data.message || `Promoted to ${updatedUser?.role_name} successfully! 🎉`);
-      setElevateSecretKey("");
-      setTimeout(() => {
-        window.location.reload();
-      }, 800);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to elevate role with this secret key ❌");
-    } finally {
-      setElevatingRole(false);
-    }
-  };
-
   // ⚡ ADMIN DIRECT ROLE EDIT MODAL
   const askEditRole = (u) => {
     setRoleEditUser(u);
@@ -465,46 +431,6 @@ export default function Account() {
             🗑️ Delete Account
           </button>
         </div>
-
-        {/* 🔑 IN-APP ROLE ELEVATION / REDEEM SECRET KEY CARD */}
-        {user?.role_name !== "Admin" && Number(user?.role_id) !== 3 && (
-          <div className="account-card" style={{ border: "1px solid rgba(124, 58, 237, 0.35)", background: "rgba(14, 14, 18, 0.85)" }}>
-            <h3 style={{ color: "#c084fc", borderBottom: "none", marginBottom: "4px" }}>
-              🔑 Upgrade Role / Redeem Secret Key
-            </h3>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "16px" }}>
-              Appointed as a Club Head, Club Mentor, Estate Manager, Principal, or Director? Enter your secret key here to instantly upgrade your account while keeping your past history intact.
-            </p>
-            <form onSubmit={handleElevateRole} style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-              <div className="key-input-wrapper" style={{ flex: 1, minWidth: "260px" }}>
-                <input
-                  type={showElevateInputKey ? "text" : "password"}
-                  placeholder="Enter Secret Key (e.g. KEY_PRINCIPAL_... or Club Key)"
-                  value={elevateSecretKey}
-                  onChange={(e) => setElevateSecretKey(e.target.value)}
-                  className="key-input"
-                  style={{ width: "100%", padding: "10px 14px" }}
-                />
-                <button
-                  type="button"
-                  className="action-icon-btn"
-                  onClick={() => setShowElevateInputKey(!showElevateInputKey)}
-                  title={showElevateInputKey ? "Hide Key" : "Show Key"}
-                >
-                  {showElevateInputKey ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-              <button
-                type="submit"
-                className="hp-btn hp-btn-primary"
-                disabled={!elevateSecretKey.trim() || elevatingRole}
-                style={{ padding: "10px 20px", fontSize: "0.9rem", fontWeight: "600" }}
-              >
-                {elevatingRole ? "Upgrading..." : "⚡ Elevate Role"}
-              </button>
-            </form>
-          </div>
-        )}
 
         {/* 🔑 ADMIN SECRET KEYS MANAGEMENT SECTION */}
         {(user?.role_name === "Admin" || user?.role_id === 3) && (
@@ -1091,14 +1017,21 @@ export default function Account() {
                     fontSize: "0.95rem"
                   }}
                 >
-                  <option value="1" style={{ background: "#18181b" }}>🎓 Student (Role 1)</option>
-                  <option value="2" style={{ background: "#18181b" }}>👨‍🏫 Teacher (Role 2)</option>
-                  <option value="4" style={{ background: "#18181b" }}>👑 Club Head (Role 4)</option>
-                  <option value="5" style={{ background: "#18181b" }}>🎓 Club Mentor (Role 5)</option>
-                  <option value="6" style={{ background: "#18181b" }}>🏢 Estate Manager (Role 6)</option>
-                  <option value="7" style={{ background: "#18181b" }}>👑 Principal (Role 7)</option>
-                  <option value="8" style={{ background: "#18181b" }}>🎓 Director (Role 8)</option>
-                  <option value="3" style={{ background: "#18181b" }}>🛡️ Admin (Role 3)</option>
+                  {Number(roleEditUser.role_id) === 1 || Number(roleEditUser.role_id) === 4 ? (
+                    <>
+                      <option value="1" style={{ background: "#18181b" }}>🎓 Student (Base Student Member)</option>
+                      <option value="4" style={{ background: "#18181b" }}>👑 Club Head (Student Club Leadership)</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="2" style={{ background: "#18181b" }}>👨‍🏫 Teacher / Faculty (Base Faculty)</option>
+                      <option value="5" style={{ background: "#18181b" }}>🎓 Club Mentor (Level 1 Reviewer)</option>
+                      <option value="6" style={{ background: "#18181b" }}>🏢 Estate Manager (Level 2 Reviewer)</option>
+                      <option value="7" style={{ background: "#18181b" }}>👑 Principal (Level 3 Reviewer)</option>
+                      <option value="8" style={{ background: "#18181b" }}>🎓 Director (Level 4 Reviewer - Highest Executive)</option>
+                      <option value="3" style={{ background: "#18181b" }}>🛡️ Admin (System Administrator)</option>
+                    </>
+                  )}
                 </select>
               </div>
 

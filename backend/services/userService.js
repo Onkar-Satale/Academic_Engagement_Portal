@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { db } from "../config/db.js";
 import { RoleModel } from "../models/roleModel.js";
 import { UserModel } from "../models/userModel.js";
 import { ClubModel } from "../models/clubModel.js";
@@ -134,6 +135,31 @@ export const userService = {
     if (!targetUser) {
       throw new ApiError(404, "User not found.");
     }
+
+    const currentRoleId = Number(targetUser.role_id);
+
+    // 1. Student Track (Role 1: Student, Role 4: Club Head)
+    const isStudentTrack = currentRoleId === 1 || currentRoleId === 4;
+    if (isStudentTrack) {
+      if (roleIdNum !== 1 && roleIdNum !== 4) {
+        throw new ApiError(400, "Students can only be promoted to Club Head. They cannot be assigned to faculty or executive posts.");
+      }
+      // If stepped down from Club Head to Student, unlink from club leadership
+      if (currentRoleId === 4 && roleIdNum === 1) {
+        await db.query("UPDATE club SET club_head_id = NULL WHERE club_head_id = ?", [targetUserId]);
+      }
+    } 
+    // 2. Faculty / Administrative Track (Teacher: 2, Mentor: 5, Estate Manager: 6, Principal: 7, Director: 8, Admin: 3)
+    else {
+      if (roleIdNum === 1) {
+        throw new ApiError(400, "Faculty and administrative staff cannot be converted into a Student.");
+      }
+      // If transitioned away from Club Mentor, unlink from mentor assignment
+      if (currentRoleId === 5 && roleIdNum !== 5) {
+        await db.query("UPDATE club SET club_mentor_id = NULL WHERE club_mentor_id = ?", [targetUserId]);
+      }
+    }
+
     await UserModel.updateRole(targetUserId, roleIdNum);
     return await UserModel.findById(targetUserId);
   }
