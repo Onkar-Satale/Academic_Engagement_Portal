@@ -101,7 +101,10 @@ export default function Account() {
   const fetchDbRoles = async () => {
     try {
       const res = await api.get("/users/roles");
-      const filtered = (res.data || []).filter(r => ["Principal", "Director", "Estate Manager"].includes(r.role_name));
+      const desiredOrder = ["Estate Manager", "Principal", "Director"];
+      const filtered = (res.data || [])
+        .filter(r => desiredOrder.includes(r.role_name))
+        .sort((a, b) => desiredOrder.indexOf(a.role_name) - desiredOrder.indexOf(b.role_name));
       setDbRoles(filtered);
       if (filtered.length > 0) {
         setSelectedRoleForKey(filtered[0].role_id);
