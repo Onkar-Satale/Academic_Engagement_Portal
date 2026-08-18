@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "./ClubDetails.css";
@@ -32,9 +32,6 @@ export default function ClubDetails() {
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
 
-
-
-
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -42,82 +39,51 @@ export default function ClubDetails() {
     category: "",
     activities: "",
     club_head_id: "",
+    club_mentor_id: "",
   });
 
-  const [visibleClubKeys, setVisibleClubKeys] = useState({ head: false, mentor: false });
-  const [copiedClubKeyType, setCopiedClubKeyType] = useState(null);
-  const [showRevokeClubKeyConfirm, setShowRevokeClubKeyConfirm] = useState(false);
-  const [keyTypeToRevoke, setKeyTypeToRevoke] = useState(null);
+  const [candidates, setCandidates] = useState({ students: [], teachers: [] });
+  const [headSearch, setHeadSearch] = useState("");
+  const [headDropdownOpen, setHeadDropdownOpen] = useState(false);
+  const [mentorSearch, setMentorSearch] = useState("");
+  const [mentorDropdownOpen, setMentorDropdownOpen] = useState(false);
 
-  const toggleClubKeyVisibility = (type) => {
-    setVisibleClubKeys(prev => ({
-      ...prev,
-      [type]: !prev[type]
-    }));
-  };
-
-  const copyClubKey = (text, type) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedClubKeyType(type);
-    toast.info("Club secret key copied to clipboard! 📋");
-    setTimeout(() => {
-      setCopiedClubKeyType(curr => (curr === type ? null : curr));
-    }, 2000);
-  };
-
-  const generateCryptoClubKey = async (type) => {
-    try {
-      const array = new Uint8Array(16);
-      window.crypto.getRandomValues(array);
-      const randomHex = Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
-      const clubPrefix = club?.name ? club.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() : "CLB";
-      const generatedKey = `KEY_${clubPrefix}_${type === 'mentor' ? 'MNTR' : 'HEAD'}_${randomHex}`;
-
-      const token = localStorage.getItem("token");
-      await api.post(`/clubs/${clubId}/generate-key`, {
-        key_type: type,
-        secret_key: generatedKey
-      }, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-
-      toast.success(`Cryptographically secure ${type === 'mentor' ? 'Club Mentor' : 'Club Head'} key generated & activated 🛡️`);
-      fetchClub();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to generate key ❌");
-    }
-  };
-
-  const askRevokeClubKey = (type) => {
-    setKeyTypeToRevoke(type);
-    setShowRevokeClubKeyConfirm(true);
-  };
-
-  const confirmRevokeClubKey = async () => {
-    if (!keyTypeToRevoke) return;
-    try {
-      const token = localStorage.getItem("token");
-      await api.post(`/clubs/${clubId}/revoke-key`, {
-        key_type: keyTypeToRevoke
-      }, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      toast.success(`${keyTypeToRevoke === 'mentor' ? 'Club Mentor' : 'Club Head'} key revoked successfully 🚫`);
-      setShowRevokeClubKeyConfirm(false);
-      setKeyTypeToRevoke(null);
-      fetchClub();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to revoke key ❌");
-    }
-  };
+  const headRef = useRef(null);
+  const mentorRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
+  const isAdmin = user && (user.role_name === "Admin" || user.role_id === 3 || user.role === 3);
+
+  const fetchCandidates = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get("/clubs/candidates", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCandidates(res.data || { students: [], teachers: [] });
+    } catch (err) {
+      console.error("Failed to fetch candidates:", err);
+    }
+  };
 
   useEffect(() => {
     fetchClub();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchCandidates();
   }, [clubId]);
+
+  // Click outside listener for dropdowns
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (headRef.current && !headRef.current.contains(e.target)) {
+        setHeadDropdownOpen(false);
+      }
+      if (mentorRef.current && !mentorRef.current.contains(e.target)) {
+        setMentorDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   const fetchClub = async () => {
     try {
@@ -180,8 +146,6 @@ export default function ClubDetails() {
     }
   };
 
-
-  const isAdmin = user && (user.role_name === "Admin" || user.role_id === 3 || user.role === 3);
   const isAuthority = user && (["Admin", "Estate Manager", "Principal", "Director", "Club Mentor", "Club Head", "Teacher"].includes(user.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(user.role_id) || [2, 3, 5, 6, 7, 8, 9].includes(user.role));
   const isClubHead = user && (user.role_name === "Club Head" || user.role_id === 4 || user.role === 4 || (club && club.club_head_id === user.id));
   const isClubMentor = user && (user.role_name === "Club Mentor" || user.role_id === 5 || user.role === 5 || (club && club.club_mentor_id === user.id));
@@ -357,9 +321,9 @@ export default function ClubDetails() {
 
           {editing ? (
             <form className="club-edit-form" onSubmit={submitEdit}>
-              <h2>Edit Club</h2>
+              <h2>Edit Club Details & Leadership</h2>
 
-              <label>Club Name</label>
+              <label>Club Name *</label>
               <input
                 name="name"
                 value={formData.name}
@@ -367,19 +331,24 @@ export default function ClubDetails() {
                 required
               />
 
-              <label>Tagline</label>
-              <input
-                name="tagline"
-                value={formData.tagline}
-                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-              />
-
-              <label>Category</label>
-              <input
-                name="category"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <div>
+                  <label>Tagline</label>
+                  <input
+                    name="tagline"
+                    value={formData.tagline}
+                    onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label>Category</label>
+                  <input
+                    name="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  />
+                </div>
+              </div>
 
               <label>Description</label>
               <textarea
@@ -397,7 +366,209 @@ export default function ClubDetails() {
                 onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
               />
 
-              <div className="club-edit-form-actions">
+              {/* 👑 Search & Reassign Club Head (Admin Only) */}
+              {isAdmin && (
+                <div style={{ marginTop: "14px", padding: "14px", background: "rgba(0, 0, 0, 0.35)", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)" }} ref={headRef}>
+                  <label style={{ display: "block", fontSize: "0.88rem", color: "#fde047", fontWeight: 700, marginBottom: "8px" }}>
+                    👑 Reassign Club Head (Student)
+                  </label>
+
+                  {formData.club_head_id && (candidates.students || []).find(s => String(s.user_id) === String(formData.club_head_id)) ? (
+                    (() => {
+                      const s = (candidates.students || []).find(s => String(s.user_id) === String(formData.club_head_id));
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#27272a", border: "1px solid rgba(234, 179, 8, 0.4)", borderRadius: "8px", padding: "8px 14px", marginBottom: "6px" }}>
+                          <div>
+                            <span style={{ fontWeight: 700, color: "#f8fafc" }}>{s.name}</span>
+                            <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>({s.email})</span>
+                            {s.department && (
+                              <span style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
+                                {s.department}{s.year ? ` - Yr ${s.year}` : ''}
+                              </span>
+                            )}
+                            {Number(s.user_id) === Number(club?.club_head_id) && (
+                              <span style={{ color: "#fde047", fontSize: "0.75rem", marginLeft: "8px", fontWeight: 600 }}>👑 Current Head</span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setFormData(prev => ({ ...prev, club_head_id: "" })); setHeadSearch(""); }}
+                            style={{ background: "none", border: "none", color: "#ef4444", fontSize: "1rem", cursor: "pointer", fontWeight: "bold" }}
+                            title="Remove selection"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        placeholder="🔍 Search student by name, email, or department..."
+                        value={headSearch}
+                        onChange={(e) => {
+                          setHeadSearch(e.target.value);
+                          setHeadDropdownOpen(true);
+                        }}
+                        onFocus={() => setHeadDropdownOpen(true)}
+                        style={{ width: "100%", padding: "10px 14px", background: "#18181b", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff", outline: "none", boxSizing: "border-box" }}
+                      />
+
+                      {headDropdownOpen && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: "4px", background: "#18181b", border: "1px solid rgba(234, 179, 8, 0.4)", borderRadius: "8px", maxHeight: "200px", overflowY: "auto", zIndex: 50, boxShadow: "0 10px 30px rgba(0,0,0,0.7)" }}>
+                          {(candidates.students || []).filter(s => {
+                            if (!headSearch.trim()) return true;
+                            const q = headSearch.toLowerCase();
+                            return (
+                              (s.name && s.name.toLowerCase().includes(q)) ||
+                              (s.email && s.email.toLowerCase().includes(q)) ||
+                              (s.department && s.department.toLowerCase().includes(q))
+                            );
+                          }).length === 0 ? (
+                            <p style={{ padding: "12px", color: "#94a3b8", margin: 0, fontSize: "0.85rem", textAlign: "center" }}>No students found</p>
+                          ) : (
+                            (candidates.students || []).filter(s => {
+                              if (!headSearch.trim()) return true;
+                              const q = headSearch.toLowerCase();
+                              return (
+                                (s.name && s.name.toLowerCase().includes(q)) ||
+                                (s.email && s.email.toLowerCase().includes(q)) ||
+                                (s.department && s.department.toLowerCase().includes(q))
+                              );
+                            }).map((s) => (
+                              <div
+                                key={s.user_id}
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, club_head_id: String(s.user_id) }));
+                                  setHeadDropdownOpen(false);
+                                  setHeadSearch("");
+                                }}
+                                style={{ padding: "10px 14px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(234, 179, 8, 0.15)")}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                              >
+                                <div>
+                                  <span style={{ fontWeight: 600, color: "#fff" }}>{s.name}</span>
+                                  <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>{s.email}</span>
+                                </div>
+                                {s.department && (
+                                  <span style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
+                                    {s.department}{s.year ? ` - Yr ${s.year}` : ''}
+                                  </span>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 🎓 Search & Reassign Club Mentor (Admin Only) */}
+              {isAdmin && (
+                <div style={{ marginTop: "14px", padding: "14px", background: "rgba(0, 0, 0, 0.35)", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)" }} ref={mentorRef}>
+                  <label style={{ display: "block", fontSize: "0.88rem", color: "#fde047", fontWeight: 700, marginBottom: "8px" }}>
+                    🎓 Reassign Club Mentor (Teacher / Faculty)
+                  </label>
+
+                  {formData.club_mentor_id && (candidates.teachers || []).find(t => String(t.user_id) === String(formData.club_mentor_id)) ? (
+                    (() => {
+                      const t = (candidates.teachers || []).find(t => String(t.user_id) === String(formData.club_mentor_id));
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#27272a", border: "1px solid rgba(234, 179, 8, 0.4)", borderRadius: "8px", padding: "8px 14px", marginBottom: "6px" }}>
+                          <div>
+                            <span style={{ fontWeight: 700, color: "#f8fafc" }}>Prof. {t.name}</span>
+                            <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>({t.email})</span>
+                            {t.department && (
+                              <span style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
+                                {t.department}
+                              </span>
+                            )}
+                            {Number(t.user_id) === Number(club?.club_mentor_id) && (
+                              <span style={{ color: "#fde047", fontSize: "0.75rem", marginLeft: "8px", fontWeight: 600 }}>🎓 Current Mentor</span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setFormData(prev => ({ ...prev, club_mentor_id: "" })); setMentorSearch(""); }}
+                            style={{ background: "none", border: "none", color: "#ef4444", fontSize: "1rem", cursor: "pointer", fontWeight: "bold" }}
+                            title="Remove selection"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        placeholder="🔍 Search teacher by name, email, or department..."
+                        value={mentorSearch}
+                        onChange={(e) => {
+                          setMentorSearch(e.target.value);
+                          setMentorDropdownOpen(true);
+                        }}
+                        onFocus={() => setMentorDropdownOpen(true)}
+                        style={{ width: "100%", padding: "10px 14px", background: "#18181b", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff", outline: "none", boxSizing: "border-box" }}
+                      />
+
+                      {mentorDropdownOpen && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: "4px", background: "#18181b", border: "1px solid rgba(234, 179, 8, 0.4)", borderRadius: "8px", maxHeight: "200px", overflowY: "auto", zIndex: 50, boxShadow: "0 10px 30px rgba(0,0,0,0.7)" }}>
+                          {(candidates.teachers || []).filter(t => {
+                            if (!mentorSearch.trim()) return true;
+                            const q = mentorSearch.toLowerCase();
+                            return (
+                              (t.name && t.name.toLowerCase().includes(q)) ||
+                              (t.email && t.email.toLowerCase().includes(q)) ||
+                              (t.department && t.department.toLowerCase().includes(q))
+                            );
+                          }).length === 0 ? (
+                            <p style={{ padding: "12px", color: "#94a3b8", margin: 0, fontSize: "0.85rem", textAlign: "center" }}>No faculty found</p>
+                          ) : (
+                            (candidates.teachers || []).filter(t => {
+                              if (!mentorSearch.trim()) return true;
+                              const q = mentorSearch.toLowerCase();
+                              return (
+                                (t.name && t.name.toLowerCase().includes(q)) ||
+                                (t.email && t.email.toLowerCase().includes(q)) ||
+                                (t.department && t.department.toLowerCase().includes(q))
+                              );
+                            }).map((t) => (
+                              <div
+                                key={t.user_id}
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, club_mentor_id: String(t.user_id) }));
+                                  setMentorDropdownOpen(false);
+                                  setMentorSearch("");
+                                }}
+                                style={{ padding: "10px 14px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(234, 179, 8, 0.15)")}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                              >
+                                <div>
+                                  <span style={{ fontWeight: 600, color: "#fff" }}>Prof. {t.name}</span>
+                                  <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>{t.email}</span>
+                                </div>
+                                {t.department && (
+                                  <span style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
+                                    {t.department}
+                                  </span>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="club-edit-form-actions" style={{ marginTop: "20px" }}>
                 <button type="submit">Save Changes</button>
                 <button type="button" onClick={() => setEditing(false)}>Cancel</button>
               </div>
@@ -563,236 +734,6 @@ export default function ClubDetails() {
             </div>
           )}
 
-          {/* 🔑 CLUB SECRET REGISTRATION KEYS MANAGEMENT (Admin Only) */}
-          {isAdmin && club && (
-            <div className="club-keys-management-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                <h3>🔑 Club Secret Keys Management</h3>
-              </div>
-              <p className="club-keys-subtitle">
-                Cryptographically secure single-use registration keys for the Club Head and Club Mentor. Keep them private until shared with the appointed authority.
-              </p>
-
-              <div className="club-keys-table-wrapper">
-                <table className="club-keys-table">
-                  <thead>
-                    <tr>
-                      <th>Role</th>
-                      <th>Secret Key</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* 👑 Club Head Key Row */}
-                    <tr>
-                      <td>
-                        <span className="role-tag">👑 Club Head</span>
-                      </td>
-                      <td>
-                        {club.club_head_key ? (
-                          <div className="key-code-badge">
-                            <span className="key-badge-text">
-                              {visibleClubKeys.head ? club.club_head_key : "••••••••••••••••••••••••"}
-                            </span>
-                            <div className="key-badge-actions">
-                              <button
-                                type="button"
-                                className="key-badge-btn"
-                                onClick={() => toggleClubKeyVisibility("head")}
-                                title={visibleClubKeys.head ? "Hide Key" : "Show Key"}
-                              >
-                                {visibleClubKeys.head ? (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                    <line x1="1" y1="1" x2="23" y2="23" />
-                                  </svg>
-                                ) : (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                  </svg>
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                className="key-badge-btn"
-                                onClick={() => copyClubKey(club.club_head_key, "head")}
-                                title="Copy Secret Key"
-                              >
-                                {copiedClubKeyType === "head" ? (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                ) : (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                  </svg>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        ) : club.club_head_id ? (
-                          <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: "600" }}>🔒 Single-Use Key Claimed</span>
-                        ) : (
-                          <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>No key generated</span>
-                        )}
-                      </td>
-                      <td>
-                        {club.club_head_id ? (
-                          <span className="status-badge status-used">
-                            👤 Assigned: {club.head_name || "Club Head"}
-                          </span>
-                        ) : club.club_head_key ? (
-                          <span className="status-badge status-active">
-                            ⚡ Active (Unclaimed)
-                          </span>
-                        ) : (
-                          <span className="status-badge status-empty">
-                            🚫 No Key Set
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <div className="club-key-action-group">
-                          {club.club_head_key ? (
-                            <button
-                              type="button"
-                              className="club-key-revoke-btn"
-                              onClick={() => askRevokeClubKey("head")}
-                              title="Delete / revoke this secret key"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                              <span>Delete Key</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="club-key-gen-action-btn"
-                              onClick={() => generateCryptoClubKey("head")}
-                              title="Auto-generate a new cryptographically secure key for Club Head"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
-                              </svg>
-                              <span>Auto-Gen Key</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* 🎓 Club Mentor Key Row */}
-                    <tr>
-                      <td>
-                        <span className="role-tag">🎓 Club Mentor</span>
-                      </td>
-                      <td>
-                        {club.club_mentor_key ? (
-                          <div className="key-code-badge">
-                            <span className="key-badge-text">
-                              {visibleClubKeys.mentor ? club.club_mentor_key : "••••••••••••••••••••••••"}
-                            </span>
-                            <div className="key-badge-actions">
-                              <button
-                                type="button"
-                                className="key-badge-btn"
-                                onClick={() => toggleClubKeyVisibility("mentor")}
-                                title={visibleClubKeys.mentor ? "Hide Key" : "Show Key"}
-                              >
-                                {visibleClubKeys.mentor ? (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                    <line x1="1" y1="1" x2="23" y2="23" />
-                                  </svg>
-                                ) : (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                  </svg>
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                className="key-badge-btn"
-                                onClick={() => copyClubKey(club.club_mentor_key, "mentor")}
-                                title="Copy Secret Key"
-                              >
-                                {copiedClubKeyType === "mentor" ? (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                ) : (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                  </svg>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        ) : club.club_mentor_id ? (
-                          <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: "600" }}>🔒 Single-Use Key Claimed</span>
-                        ) : (
-                          <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>No key generated</span>
-                        )}
-                      </td>
-                      <td>
-                        {club.club_mentor_id ? (
-                          <span className="status-badge status-used">
-                            👤 Assigned: {club.mentor_name || "Club Mentor"}
-                          </span>
-                        ) : club.club_mentor_key ? (
-                          <span className="status-badge status-active">
-                            ⚡ Active (Unclaimed)
-                          </span>
-                        ) : (
-                          <span className="status-badge status-empty">
-                            🚫 No Key Set
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <div className="club-key-action-group">
-                          {club.club_mentor_key ? (
-                            <button
-                              type="button"
-                              className="club-key-revoke-btn"
-                              onClick={() => askRevokeClubKey("mentor")}
-                              title="Delete / revoke this secret key"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                              <span>Delete Key</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="club-key-gen-action-btn"
-                              onClick={() => generateCryptoClubKey("mentor")}
-                              title="Auto-generate a new cryptographically secure key for Club Mentor"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
-                              </svg>
-                              <span>Auto-Gen Key</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
           {canManageClub && (
             <div className="club-admin-buttons">
               {/* Only Club Head or Admin can request event permission; Club Mentor approves at Level 1 */}
@@ -822,6 +763,9 @@ export default function ClubDetails() {
                     club_mentor_id: club.club_mentor_id || "",
                   });
                 }
+                if (isAdmin) {
+                  fetchCandidates();
+                }
                 setEditing(true);
               }}>Edit Club</button>
               <button className="delete-btn" onClick={() => setShowConfirm(true)}>Delete Club</button>
@@ -835,27 +779,6 @@ export default function ClubDetails() {
             <div className="confirm-actions">
               <button className="yes-btn danger" style={{ background: '#ef4444' }} onClick={deleteClub}>Yes, Delete</button>
               <button className="no-btn" onClick={() => setShowConfirm(false)}>Cancel</button>
-            </div>
-          </div>
-        )}
-
-        {/* 🗑️ REVOKE CLUB KEY CONFIRM MODAL */}
-        {showRevokeClubKeyConfirm && (
-          <div className="confirm-toast">
-            <p>🗑️ Are you sure you want to <b>delete the secret key for {keyTypeToRevoke === "mentor" ? "Club Mentor" : "Club Head"}</b>? This action cannot be undone!</p>
-            <div className="confirm-actions">
-              <button className="yes-btn danger" style={{ background: '#ef4444' }} onClick={confirmRevokeClubKey}>
-                Yes, Delete Key
-              </button>
-              <button
-                className="no-btn"
-                onClick={() => {
-                  setShowRevokeClubKeyConfirm(false);
-                  setKeyTypeToRevoke(null);
-                }}
-              >
-                Cancel
-              </button>
             </div>
           </div>
         )}

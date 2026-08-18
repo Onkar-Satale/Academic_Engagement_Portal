@@ -558,7 +558,11 @@ export default function HomePage() {
                         {feedbacks.length > 0 ? (
                             feedbacks.slice(0, 3).map((t, idx) => {
                                 const displayName = t.user_name || t.name;
-                                const displayRole = `${t.role_name || t.role}${t.department ? `, ${t.department}` : ''}`;
+                                const isRetired = t.is_retired === 1 || t.is_retired === true;
+                                const baseRole = isRetired && !["Student", "Club Head"].includes(t.role_name || t.role)
+                                    ? `🏷️ Retired ${t.role_name || t.role || 'Teacher'}`
+                                    : (t.role_name || t.role);
+                                const displayRole = `${baseRole}${t.department ? `, ${t.department}` : ''}`;
                                 const avatarInitial = (displayName || "?").charAt(0).toUpperCase();
                                 const fullText = t.message || t.text || "";
                                 const canDelete = t.feedback_id && user && Number(user.id) === Number(t.user_id);
@@ -707,7 +711,11 @@ export default function HomePage() {
                             {feedbacks.length > 0 ? feedbacks.map((f, i) => {
                                 const displayName = f.user_name || f.name;
                                 const avatar = (displayName || "?").charAt(0).toUpperCase();
-                                const roleStr = `${f.role_name || f.role}${f.department ? `, ${f.department}` : ''}`;
+                                const isRetired = f.is_retired === 1 || f.is_retired === true;
+                                const baseRole = isRetired && !["Student", "Club Head"].includes(f.role_name || f.role)
+                                    ? `🏷️ Retired ${f.role_name || f.role || 'Teacher'}`
+                                    : (f.role_name || f.role || "Community Member");
+                                const roleStr = `${baseRole}${f.department ? `, ${f.department}` : ''}`;
                                 const canDelete = f.feedback_id && user && Number(user.id) === Number(f.user_id);
                                 const fullText = f.message || f.text || "";
 

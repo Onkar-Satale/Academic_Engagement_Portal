@@ -2,47 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ClubCard from "../components/ClubCard";
+import FacultyChairSelector from "../components/FacultyChairSelector";
 import api from "../api/axios";
 import "./Account.css";
 import EventCard from "../components/EventCard";
-import CustomSelect from "../components/CustomSelect";
 
 // Clean SVG Icons
-const EyeIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
-const EyeOffIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-    <line x1="1" y1="1" x2="23" y2="23" />
-  </svg>
-);
-
-const CopyIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
-const SparklesIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-    <path d="M5 3v4" />
-    <path d="M19 17v4" />
-  </svg>
-);
-
 const TrashIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="3 6 5 6 21 6" />
@@ -54,7 +19,7 @@ const TrashIcon = () => (
 
 export default function Account() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user") || "null"));
   const clubsRef = useRef(null);
 
   const scrollToClubs = () => {
@@ -70,16 +35,19 @@ export default function Account() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [events, setEvents] = useState([]);
 
-  // 🔑 ADMIN SECRET KEYS STATES
-  const [secretKeys, setSecretKeys] = useState([]);
-  const [dbRoles, setDbRoles] = useState([]);
-  const [selectedRoleForKey, setSelectedRoleForKey] = useState("");
-  const [customKeyInput, setCustomKeyInput] = useState("");
-  const [generatingKey, setGeneratingKey] = useState(false);
-  const [keysLoading, setKeysLoading] = useState(false);
-  const [showInputKey, setShowInputKey] = useState(false);
-  const [visibleKeys, setVisibleKeys] = useState({});
-  const [copiedKeyId, setCopiedKeyId] = useState(null);
+  // 📜 AUTHORITY DECISION & APPROVAL HISTORY
+  const [authorityHistory, setAuthorityHistory] = useState([]);
+
+  // 🏛️ INSTITUTIONAL AUTHORITY CHAIRS STATES
+  const [authoritySeats, setAuthoritySeats] = useState({
+    admin_id: "",
+    director_id: "",
+    principal_id: "",
+    estate_manager_id: ""
+  });
+  const [facultyCandidates, setFacultyCandidates] = useState([]);
+  const [savingSeats, setSavingSeats] = useState(false);
+  const [seatsLoading, setSeatsLoading] = useState(false);
 
   // 👥 ADMIN ALL USERS DIRECTORY STATES
   const [allUsers, setAllUsers] = useState([]);
@@ -89,35 +57,120 @@ export default function Account() {
   const [userToDelete, setUserToDelete] = useState(null);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [deletingUser, setDeletingUser] = useState(false);
+  const [togglingUserId, setTogglingUserId] = useState(null);
+  const [togglingRetiredUserId, setTogglingRetiredUserId] = useState(null);
+  const [togglingPassoutUserId, setTogglingPassoutUserId] = useState(null);
+  const [batchActionLoading, setBatchActionLoading] = useState(false);
+  const [showBatchGraduateModal, setShowBatchGraduateModal] = useState(false);
+  const [showBatchPromoteModal, setShowBatchPromoteModal] = useState(false);
+  const [batchDeptFilter, setBatchDeptFilter] = useState("all");
 
-  // ⚡ ADMIN DIRECT ROLE EDIT MODAL
-  const [roleEditUser, setRoleEditUser] = useState(null);
-  const [selectedNewRole, setSelectedNewRole] = useState("");
-  const [updatingRole, setUpdatingRole] = useState(false);
-  const [showRoleEditModal, setShowRoleEditModal] = useState(false);
-
-  // Roles that should only see profile info (no student events/clubs cards on account page)
   const profileOnlyRoles = ["Admin", "Estate Manager", "Principal", "Director", "Club Mentor", "Club Head", "Teacher"];
   const isProfileOnly = profileOnlyRoles.includes(user?.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role_id) || [2, 3, 5, 6, 7, 8, 9].includes(user?.role);
+  const isAdmin = user?.role_name === "Admin" || user?.role_id === 3;
 
   useEffect(() => {
-    if (user?.role_name === "Admin" || user?.role_id === 3) {
-      fetchSecretKeys();
-      fetchDbRoles();
-      fetchAllUsers();
-    }
-    // Only fetch clubs and events if user is not a profile-only role
-    if (!isProfileOnly) {
-      fetchMyClubs();
-      fetchMyEvents();
-    } else {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    syncFreshProfile();
+
+    const handleAuth = () => {
+      const u = JSON.parse(localStorage.getItem("user") || "null");
+      setUser(u);
+    };
+    const handleFocus = () => {
+      const u = JSON.parse(localStorage.getItem("user") || "null");
+      if (u?.role_name === "Admin" || u?.role_id === 3) {
+        fetchAllUsers();
+        fetchAuthoritySeats();
+      }
+    };
+
+    window.addEventListener("authChange", handleAuth);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("authChange", handleAuth);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
+  const syncFreshProfile = async () => {
+    try {
+      const res = await api.get("/users/profile");
+      if (res.data?.user) {
+        setUser(res.data.user);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        if (res.data.token) localStorage.setItem("token", res.data.token);
+        if (res.data.refreshToken) localStorage.setItem("refreshToken", res.data.refreshToken);
+
+        const freshIsAdmin = res.data.user.role_name === "Admin" || res.data.user.role_id === 3;
+        if (freshIsAdmin) {
+          fetchAllUsers();
+          fetchAuthoritySeats();
+        }
+
+        const freshIsProfileOnly = profileOnlyRoles.includes(res.data.user.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(res.data.user.role_id);
+        if (!freshIsProfileOnly) {
+          fetchMyClubs();
+          fetchMyEvents();
+        } else {
+          setLoading(false);
+        }
+      }
+    } catch (err) {
+      console.warn("Profile sync error:", err);
+      setLoading(false);
+    }
+    fetchAuthorityHistory();
+  };
+
+  const fetchAuthorityHistory = async () => {
+    try {
+      const res = await api.get("/users/authority-history");
+      setAuthorityHistory(res.data || []);
+    } catch (err) {
+      console.warn("Authority history load warning:", err);
+    }
+  };
+
+  const fetchAuthoritySeats = async () => {
+    setSeatsLoading(true);
+    try {
+      const res = await api.get("/users/authority-seats");
+      const { currentHolders, facultyCandidates } = res.data;
+      setFacultyCandidates(facultyCandidates || []);
+
+      const seatsObj = { admin_id: "", director_id: "", principal_id: "", estate_manager_id: "" };
+      (currentHolders || []).forEach((h) => {
+        if (h.role_id === 3) seatsObj.admin_id = String(h.user_id);
+        if (h.role_id === 8) seatsObj.director_id = String(h.user_id);
+        if (h.role_id === 7) seatsObj.principal_id = String(h.user_id);
+        if (h.role_id === 6) seatsObj.estate_manager_id = String(h.user_id);
+      });
+      setAuthoritySeats(seatsObj);
+    } catch (err) {
+      console.error("Failed to load authority seats", err);
+    } finally {
+      setSeatsLoading(false);
+    }
+  };
+
+  const handleSaveAuthoritySeats = async (e) => {
+    e.preventDefault();
+    setSavingSeats(true);
+    try {
+      const res = await api.put("/users/authority-seats", authoritySeats);
+      toast.success(res.data?.message || "Authority chairs updated successfully! 🏛️");
+      fetchAllUsers();
+      fetchAuthoritySeats();
+      syncFreshProfile();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update authority chairs ❌");
+    } finally {
+      setSavingSeats(false);
+    }
+  };
+
   const fetchAllUsers = async () => {
-    setUsersLoading(true);
     try {
       const res = await api.get("/users");
       setAllUsers(res.data || []);
@@ -128,118 +181,124 @@ export default function Account() {
     }
   };
 
-  const fetchDbRoles = async () => {
+  const handleToggleStatus = async (targetUser) => {
+    setTogglingUserId(targetUser.user_id);
     try {
-      const res = await api.get("/users/roles");
-      const desiredOrder = ["Estate Manager", "Principal", "Director"];
-      const filtered = (res.data || [])
-        .filter(r => desiredOrder.includes(r.role_name))
-        .sort((a, b) => desiredOrder.indexOf(a.role_name) - desiredOrder.indexOf(b.role_name));
-      setDbRoles(filtered);
-      if (filtered.length > 0) {
-        setSelectedRoleForKey(filtered[0].role_id);
-      }
+      const res = await api.patch(`/users/${targetUser.user_id}/toggle-status`);
+      toast.success(res.data?.message || "User status updated successfully!");
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.user_id === targetUser.user_id
+            ? { ...u, is_active: u.is_active === 1 ? 0 : 1 }
+            : u
+        )
+      );
     } catch (err) {
-      console.error("Failed to fetch DB roles", err);
-    }
-  };
-
-  const getKeyForRole = (roleId) => {
-    return secretKeys.find((k) => Number(k.role_id) === Number(roleId));
-  };
-
-  const fetchSecretKeys = async () => {
-    setKeysLoading(true);
-    try {
-      const res = await api.get("/users/secret-keys");
-      setSecretKeys(res.data);
-    } catch (err) {
-      console.error("Failed to fetch secret keys", err);
+      toast.error(err.response?.data?.message || "Failed to change user status ❌");
     } finally {
-      setKeysLoading(false);
+      setTogglingUserId(null);
     }
   };
 
-  // 🛡️ Cryptographically Secure Random Key Generator (Web Crypto API)
-  const generateCryptoKey = () => {
-    const existingKey = getKeyForRole(selectedRoleForKey);
-    if (existingKey) {
-      toast.warning(`A key already exists for this role (${existingKey.is_used ? 'Used' : 'Active'}). Delete the existing key first to generate a new one!`);
-      return;
-    }
-    const roleObj = dbRoles.find((r) => Number(r.role_id) === Number(selectedRoleForKey));
-    const rolePrefix = roleObj ? roleObj.role_name.replace(/\s+/g, "_").toUpperCase() : "ROLE";
-    const array = new Uint8Array(16); // 128-bit cryptographic randomness
-    window.crypto.getRandomValues(array);
-    const randomHex = Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
-    const newKey = `KEY_${rolePrefix}_${randomHex}`;
-    setCustomKeyInput(newKey);
-    toast.success("Cryptographically secure key generated (hidden by default) 🛡️");
-  };
-
-  const toggleKeyVisibility = (keyId) => {
-    setVisibleKeys((prev) => ({
-      ...prev,
-      [keyId]: !prev[keyId]
-    }));
-  };
-
-  const copyToClipboard = (text, id = "input") => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedKeyId(id);
-    toast.info("Secret key copied to clipboard! 📋");
-    setTimeout(() => {
-      setCopiedKeyId((curr) => (curr === id ? null : curr));
-    }, 2000);
-  };
-
-  const handleGenerateKey = async (e) => {
-    e.preventDefault();
-    const existingKey = getKeyForRole(selectedRoleForKey);
-    if (existingKey) {
-      toast.warning(`A key record already exists for this role. Delete it from the table below to generate a new key!`);
-      return;
-    }
-    if (!customKeyInput.trim()) {
-      toast.error("Please click 'Auto-Gen Key' or type a secret key in the box before activating! 🔑");
-      return;
-    }
-    setGeneratingKey(true);
+  const handleToggleSelfRetired = async () => {
     try {
-      await api.post("/users/generate-key", {
-        role_id: Number(selectedRoleForKey),
-        secret_key: customKeyInput.trim()
-      });
-      toast.success("Role invite key activated successfully! 🎉");
-      setCustomKeyInput("");
-      fetchSecretKeys();
+      const res = await api.patch("/users/me/toggle-retired");
+      toast.success(res.data?.message || "Retirement status updated!");
+      setUser((prev) => ({ ...prev, is_retired: res.data?.user?.is_retired, role_id: res.data?.user?.role_id, role_name: res.data?.user?.role_name }));
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      stored.is_retired = res.data?.user?.is_retired;
+      if (res.data?.user?.role_id) stored.role_id = res.data?.user?.role_id;
+      if (res.data?.user?.role_name) stored.role_name = res.data?.user?.role_name;
+      localStorage.setItem("user", JSON.stringify(stored));
+      syncFreshProfile();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to generate key ❌");
-    } finally {
-      setGeneratingKey(false);
+      toast.error(err.response?.data?.message || "Failed to update retirement status.");
     }
   };
 
-  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
-  const [keyToRevoke, setKeyToRevoke] = useState(null);
-
-  const askRevokeKey = (keyString, roleName = "") => {
-    setKeyToRevoke({ secret_key: keyString, role_name: roleName });
-    setShowRevokeConfirm(true);
+  const handleAdminToggleRetired = async (targetUser) => {
+    setTogglingRetiredUserId(targetUser.user_id);
+    try {
+      const res = await api.patch(`/users/${targetUser.user_id}/toggle-retired`);
+      toast.success(res.data?.message || "User retirement status updated!");
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.user_id === targetUser.user_id
+            ? {
+                ...u,
+                is_retired: res.data?.user?.is_retired,
+                role_id: res.data?.user?.role_id || u.role_id,
+                role_name: res.data?.user?.role_name || u.role_name
+              }
+            : u
+        )
+      );
+      fetchAuthoritySeats();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update retirement status.");
+    } finally {
+      setTogglingRetiredUserId(null);
+    }
   };
 
-  const confirmRevokeKey = async () => {
-    if (!keyToRevoke?.secret_key) return;
+  const handleToggleSelfPassout = async () => {
     try {
-      await api.post("/users/revoke-key", { secret_key: keyToRevoke.secret_key });
-      toast.success("Secret key record deleted successfully 🚫");
-      fetchSecretKeys();
+      const res = await api.patch("/users/me/toggle-passout");
+      toast.success(res.data?.message || "Academic status updated!");
+      setUser((prev) => ({ ...prev, is_passout: res.data?.user?.is_passout }));
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      stored.is_passout = res.data?.user?.is_passout;
+      localStorage.setItem("user", JSON.stringify(stored));
+      syncFreshProfile();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete key ❌");
+      toast.error(err.response?.data?.message || "Failed to update academic status.");
+    }
+  };
+
+  const handleAdminTogglePassout = async (targetUser) => {
+    setTogglingPassoutUserId(targetUser.user_id);
+    try {
+      const res = await api.patch(`/users/${targetUser.user_id}/toggle-passout`);
+      toast.success(res.data?.message || "Student status updated!");
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.user_id === targetUser.user_id
+            ? { ...u, is_passout: res.data?.user?.is_passout }
+            : u
+        )
+      );
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update passout status.");
     } finally {
-      setShowRevokeConfirm(false);
-      setKeyToRevoke(null);
+      setTogglingPassoutUserId(null);
+    }
+  };
+
+  const handleBatchGraduate = async () => {
+    setBatchActionLoading(true);
+    try {
+      const res = await api.post("/users/batch-graduate", { department: batchDeptFilter });
+      toast.success(res.data?.message || "Final Year BE students graduated successfully! 🎓");
+      setShowBatchGraduateModal(false);
+      fetchAllUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to execute batch graduation.");
+    } finally {
+      setBatchActionLoading(false);
+    }
+  };
+
+  const handleBatchPromote = async () => {
+    setBatchActionLoading(true);
+    try {
+      const res = await api.post("/users/batch-promote");
+      toast.success(res.data?.message || "Annual academic batch roll-over completed! 🚀");
+      setShowBatchPromoteModal(false);
+      fetchAllUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to execute annual roll-over.");
+    } finally {
+      setBatchActionLoading(false);
     }
   };
 
@@ -286,14 +345,16 @@ export default function Account() {
   // 👥 ADMIN USER DIRECTORY ACTIONS & FILTERING
   const roleCategories = [
     { key: "all", label: "All Users", icon: "👥" },
-    { key: "1", label: "Students", icon: "🎓", roleId: 1 },
-    { key: "2", label: "Teachers", icon: "👨‍🏫", roleId: 2 },
-    { key: "4", label: "Club Heads", icon: "👑", roleId: 4 },
-    { key: "5", label: "Club Mentors", icon: "🎓", roleId: 5 },
-    { key: "6", label: "Estate Managers", icon: "🏢", roleId: 6 },
-    { key: "7", label: "Principals", icon: "👑", roleId: 7 },
-    { key: "8", label: "Directors", icon: "🎓", roleId: 8 },
-    { key: "3", label: "Admins", icon: "🛡️", roleId: 3 },
+    { key: "1", label: "Students", icon: "🎓", roleId: 1, roleName: "Student" },
+    { key: "passout", label: "Passout / Alumni", icon: "🎓" },
+    { key: "retired", label: "Retired Faculty", icon: "🏷️" },
+    { key: "2", label: "Teachers", icon: "👨‍🏫", roleId: 2, roleName: "Teacher" },
+    { key: "4", label: "Club Heads", icon: "👑", roleId: 4, roleName: "Club Head" },
+    { key: "5", label: "Club Mentors", icon: "🎓", roleId: 5, roleName: "Club Mentor" },
+    { key: "6", label: "Estate Managers", icon: "🏢", roleId: 6, roleName: "Estate Manager" },
+    { key: "7", label: "Principals", icon: "👑", roleId: 7, roleName: "Principal" },
+    { key: "8", label: "Directors", icon: "🎓", roleId: 8, roleName: "Director" },
+    { key: "3", label: "Admins", icon: "🛡️", roleId: 3, roleName: "Admin" },
   ];
 
   const askDeleteUser = (u) => {
@@ -306,7 +367,7 @@ export default function Account() {
     setDeletingUser(true);
     try {
       await api.delete(`/users/${userToDelete.user_id}`);
-      toast.success(`User '${userToDelete.name}' (${userToDelete.role_name || "User"}) deleted successfully! 🗑️`);
+      toast.success(`User '${userToDelete.name}' deleted successfully! 🗑️`);
       setAllUsers((prev) => prev.filter((u) => u.user_id !== userToDelete.user_id));
       setShowDeleteUserModal(false);
       setUserToDelete(null);
@@ -319,8 +380,16 @@ export default function Account() {
 
   const filteredUsers = allUsers.filter((u) => {
     if (selectedRoleCategory !== "all") {
-      const targetRoleId = roleCategories.find(c => c.key === selectedRoleCategory)?.roleId;
-      if (Number(u.role_id) !== Number(targetRoleId)) return false;
+      if (selectedRoleCategory === "passout") {
+        if (!u.is_passout) return false;
+      } else if (selectedRoleCategory === "retired") {
+        if (!u.is_retired) return false;
+      } else {
+        const targetCat = roleCategories.find(c => c.key === selectedRoleCategory);
+        const matchesId = Number(u.role_id) === Number(targetCat?.roleId);
+        const matchesName = u.role_name?.toLowerCase() === targetCat?.roleName?.toLowerCase();
+        if (!matchesId && !matchesName) return false;
+      }
     }
     if (userSearchQuery.trim()) {
       const q = userSearchQuery.toLowerCase();
@@ -333,32 +402,6 @@ export default function Account() {
     }
     return true;
   });
-
-  // ⚡ ADMIN DIRECT ROLE EDIT MODAL
-  const askEditRole = (u) => {
-    setRoleEditUser(u);
-    setSelectedNewRole(String(u.role_id));
-    setShowRoleEditModal(true);
-  };
-
-  const confirmUpdateRole = async (e) => {
-    e.preventDefault();
-    if (!roleEditUser || !selectedNewRole) return;
-    setUpdatingRole(true);
-    try {
-      await api.patch(`/users/${roleEditUser.user_id}/role`, {
-        role_id: Number(selectedNewRole)
-      });
-      toast.success(`Role for '${roleEditUser.name}' updated successfully! ⚡`);
-      fetchAllUsers();
-      setShowRoleEditModal(false);
-      setRoleEditUser(null);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update role ❌");
-    } finally {
-      setUpdatingRole(false);
-    }
-  };
 
   // 🔹 CONFIRM DELETE ACCOUNT
   const confirmDeleteAccount = async () => {
@@ -392,14 +435,12 @@ export default function Account() {
     }
   };
 
-
-  if (loading) return <p>Loading your clubs...</p>;
+  if (loading) return <p>Loading your profile...</p>;
 
   return (
     <>
       <div className="account-container">
         {/* Header */}
-
         <div className="account-header">
           <h2>My Account</h2>
           <div className="header-actions">
@@ -416,266 +457,250 @@ export default function Account() {
           <h3>Personal Details</h3>
           <p><b>Name:</b> {user?.name}</p>
           <p><b>Email:</b> {user?.email}</p>
-          {!["Estate Manager", "Principal", "Director"].includes(user?.role_name) && (
+          {!["Admin", "Estate Manager", "Principal", "Director"].includes(user?.role_name) && user?.department && (
             <p><b>Department:</b> {user?.department}</p>
           )}
           {["Student", "Club Head"].includes(user?.role_name) && user?.year && (
             <p><b>Year:</b> {user?.year}</p>
           )}
-          <p><b>Role:</b> <span style={{ color: 'var(--primary-light)', fontWeight: '600' }}>{user?.role_name}</span></p>
+          <p><b>Role:</b> <span style={{ color: 'var(--primary-light)', fontWeight: '700', fontSize: '1.05rem' }}>
+            {(user?.is_retired === 1 || user?.is_retired === true) && !["Student", "Club Head"].includes(user?.role_name)
+              ? `Retired ${user?.role_name || 'Faculty'}`
+              : (user?.is_passout === 1 || user?.is_passout === true) && ["Student", "Club Head"].includes(user?.role_name)
+                ? `Passout / Alumni (Student)`
+                : user?.role_name}
+          </span></p>
 
-          <button
-            className="delete-account-btn"
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            🗑️ Delete Account
-          </button>
+          {["Student", "Club Head"].includes(user?.role_name) && (
+            <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <b style={{ color: "var(--text-muted)", fontWeight: "500" }}>Academic Status:</b>
+                {user?.is_passout === 1 || user?.is_passout === true ? (
+                  <span className="retired-status-badge" style={{ background: "rgba(168, 85, 247, 0.15)", color: "#d8b4fe", borderColor: "rgba(168, 85, 247, 0.35)" }}>
+                    🎓 Passout / Alumni
+                  </span>
+                ) : (
+                  <span className="active-faculty-badge" style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.35)" }}>
+                    🎓 Current Active Student (Year {user?.year || "1"})
+                  </span>
+                )}
+              </div>
+              <div>
+                <button
+                  type="button"
+                  className={user?.is_passout === 1 || user?.is_passout === true ? "reactivate-faculty-btn" : "declare-retirement-btn"}
+                  style={!(user?.is_passout === 1 || user?.is_passout === true) ? { background: "rgba(168, 85, 247, 0.15)", color: "#d8b4fe", borderColor: "rgba(168, 85, 247, 0.35)" } : {}}
+                  onClick={handleToggleSelfPassout}
+                >
+                  {user?.is_passout === 1 || user?.is_passout === true ? "🎓 Mark as Active Student" : "🎓 Declare Graduation (Mark as Passout)"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!["Student", "Club Head"].includes(user?.role_name) && Number(user?.role_id) !== 1 && Number(user?.role_id) !== 4 && (
+            <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <b style={{ color: "var(--text-muted)", fontWeight: "500" }}>Faculty Status:</b>
+                {user?.is_retired === 1 || user?.is_retired === true ? (
+                  <span className="retired-status-badge">🏷️ Retired Faculty</span>
+                ) : (
+                  <span className="active-faculty-badge">✅ Active Faculty</span>
+                )}
+              </div>
+              <div>
+                <button
+                  type="button"
+                  className={user?.is_retired === 1 || user?.is_retired === true ? "reactivate-faculty-btn" : "declare-retirement-btn"}
+                  onClick={handleToggleSelfRetired}
+                >
+                  {user?.is_retired === 1 || user?.is_retired === true ? "✅ Mark as Active Faculty" : "🏷️ Declare Retirement (Mark as Retired)"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: "16px" }}>
+            <button
+              className="delete-account-btn"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              🗑️ Delete Account
+            </button>
+          </div>
         </div>
 
-        {/* 🔑 ADMIN SECRET KEYS MANAGEMENT SECTION */}
-        {(user?.role_name === "Admin" || user?.role_id === 3) && (
-          <div className="account-card admin-keys-card">
-            <div className="admin-card-header">
+        {/* 📜 MY OFFICIAL APPROVAL & AUTHORITY DECISION HISTORY */}
+        {authorityHistory.length > 0 && (
+          <div className="account-card" style={{ border: "1px solid rgba(56, 189, 248, 0.3)", background: "linear-gradient(145deg, #0f172a 0%, #18181b 100%)" }}>
+            <div className="admin-card-header" style={{ marginBottom: "12px" }}>
               <div>
-                <h3>🔑 Authority Secret Key Management</h3>
-                <p className="subtitle-text">Generate, track, and revoke single-use cryptographically secure registration keys for Principal, Director, Estate Manager, etc.</p>
+                <h3 style={{ color: "#38bdf8", display: "flex", alignItems: "center", gap: "8px", margin: "0 0 4px 0" }}>
+                  📜 My Official Approval & Decision History
+                </h3>
+                <p className="subtitle-text" style={{ color: "#94a3b8", margin: 0 }}>
+                  Audit log of all event permission reviews and decisions submitted by your account across institutional roles.
+                </p>
               </div>
             </div>
 
-            {/* Key Generation Form */}
-            <form onSubmit={handleGenerateKey} className="generate-key-form">
-              <div className="form-group role-select-group">
-                <label>Target Authority Role</label>
-                <CustomSelect
-                  value={selectedRoleForKey}
-                  onChange={(val) => setSelectedRoleForKey(val)}
-                  options={dbRoles.map((r) => {
-                    const existingKey = getKeyForRole(r.role_id);
-                    const icon = r.role_name === "Principal" ? "👑" : r.role_name === "Director" ? "🎓" : "🏢";
-                    return {
-                      value: r.role_id,
-                      label: `${icon} ${r.role_name} ${existingKey ? `(Key Exists: ${existingKey.is_used ? 'Used' : 'Active'})` : ''}`
-                    };
-                  })}
-                  placeholder="Select Authority Role"
-                  className="account-custom-role-select"
-                />
-              </div>
-
-              <div className="form-group key-input-group">
-                <label>Cryptographic Secret Key</label>
-                <div className="key-input-wrapper">
-                  <input 
-                    type={showInputKey ? "text" : "password"} 
-                    name="authority_crypto_key_field"
-                    autoComplete="new-password"
-                    placeholder={getKeyForRole(selectedRoleForKey) ? "A key already exists for this role (delete below first)" : "Click 'Auto-Gen Key' or type custom key..."}
-                    value={customKeyInput}
-                    onChange={(e) => setCustomKeyInput(e.target.value)}
-                    disabled={!!getKeyForRole(selectedRoleForKey)}
-                    className="key-input"
-                  />
-                  <div className="key-input-actions">
-                    {customKeyInput && (
-                      <button 
-                        type="button"
-                        className="action-icon-btn"
-                        onClick={() => copyToClipboard(customKeyInput, "input")}
-                        title="Copy Key"
-                      >
-                        {copiedKeyId === "input" ? <CheckIcon /> : <CopyIcon />}
-                      </button>
-                    )}
-                    <button 
-                      type="button"
-                      className="action-icon-btn"
-                      onClick={() => setShowInputKey(!showInputKey)}
-                      title={showInputKey ? "Hide Key" : "Show Key"}
-                    >
-                      {showInputKey ? <EyeOffIcon /> : <EyeIcon />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-group button-group">
-                <button
-                  type="button"
-                  className="generate-crypto-above-btn"
-                  onClick={generateCryptoKey}
-                  disabled={!!getKeyForRole(selectedRoleForKey) || generatingKey}
-                  title={getKeyForRole(selectedRoleForKey) ? "A key record already exists for this role" : "Generate a cryptographically secure random key"}
-                >
-                  <SparklesIcon />
-                  <span>Auto-Gen Key (Crypto)</span>
-                </button>
-                <button 
-                  type="submit" 
-                  className="generate-btn" 
-                  disabled={!customKeyInput.trim() || !!getKeyForRole(selectedRoleForKey) || generatingKey}
-                  title={
-                    getKeyForRole(selectedRoleForKey)
-                      ? "A key record already exists for this role"
-                      : !customKeyInput.trim()
-                      ? "Please click 'Auto-Gen Key' or type a key first to activate"
-                      : "Activate and save key"
-                  }
-                  style={!customKeyInput.trim() ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-                >
-                  {generatingKey ? "Saving..." : "⚡ Activate Key"}
-                </button>
-              </div>
-            </form>
-
-            {/* Keys List Table */}
-            <div className="keys-list-container">
-              <h4 style={{ color: "#f8fafc", margin: "20px 0 12px 0", fontSize: "1.1rem" }}>
-                Authority Registration Secret Keys
-              </h4>
-
-              {keysLoading ? (
-                <p style={{ color: "#94a3b8" }}>Loading secret keys...</p>
-              ) : (
-                <div className="keys-table-wrapper">
-                  <table className="keys-table">
-                    <thead>
-                      <tr>
-                        <th>Role</th>
-                        <th>Secret Key</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dbRoles.map((role) => {
-                        const k = getKeyForRole(role.role_id);
-                        const isVisible = k ? !!visibleKeys[k.key_id] : false;
-                        const isCopied = k ? copiedKeyId === k.key_id : false;
-                        const icon = role.role_name === "Principal" ? "👑" : role.role_name === "Director" ? "🎓" : "🏢";
-
-                        return (
-                          <tr key={role.role_id}>
-                            <td>
-                              <span className="role-tag">{icon} {role.role_name}</span>
-                            </td>
-                            <td>
-                              {k ? (
-                                k.is_used ? (
-                                  <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: "600" }}>
-                                    🔒 Single-Use Key Claimed
-                                  </span>
-                                ) : (
-                                  <div className="key-code-badge">
-                                    <span className="key-badge-text">
-                                      {isVisible ? k.secret_key : "••••••••••••••••••••••••"}
-                                    </span>
-                                    <div className="key-badge-actions">
-                                      <button 
-                                        type="button" 
-                                        className="key-badge-btn"
-                                        onClick={() => toggleKeyVisibility(k.key_id)}
-                                        title={isVisible ? "Hide Key" : "Show Key"}
-                                      >
-                                        {isVisible ? <EyeOffIcon /> : <EyeIcon />}
-                                      </button>
-                                      <button 
-                                        type="button" 
-                                        className="key-badge-btn"
-                                        onClick={() => copyToClipboard(k.secret_key, k.key_id)}
-                                        title="Copy Key"
-                                      >
-                                        {isCopied ? <CheckIcon /> : <CopyIcon />}
-                                      </button>
-                                    </div>
-                                  </div>
-                                )
-                              ) : (
-                                <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>
-                                  No key generated
-                                </span>
-                              )}
-                            </td>
-                            <td>
-                              {k ? (
-                                k.is_used ? (
-                                  <span className="status-badge status-used">👤 Assigned / Claimed</span>
-                                ) : (
-                                  <span className="status-badge status-active">⚡ Active (Unclaimed)</span>
-                                )
-                              ) : (
-                                <span className="status-badge status-empty">🚫 No Key Set</span>
-                              )}
-                            </td>
-                            <td>
-                              {k ? (
-                                <button 
-                                  className="revoke-btn"
-                                  onClick={() => askRevokeKey(k.secret_key, role.role_name)}
-                                  title="Delete Key Record"
-                                >
-                                  <TrashIcon />
-                                  <span>Delete Key</span>
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="club-key-gen-action-btn"
-                                  onClick={async () => {
-                                    const rolePrefix = role.role_name.replace(/\s+/g, "_").toUpperCase();
-                                    const array = new Uint8Array(16);
-                                    window.crypto.getRandomValues(array);
-                                    const randomHex = Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
-                                    const newKey = `KEY_${rolePrefix}_${randomHex}`;
-                                    try {
-                                      await api.post("/users/generate-key", {
-                                        role_id: Number(role.role_id),
-                                        secret_key: newKey
-                                      });
-                                      toast.success(`${role.role_name} secret key generated & activated 🛡️`);
-                                      fetchSecretKeys();
-                                    } catch (err) {
-                                      toast.error(err.response?.data?.message || "Failed to generate key ❌");
-                                    }
-                                  }}
-                                  title={`Auto-generate a new cryptographically secure key for ${role.role_name}`}
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                    padding: "6px 12px",
-                                    background: "rgba(124, 58, 237, 0.18)",
-                                    border: "1px solid rgba(124, 58, 237, 0.4)",
-                                    borderRadius: "8px",
-                                    color: "#c084fc",
-                                    fontSize: "0.82rem",
-                                    fontWeight: "600",
-                                    cursor: "pointer"
-                                  }}
-                                >
-                                  <SparklesIcon />
-                                  <span>Auto-Gen Key</span>
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            <div className="keys-table-wrapper" style={{ marginTop: "12px" }}>
+              <table className="keys-table">
+                <thead>
+                  <tr>
+                    <th>Event Request</th>
+                    <th>Club</th>
+                    <th>Stage Acted As</th>
+                    <th>Decision</th>
+                    <th>Date & Time</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {authorityHistory.map((item) => (
+                    <tr key={item.approval_id}>
+                      <td style={{ fontWeight: "600", color: "#f8fafc" }}>
+                        {item.request_title}
+                      </td>
+                      <td>
+                        <span style={{ color: "#cbd5e1" }}>{item.club_name}</span>
+                      </td>
+                      <td>
+                        <span style={{
+                          background: "rgba(56, 189, 248, 0.15)",
+                          color: "#38bdf8",
+                          border: "1px solid rgba(56, 189, 248, 0.3)",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.8rem",
+                          fontWeight: "700"
+                        }}>
+                          {item.authority_stage_title}
+                        </span>
+                      </td>
+                      <td>
+                        {item.status === "approved" ? (
+                          <span style={{ color: "#22c55e", fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}>
+                            ✅ Approved
+                          </span>
+                        ) : (
+                          <span style={{ color: "#ef4444", fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}>
+                            ❌ Rejected
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ color: "#94a3b8", fontSize: "0.84rem" }}>
+                        {new Date(item.action_date).toLocaleDateString()} {new Date(item.action_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td style={{ color: "#cbd5e1", fontSize: "0.85rem", fontStyle: item.remarks ? "normal" : "italic" }}>
+                        {item.remarks ? `"${item.remarks}"` : "None"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        {/* 👥 ADMIN USER DIRECTORY & ROLE MANAGEMENT SECTION */}
-        {(user?.role_name === "Admin" || user?.role_id === 3) && (
+        {/* 🏛️ INSTITUTIONAL AUTHORITY CHAIRS MANAGEMENT (ADMIN ONLY) */}
+        {isAdmin && (
+          <div className="account-card" style={{ border: "1px solid rgba(234, 179, 8, 0.35)", background: "linear-gradient(145deg, #1c1917 0%, #18181b 100%)" }}>
+            <div className="admin-card-header" style={{ marginBottom: "16px" }}>
+              <div>
+                <h3 style={{ color: "#fef08a", display: "flex", alignItems: "center", gap: "8px", margin: "0 0 4px 0" }}>
+                  🏛️ Institutional Authority Chairs
+                </h3>
+                <p className="subtitle-text" style={{ color: "#a1a1aa", margin: 0 }}>
+                  Search and appoint any faculty member directly to Director, Principal, Estate Manager, or Admin chairs without secret keys.
+                </p>
+              </div>
+            </div>
+
+            {seatsLoading ? (
+              <p style={{ color: "#94a3b8" }}>Loading authority seats...</p>
+            ) : (
+              <form onSubmit={handleSaveAuthoritySeats} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px", marginTop: "12px" }}>
+                {/* 🎓 Director Chair */}
+                <FacultyChairSelector
+                  title="Director"
+                  subtitle="Level 4 Final Approval Chair"
+                  icon="🎓"
+                  selectedUserId={authoritySeats.director_id}
+                  candidates={facultyCandidates}
+                  onChange={(val) => setAuthoritySeats((prev) => ({ ...prev, director_id: val }))}
+                  accentColor="#fde047"
+                />
+
+                {/* 🏫 Principal Chair */}
+                <FacultyChairSelector
+                  title="Principal"
+                  subtitle="Level 3 Institutional Review Chair"
+                  icon="🏫"
+                  selectedUserId={authoritySeats.principal_id}
+                  candidates={facultyCandidates}
+                  onChange={(val) => setAuthoritySeats((prev) => ({ ...prev, principal_id: val }))}
+                  accentColor="#fde047"
+                />
+
+                {/* 🏢 Estate Manager Chair */}
+                <FacultyChairSelector
+                  title="Estate Manager"
+                  subtitle="Level 2 Infrastructure Review Chair"
+                  icon="🏢"
+                  selectedUserId={authoritySeats.estate_manager_id}
+                  candidates={facultyCandidates}
+                  onChange={(val) => setAuthoritySeats((prev) => ({ ...prev, estate_manager_id: val }))}
+                  accentColor="#fde047"
+                />
+
+                {/* 👑 System Admin Chair */}
+                <FacultyChairSelector
+                  title="Primary System Admin"
+                  subtitle="Institutional Root Administrator"
+                  icon="👑"
+                  selectedUserId={authoritySeats.admin_id}
+                  candidates={facultyCandidates}
+                  onChange={(val) => setAuthoritySeats((prev) => ({ ...prev, admin_id: val }))}
+                  accentColor="#fde047"
+                />
+
+                {/* Save Seats Button */}
+                <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+                  <button
+                    type="submit"
+                    disabled={savingSeats}
+                    style={{
+                      background: "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)",
+                      color: "#000",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "11px 24px",
+                      fontWeight: "700",
+                      fontSize: "0.92rem",
+                      cursor: savingSeats ? "not-allowed" : "pointer",
+                      boxShadow: "0 4px 14px rgba(234, 179, 8, 0.35)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    {savingSeats ? "Saving Chairs..." : "💾 Save Authority Assignments"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* 👥 ADMIN USER DIRECTORY & ACCOUNT MANAGEMENT */}
+        {isAdmin && (
           <div className="account-card admin-users-card">
             <div className="admin-card-header">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", width: "100%" }}>
                 <div>
-                  <h3>👥 User Directory & Role Management</h3>
-                  <p className="subtitle-text">Inspect registered accounts across campus, filter by authority or student tiers, and delete users if needed.</p>
+                  <h3>👥 User Directory & Account Management</h3>
+                  <p className="subtitle-text">Inspect registered accounts, filter by role, activate/deactivate access, and delete accounts.</p>
                 </div>
                 <button
                   type="button"
@@ -700,12 +725,81 @@ export default function Account() {
               </div>
             </div>
 
+            {/* 🎓 BATCH ACADEMIC PROGRESSION & GRADUATION TOOLS */}
+            <div style={{
+              background: "linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)",
+              border: "1px solid rgba(147, 51, 234, 0.3)",
+              borderRadius: "12px",
+              padding: "16px 20px",
+              margin: "18px 0",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+                <div>
+                  <h4 style={{ margin: 0, color: "#f8fafc", fontSize: "1.02rem", display: "flex", alignItems: "center", gap: "8px", fontWeight: "700" }}>
+                    🎓 Batch Academic Progression & Graduation Tools
+                  </h4>
+                  <p style={{ margin: "4px 0 0 0", color: "#94a3b8", fontSize: "0.83rem" }}>
+                    Graduate all 4th-year (BE) students into Passout / Alumni in 1-click, or perform the annual college batch roll-over (FE → SE → TE → BE → Alumni).
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBatchGraduateModal(true)}
+                    disabled={batchActionLoading}
+                    style={{
+                      background: "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)",
+                      color: "#fff",
+                      border: "none",
+                      padding: "9px 15px",
+                      borderRadius: "8px",
+                      fontSize: "0.84rem",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 3px 10px rgba(147, 51, 234, 0.3)"
+                    }}
+                  >
+                    🎓 Graduate BE (Year 4) Batch
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowBatchPromoteModal(true)}
+                    disabled={batchActionLoading}
+                    style={{
+                      background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                      color: "#fff",
+                      border: "none",
+                      padding: "9px 15px",
+                      borderRadius: "8px",
+                      fontSize: "0.84rem",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 3px 10px rgba(59, 130, 246, 0.3)"
+                    }}
+                  >
+                    🚀 Annual Batch Roll-over (All Years)
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Role Category Filter Chips */}
             <div className="admin-role-filter-bar">
               {roleCategories.map((cat) => {
-                const count = cat.key === "all" 
-                  ? allUsers.length 
-                  : allUsers.filter(u => Number(u.role_id) === cat.roleId).length;
+                let count = 0;
+                if (cat.key === "all") count = allUsers.length;
+                else if (cat.key === "passout") count = allUsers.filter(u => u.is_passout === 1 || u.is_passout === true).length;
+                else if (cat.key === "retired") count = allUsers.filter(u => u.is_retired === 1 || u.is_retired === true).length;
+                else count = allUsers.filter(u => Number(u.role_id) === cat.roleId || u.role_name?.toLowerCase() === cat.roleName?.toLowerCase()).length;
                 const isSelected = selectedRoleCategory === cat.key;
 
                 return (
@@ -726,7 +820,7 @@ export default function Account() {
             <div style={{ margin: "14px 0 20px 0" }}>
               <input
                 type="text"
-                placeholder="🔍 Search by name, email, department, or role..."
+                placeholder="🔍 Search user by name, email, department, or role..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
                 className="user-search-input"
@@ -748,6 +842,7 @@ export default function Account() {
                       <th>User</th>
                       <th>Email</th>
                       <th>Role</th>
+                      <th>Status</th>
                       <th>Department / Year</th>
                       <th>Action</th>
                     </tr>
@@ -756,6 +851,7 @@ export default function Account() {
                     {filteredUsers.map((u) => {
                       const isCurrentUser = Number(u.user_id) === Number(user?.id);
                       const roleName = u.role_name || "Member";
+                      const isActive = u.is_active === 1 || u.is_active === true;
                       const icon = roleName === "Student" ? "🎓" 
                         : roleName === "Teacher" ? "👨‍🏫"
                         : roleName === "Admin" ? "🛡️"
@@ -767,10 +863,10 @@ export default function Account() {
                         : "👤";
 
                       return (
-                        <tr key={u.user_id}>
+                        <tr key={u.user_id} style={{ opacity: isActive ? 1 : 0.65 }}>
                           <td>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <div className="user-avatar-circle">
+                              <div className="user-avatar-circle" style={{ background: isActive ? "" : "#475569" }}>
                                 {u.name ? u.name.charAt(0).toUpperCase() : "?"}
                               </div>
                               <div>
@@ -784,7 +880,58 @@ export default function Account() {
                             <span style={{ color: "#94a3b8", fontSize: "0.88rem" }}>{u.email}</span>
                           </td>
                           <td>
-                            <span className="role-tag">{icon} {roleName}</span>
+                            <span className="role-tag" style={
+                              (u.is_retired === 1 || u.is_retired === true) && !["Student", "Club Head"].includes(roleName)
+                                ? { border: "1px solid rgba(239, 68, 68, 0.4)", color: "#fca5a5" }
+                                : (u.is_passout === 1 || u.is_passout === true) && ["Student", "Club Head"].includes(roleName)
+                                  ? { border: "1px solid rgba(168, 85, 247, 0.4)", color: "#d8b4fe" }
+                                  : {}
+                            }>
+                              {icon} {(u.is_retired === 1 || u.is_retired === true) && !["Student", "Club Head"].includes(roleName)
+                                ? `Retired ${roleName}`
+                                : (u.is_passout === 1 || u.is_passout === true) && ["Student", "Club Head"].includes(roleName)
+                                  ? `Passout Student`
+                                  : roleName}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center" }}>
+                              {isActive ? (
+                                <span style={{
+                                  background: "rgba(34, 197, 94, 0.15)",
+                                  color: "#4ade80",
+                                  border: "1px solid rgba(34, 197, 94, 0.3)",
+                                  padding: "2px 8px",
+                                  borderRadius: "12px",
+                                  fontSize: "0.76rem",
+                                  fontWeight: "700"
+                                }}>
+                                  ● Active
+                                </span>
+                              ) : (
+                                <span style={{
+                                  background: "rgba(239, 68, 68, 0.15)",
+                                  color: "#f87171",
+                                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                                  padding: "2px 8px",
+                                  borderRadius: "12px",
+                                  fontSize: "0.76rem",
+                                  fontWeight: "700"
+                                }}>
+                                  ⏸️ Deactivated
+                                </span>
+                              )}
+                              {(u.is_retired === 1 || u.is_retired === true) && !["Student", "Club Head"].includes(roleName) && (
+                                <span className="retired-status-badge">
+                                  🏷️ Retired
+                                </span>
+                              )}
+                              {(u.is_passout === 1 || u.is_passout === true) && ["Student", "Club Head"].includes(roleName) && (
+                                <span className="retired-status-badge" style={{ background: "rgba(168, 85, 247, 0.15)", color: "#d8b4fe", borderColor: "rgba(168, 85, 247, 0.35)" }}>
+                                  🎓 Passout
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td>
                             <span style={{ color: "#cbd5e1", fontSize: "0.85rem" }}>
@@ -793,32 +940,74 @@ export default function Account() {
                             </span>
                           </td>
                           <td>
-                            {isCurrentUser ? (
-                              <span style={{ color: "#64748b", fontSize: "0.82rem", fontStyle: "italic" }}>
-                                Current Admin
-                              </span>
-                            ) : (
-                              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            {!isCurrentUser ? (
+                              <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                                {["Student", "Club Head"].includes(roleName) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAdminTogglePassout(u)}
+                                    disabled={togglingPassoutUserId === u.user_id}
+                                    title={u.is_passout ? "Mark student as active" : "Mark student as passout alumni"}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "3px",
+                                      padding: "5px 8px",
+                                      background: u.is_passout ? "rgba(34, 197, 94, 0.15)" : "rgba(168, 85, 247, 0.15)",
+                                      border: u.is_passout ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid rgba(168, 85, 247, 0.35)",
+                                      borderRadius: "6px",
+                                      color: u.is_passout ? "#4ade80" : "#d8b4fe",
+                                      fontSize: "0.76rem",
+                                      fontWeight: "600",
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    {u.is_passout ? "🎓 Unmark Passout" : "🎓 Passout"}
+                                  </button>
+                                )}
+                                {!["Student", "Club Head"].includes(roleName) && Number(u.role_id) !== 1 && Number(u.role_id) !== 4 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAdminToggleRetired(u)}
+                                    disabled={togglingRetiredUserId === u.user_id}
+                                    title={u.is_retired ? "Mark faculty as active" : "Mark faculty as retired"}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "3px",
+                                      padding: "5px 8px",
+                                      background: u.is_retired ? "rgba(34, 197, 94, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                                      border: u.is_retired ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid rgba(245, 158, 11, 0.35)",
+                                      borderRadius: "6px",
+                                      color: u.is_retired ? "#4ade80" : "#fbbf24",
+                                      fontSize: "0.76rem",
+                                      fontWeight: "600",
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    {u.is_retired ? "✅ Unretire" : "🏷️ Retire"}
+                                  </button>
+                                )}
                                 <button
                                   type="button"
-                                  className="club-key-gen-action-btn"
-                                  onClick={() => askEditRole(u)}
-                                  title={`Change role for ${u.name}`}
+                                  onClick={() => handleToggleStatus(u)}
+                                  disabled={togglingUserId === u.user_id}
+                                  title={isActive ? "Deactivate user account" : "Activate user account"}
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
                                     gap: "4px",
                                     padding: "5px 10px",
-                                    background: "rgba(56, 189, 248, 0.15)",
-                                    border: "1px solid rgba(56, 189, 248, 0.35)",
+                                    background: isActive ? "rgba(245, 158, 11, 0.15)" : "rgba(34, 197, 94, 0.15)",
+                                    border: isActive ? "1px solid rgba(245, 158, 11, 0.35)" : "1px solid rgba(34, 197, 94, 0.35)",
                                     borderRadius: "6px",
-                                    color: "#38bdf8",
+                                    color: isActive ? "#fbbf24" : "#4ade80",
                                     fontSize: "0.78rem",
                                     fontWeight: "600",
                                     cursor: "pointer"
                                   }}
                                 >
-                                  ⚡ Role
+                                  {isActive ? "⏸️ Deactivate" : "▶️ Activate"}
                                 </button>
                                 <button
                                   type="button"
@@ -830,6 +1019,10 @@ export default function Account() {
                                   <span>Delete</span>
                                 </button>
                               </div>
+                            ) : (
+                              <span style={{ color: "#64748b", fontSize: "0.82rem", fontStyle: "italic" }}>
+                                Current Session
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -861,7 +1054,6 @@ export default function Account() {
           </>
         )}
 
-
         {/* Clubs - Only show for non-profile-only roles */}
         {!isProfileOnly && (
           <div className="account-card" ref={clubsRef}>
@@ -889,7 +1081,6 @@ export default function Account() {
           </div>
         )}
       </div>
-
 
       {/* 🔴 LEAVE CLUB CONFIRM */}
       {showLeaveConfirm && (
@@ -921,27 +1112,6 @@ export default function Account() {
               Delete Account
             </button>
             <button className="no-btn" onClick={() => setShowDeleteConfirm(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 🗑️ DELETE SECRET KEY CONFIRM */}
-      {showRevokeConfirm && (
-        <div className="confirm-toast">
-          <p>🗑️ Are you sure you want to <b>delete the secret key record for {keyToRevoke?.role_name || "this role"}</b>? This action cannot be undone!</p>
-          <div className="confirm-actions">
-            <button className="yes-btn" style={{ background: '#ef4444' }} onClick={confirmRevokeKey}>
-              Yes, Delete Key
-            </button>
-            <button
-              className="no-btn"
-              onClick={() => {
-                setShowRevokeConfirm(false);
-                setKeyToRevoke(null);
-              }}
-            >
               Cancel
             </button>
           </div>
@@ -981,78 +1151,90 @@ export default function Account() {
         </div>
       )}
 
-      {/* ⚡ ADMIN EDIT USER ROLE MODAL */}
-      {showRoleEditModal && roleEditUser && (
-        <div className="hp-modal-overlay" onClick={() => setShowRoleEditModal(false)}>
-          <div className="hp-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "460px" }}>
-            <div className="hp-modal-header">
-              <h3>⚡ Change User Role</h3>
-              <button className="hp-modal-close" onClick={() => setShowRoleEditModal(false)}>✕</button>
-            </div>
+      {/* 🎓 BATCH GRADUATE FINAL YEAR CONFIRM MODAL */}
+      {showBatchGraduateModal && (
+        <div className="confirm-toast" style={{ maxWidth: "480px" }}>
+          <h4 style={{ margin: "0 0 10px 0", color: "#f8fafc", fontSize: "1.1rem" }}>
+            🎓 Graduate Final Year (BE - Year 4) Batch
+          </h4>
+          <p style={{ margin: "0 0 12px 0", color: "#cbd5e1", fontSize: "0.88rem", lineHeight: "1.5" }}>
+            This action will mark all <b>4th-year (BE)</b> students as <b>Passout / Alumni</b>. Any active Club Head leadership held by graduating students will be automatically unlinked.
+          </p>
+          <div style={{ margin: "10px 0 16px 0", textAlign: "left" }}>
+            <label style={{ display: "block", fontSize: "0.82rem", color: "#94a3b8", marginBottom: "4px" }}>Filter Department (Optional):</label>
+            <select
+              value={batchDeptFilter}
+              onChange={(e) => setBatchDeptFilter(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                background: "#0f172a",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                borderRadius: "8px",
+                color: "#f8fafc",
+                fontSize: "0.88rem"
+              }}
+            >
+              <option value="all">All Departments (College-Wide)</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Electronics & Telecommunication">Electronics & Telecommunication</option>
+              <option value="Mechanical Engineering">Mechanical Engineering</option>
+              <option value="Civil Engineering">Civil Engineering</option>
+              <option value="Electrical Engineering">Electrical Engineering</option>
+            </select>
+          </div>
+          <div className="confirm-actions">
+            <button
+              className="yes-btn"
+              style={{ background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)' }}
+              onClick={handleBatchGraduate}
+              disabled={batchActionLoading}
+            >
+              {batchActionLoading ? "Graduating Batch..." : "🎓 Confirm Batch Graduation"}
+            </button>
+            <button
+              className="no-btn"
+              onClick={() => setShowBatchGraduateModal(false)}
+              disabled={batchActionLoading}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
-            <form onSubmit={confirmUpdateRole} style={{ marginTop: "16px" }}>
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ color: "#f8fafc", fontWeight: "600", fontSize: "1rem", margin: "0 0 4px 0" }}>
-                  {roleEditUser.name}
-                </p>
-                <p style={{ color: "#94a3b8", fontSize: "0.85rem", margin: 0 }}>
-                  {roleEditUser.email} • Current Role: <span style={{ color: "#38bdf8", fontWeight: "600" }}>{roleEditUser.role_name}</span>
-                </p>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1", fontSize: "0.88rem", fontWeight: "600" }}>
-                  Select New Role
-                </label>
-                <select
-                  value={selectedNewRole}
-                  onChange={(e) => setSelectedNewRole(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    background: "rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    borderRadius: "8px",
-                    color: "#f8fafc",
-                    fontSize: "0.95rem"
-                  }}
-                >
-                  {Number(roleEditUser.role_id) === 1 || Number(roleEditUser.role_id) === 4 ? (
-                    <>
-                      <option value="1" style={{ background: "#18181b" }}>🎓 Student (Base Student Member)</option>
-                      <option value="4" style={{ background: "#18181b" }}>👑 Club Head (Student Club Leadership)</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="2" style={{ background: "#18181b" }}>👨‍🏫 Teacher / Faculty (Base Faculty)</option>
-                      <option value="5" style={{ background: "#18181b" }}>🎓 Club Mentor (Level 1 Reviewer)</option>
-                      <option value="6" style={{ background: "#18181b" }}>🏢 Estate Manager (Level 2 Reviewer)</option>
-                      <option value="7" style={{ background: "#18181b" }}>👑 Principal (Level 3 Reviewer)</option>
-                      <option value="8" style={{ background: "#18181b" }}>🎓 Director (Level 4 Reviewer - Highest Executive)</option>
-                      <option value="3" style={{ background: "#18181b" }}>🛡️ Admin (System Administrator)</option>
-                    </>
-                  )}
-                </select>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-                <button
-                  type="button"
-                  className="hp-btn hp-btn-outline"
-                  onClick={() => setShowRoleEditModal(false)}
-                  disabled={updatingRole}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="hp-btn hp-btn-primary"
-                  disabled={updatingRole}
-                >
-                  {updatingRole ? "Saving..." : "Save Role Change"}
-                </button>
-              </div>
-            </form>
+      {/* 🚀 ANNUAL BATCH ROLL-OVER CONFIRM MODAL */}
+      {showBatchPromoteModal && (
+        <div className="confirm-toast" style={{ maxWidth: "500px" }}>
+          <h4 style={{ margin: "0 0 10px 0", color: "#f8fafc", fontSize: "1.1rem" }}>
+            🚀 Annual Academic Batch Roll-over
+          </h4>
+          <p style={{ margin: "0 0 12px 0", color: "#cbd5e1", fontSize: "0.88rem", lineHeight: "1.5" }}>
+            Are you sure you want to perform the <b>Annual Academic Progression</b> for all students?
+          </p>
+          <ul style={{ textAlign: "left", fontSize: "0.85rem", color: "#94a3b8", lineHeight: "1.6", margin: "0 0 16px 20px" }}>
+            <li><b>Year 4 (BE)</b> students will be graduated to <b>Passout / Alumni</b> 🎓</li>
+            <li><b>Year 3 (TE)</b> students will be promoted to <b>Year 4 (BE)</b> ⬆️</li>
+            <li><b>Year 2 (SE)</b> students will be promoted to <b>Year 3 (TE)</b> ⬆️</li>
+            <li><b>Year 1 (FE)</b> students will be promoted to <b>Year 2 (SE)</b> ⬆️</li>
+          </ul>
+          <div className="confirm-actions">
+            <button
+              className="yes-btn"
+              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
+              onClick={handleBatchPromote}
+              disabled={batchActionLoading}
+            >
+              {batchActionLoading ? "Promoting All Batches..." : "🚀 Confirm Annual Roll-over"}
+            </button>
+            <button
+              className="no-btn"
+              onClick={() => setShowBatchPromoteModal(false)}
+              disabled={batchActionLoading}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

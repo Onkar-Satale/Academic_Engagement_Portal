@@ -22,7 +22,6 @@ export default function Footer() {
                         <li><a href="/events">Events</a></li>
                         <li><a href="/about">About Us</a></li>
                         <li><a href="/contact">Contact</a></li>
-                        <li><a href="/permissions">Permissions</a></li>
                     </ul>
                 </div>
 

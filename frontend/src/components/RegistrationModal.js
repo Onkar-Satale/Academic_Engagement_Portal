@@ -37,7 +37,12 @@ export default function RegistrationModal({ clubId, clubName, onClose, onSuccess
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      onSuccess(`Successfully applied to join ${clubName}!`);
+      if (onSuccess) {
+        onSuccess(`Successfully applied to join ${clubName}!`);
+      }
+      if (onClose) {
+        onClose();
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to submit application");
     } finally {
@@ -75,27 +80,42 @@ export default function RegistrationModal({ clubId, clubName, onClose, onSuccess
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Why do you want to join this club? *</label>
-            <textarea
-              rows="4"
-              placeholder="Briefly state your motivation, skills, or interest in this club..."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              required
-            ></textarea>
+        {user?.is_passout === 1 || user?.is_passout === true ? (
+          <div style={{
+            background: "rgba(239, 68, 68, 0.12)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
+            padding: "16px",
+            borderRadius: "10px",
+            margin: "16px 0",
+            textAlign: "center"
+          }}>
+            <p style={{ color: "#fca5a5", margin: 0, fontWeight: "600" }}>
+              🎓 Alumni Account: Graduated / passout students cannot submit new join requests for student clubs.
+            </p>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Why do you want to join this club? *</label>
+              <textarea
+                rows="4"
+                placeholder="Briefly state your motivation, skills, or interest in this club..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required
+              ></textarea>
+            </div>
 
-          <div className="modal-actions">
-            <button type="button" className="cancel-btn" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "Submitting..." : "Submit Application"}
-            </button>
-          </div>
-        </form>
+            <div className="modal-actions">
+              <button type="button" className="btn-cancel" onClick={onClose} disabled={loading}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-submit" disabled={loading}>
+                {loading ? "Submitting Application..." : "Submit Join Request"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

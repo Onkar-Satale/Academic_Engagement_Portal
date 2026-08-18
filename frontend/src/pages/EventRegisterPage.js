@@ -209,6 +209,26 @@ export default function EventRegisterPage() {
     return null;
   }
 
+  if (userProfile?.is_passout === 1 || userProfile?.is_passout === true) {
+    return (
+      <div className="event-register-container">
+        <div className="event-register-form" style={{ textAlign: 'center', padding: '40px' }}>
+          <h2>🎓 Alumni Account Notice</h2>
+          <p style={{ marginTop: '16px', color: '#fca5a5' }}>
+            Graduated passout students cannot register for active campus student events.
+          </p>
+          <button
+            onClick={() => navigate('/events')}
+            className="register-btn"
+            style={{ marginTop: '24px', display: 'inline-block' }}
+          >
+            ← Back to Events
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isAlreadyRegistered) {
     return (
       <div className="event-register-container">

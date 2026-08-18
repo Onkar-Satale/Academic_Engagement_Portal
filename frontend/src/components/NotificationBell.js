@@ -9,6 +9,25 @@ export default function NotificationBell() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  const syncProfile = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await api.get("/users/profile");
+      if (res.data?.user) {
+        const stored = JSON.parse(localStorage.getItem("user") || "{}");
+        if (Number(stored.role_id) !== Number(res.data.user.role_id) || stored.role_name !== res.data.user.role_name) {
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+          if (res.data.token) localStorage.setItem("token", res.data.token);
+          if (res.data.refreshToken) localStorage.setItem("refreshToken", res.data.refreshToken);
+          window.dispatchEvent(new Event("authChange"));
+        }
+      }
+    } catch (err) {
+      // Ignore if unauthenticated
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 15000); // poll every 15s
@@ -35,8 +54,15 @@ export default function NotificationBell() {
     try {
       const res = await api.get("/notifications");
       setNotifications(res.data);
+      // Check if any unread notification is role/appointment related
+      const hasRoleUpdate = (res.data || []).some(
+        (n) => !n.is_read && (n.title?.includes("Appointed") || n.title?.includes("Role") || n.title?.includes("Status") || n.title?.includes("Transition"))
+      );
+      if (hasRoleUpdate) {
+        await syncProfile();
+      }
     } catch (err) {
-      console.error("Failed to fetch notifications", err);
+      // Ignore network aborts
     }
   };
 
@@ -51,6 +77,7 @@ export default function NotificationBell() {
         console.error(err);
       }
     }
+    await syncProfile();
     setIsOpen(false);
     if (n.link) {
       navigate(n.link);

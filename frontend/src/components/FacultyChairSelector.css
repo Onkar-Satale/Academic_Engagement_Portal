@@ -1,0 +1,472 @@
+/* Chair Selector Card in Grid */
+.chair-selector-card {
+  background: #27272a;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chair-selector-card:hover {
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+.chair-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chair-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chair-icon {
+  font-size: 1.3rem;
+}
+
+.chair-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.chair-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 0.78rem;
+  color: #a1a1aa;
+}
+
+/* Appointee Card inside Chair Slot */
+.appointee-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.appointee-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  color: #000;
+  font-weight: 700;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.appointee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.appointee-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.appointee-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dept-pill {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.appointee-email {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.current-role-badge {
+  font-size: 0.74rem;
+  color: #a1a1aa;
+}
+
+.appointee-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.change-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.change-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.unassign-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unassign-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Empty Chair Slot */
+.empty-chair-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(234, 179, 8, 0.4);
+  border-radius: 10px;
+  color: #fde047;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.empty-chair-slot:hover {
+  background: rgba(234, 179, 8, 0.08);
+  border-color: #eab308;
+}
+
+.plus-icon {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   CLEAN MODAL PICKER OVERLAY (FULL SCREEN PORTAL)
+   ========================================================================== */
+.chair-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  animation: modalBackdropFadeIn 0.2s ease-out;
+}
+
+@keyframes modalBackdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.chair-modal-content {
+  background: #18181b;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(234, 179, 8, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  box-sizing: border-box;
+  animation: modalContentZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalContentZoomIn {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.chair-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.modal-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 0.84rem;
+  color: #94a3b8;
+}
+
+.modal-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #a1a1aa;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Search Input */
+.chair-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chair-search-input-wrap .search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 0.95rem;
+  color: #71717a;
+}
+
+.chair-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 36px 11px 38px;
+  background: #27272a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chair-search-input:focus {
+  border-color: #eab308;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #a1a1aa;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px;
+}
+
+.clear-search-btn:hover {
+  color: #fff;
+}
+
+/* Candidates List in Modal */
+.candidates-list {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+.candidates-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.candidates-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+.candidates-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+}
+
+.candidates-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 179, 8, 0.5);
+}
+
+.candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.candidate-item:hover {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.4);
+  transform: translateY(-1px);
+}
+
+.candidate-item.active {
+  background: rgba(234, 179, 8, 0.18);
+  border-color: #eab308;
+}
+
+.candidate-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #3f3f46;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.unassign-avatar {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.candidate-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.candidate-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.candidate-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #f8fafc;
+}
+
+.candidate-dept-tag {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.candidate-email {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.candidate-current-role {
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}
+
+.selected-check {
+  font-size: 0.82rem;
+  color: #eab308;
+  font-weight: 700;
+  margin-left: auto;
+  background: rgba(234, 179, 8, 0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.no-candidates-msg {
+  padding: 24px 10px;
+  text-align: center;
+  color: #a1a1aa;
+  font-size: 0.88rem;
+}
+
+/* Modal Footer */
+.chair-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+}
+
+.candidate-counter {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.modal-cancel-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}

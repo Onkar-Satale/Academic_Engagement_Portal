@@ -23,12 +23,16 @@ export default function RegisterPage() {
   useEffect(() => {
     api.get("/users/roles")
       .then((res) => {
-        const sorted = (res.data || []).sort((a, b) => Number(a.role_id) - Number(b.role_id));
+        const available = (res.data || []).filter(r => ["Student", "Teacher", "Admin"].includes(r.role_name));
+        const sorted = available.sort((a, b) => Number(a.role_id) - Number(b.role_id));
         setRoles(sorted);
         if (sorted.length > 0) setRoleId(sorted[0].role_id);
       })
       .catch(() => {
-        const fallback = [{ role_id: 1, role_name: "Student" }];
+        const fallback = [
+          { role_id: 1, role_name: "Student" },
+          { role_id: 2, role_name: "Teacher" }
+        ];
         setRoles(fallback);
         setRoleId(1);
       });
@@ -46,11 +50,11 @@ export default function RegisterPage() {
       { name: "Password", value: password },
     ];
 
-    if (!["Estate Manager", "Principal", "Director"].includes(selectedRole?.role_name)) {
+    if (selectedRole?.role_name !== "Admin") {
       fields.push({ name: "Department", value: department });
     }
 
-    if (["Student", "Club Head"].includes(selectedRole?.role_name)) {
+    if (selectedRole?.role_name === "Student") {
       fields.push({ name: "Year", value: year });
     }
 
@@ -70,87 +74,35 @@ export default function RegisterPage() {
       return setMessage(msg);
     }
 
-    /* ==========================================================================
-       1. NAME VALIDATION
-       ========================================================================== */
+    /* 1. NAME VALIDATION */
     const nameRegex = /^[a-zA-Z\s.']{2,50}$/;
     if (!nameRegex.test(name.trim())) {
-      const msg = "Name must only contain letters and spaces (no emojis or special characters, 2-50 characters)";
+      const msg = "Name must only contain letters and spaces (2-50 characters)";
       setType("error");
       toast.error(msg);
       return setMessage(msg);
     }
 
-    /* ==========================================================================
-       2. EMAIL STRICT VALIDATION & TYPO CHECK
-       ========================================================================== */
+    /* 2. EMAIL STRICT VALIDATION */
     const emailTrimmed = email.trim().toLowerCase();
     const emailRegex = /^[a-zA-Z0-9]+([._%+-][a-zA-Z0-9]+)*@[a-zA-Z0-9]+([.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
-    
     if (!emailRegex.test(emailTrimmed)) {
-      const msg = "Please enter a valid email address (e.g. user@gmail.com or student@pict.edu)";
+      const msg = "Please enter a valid email address";
       setType("error");
       toast.error(msg);
       return setMessage(msg);
     }
 
-    // Common typo warnings
-    const typoDomains = {
-      "gail.com": "gmail.com",
-      "gmial.com": "gmail.com",
-      "gmai.com": "gmail.com",
-      "gamil.com": "gmail.com",
-      "yaho.com": "yahoo.com",
-      "yaho.co.in": "yahoo.co.in",
-      "hotmial.com": "hotmail.com",
-      "outlok.com": "outlook.com"
-    };
-    const domainPart = emailTrimmed.split("@")[1];
-    if (typoDomains[domainPart]) {
-      const suggestedEmail = emailTrimmed.replace(domainPart, typoDomains[domainPart]);
-      const msg = `Typo detected in email domain '@${domainPart}'. Did you mean '${suggestedEmail}'?`;
-      setType("error");
-      toast.error(msg);
-      return setMessage(msg);
-    }
-
-    /* ==========================================================================
-       2. PASSWORD STRICT VALIDATION
-       ========================================================================== */
+    /* 3. PASSWORD VALIDATION */
     if (password.length < 8) {
       const msg = "Password must be at least 8 characters long";
       setType("error");
       toast.error(msg);
       return setMessage(msg);
     }
-    if (!/[A-Z]/.test(password)) {
-      const msg = "Password must contain at least one uppercase letter (A-Z)";
-      setType("error");
-      toast.error(msg);
-      return setMessage(msg);
-    }
-    if (!/[a-z]/.test(password)) {
-      const msg = "Password must contain at least one lowercase letter (a-z)";
-      setType("error");
-      toast.error(msg);
-      return setMessage(msg);
-    }
-    if (!/[0-9]/.test(password)) {
-      const msg = "Password must contain at least one number (0-9)";
-      setType("error");
-      toast.error(msg);
-      return setMessage(msg);
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      const msg = "Password must contain at least one special character (!@#$%^&*)";
-      setType("error");
-      toast.error(msg);
-      return setMessage(msg);
-    }
 
-    const rolesRequiringKeys = ["Club Head", "Admin", "Club Mentor", "Estate Manager", "Principal", "Director"];
-    if (rolesRequiringKeys.includes(selectedRole?.role_name) && !secretKey) {
-      const msg = `${selectedRole.role_name} role requires a secret key`;
+    if (selectedRole?.role_name === "Admin" && !secretKey) {
+      const msg = "Admin role requires the System Admin Authorization Key";
       setType("error");
       toast.error(msg);
       return setMessage(msg);
@@ -195,18 +147,8 @@ export default function RegisterPage() {
   };
 
   const currentRoleName = roles.find(r => r.role_id === roleId)?.role_name;
-  const rolesRequiringKeys = ["Club Head", "Admin", "Club Mentor", "Estate Manager", "Principal", "Director"];
-  const requiresKey = rolesRequiringKeys.includes(currentRoleName);
-
-  const keyPlaceholder = currentRoleName === "Admin"
-    ? "Enter Admin Secret Key"
-    : currentRoleName === "Club Head"
-    ? "Enter Club Head Secret Key"
-    : currentRoleName === "Club Mentor"
-    ? "Enter Club Mentor Secret Key"
-    : `Enter ${currentRoleName} Secret Key`;
-
-  const showYear = ["Student", "Club Head"].includes(currentRoleName);
+  const showYear = currentRoleName === "Student";
+  const requiresKey = currentRoleName === "Admin";
 
   return (
     <div className="auth-container">
@@ -222,7 +164,10 @@ export default function RegisterPage() {
         <CustomSelect
           value={roleId}
           onChange={(val) => setRoleId(Number(val))}
-          options={roles.map((r) => ({ value: r.role_id, label: r.role_name }))}
+          options={roles.map((r) => ({
+            value: r.role_id,
+            label: r.role_name === "Student" ? "🎓 Student" : r.role_name === "Teacher" ? "👨‍🏫 Teacher / Faculty" : "🛡️ Admin"
+          }))}
           placeholder="Select Role"
         />
 
@@ -254,13 +199,11 @@ export default function RegisterPage() {
             title={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
-              /* Slashed Eye (Hidden) */
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                 <line x1="1" y1="1" x2="23" y2="23" />
               </svg>
             ) : (
-              /* Eye (Visible) */
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                 <circle cx="12" cy="12" r="3" />
@@ -269,7 +212,7 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        {!["Estate Manager", "Principal", "Director"].includes(currentRoleName) && (
+        {currentRoleName !== "Admin" && (
           <CustomSelect
             value={department}
             onChange={(val) => setDepartment(val)}
@@ -302,7 +245,7 @@ export default function RegisterPage() {
           <div className="password-input-wrap">
             <input
               type={showSecretKey ? "text" : "password"}
-              placeholder={keyPlaceholder}
+              placeholder="Enter System Admin Secret Key"
               value={secretKey}
               onChange={(e) => setSecretKey(e.target.value)}
             />
@@ -313,13 +256,11 @@ export default function RegisterPage() {
               title={showSecretKey ? "Hide secret key" : "Show secret key"}
             >
               {showSecretKey ? (
-                /* Slashed Eye (Hidden) */
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                   <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
               ) : (
-                /* Eye (Visible) */
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                   <circle cx="12" cy="12" r="3" />
