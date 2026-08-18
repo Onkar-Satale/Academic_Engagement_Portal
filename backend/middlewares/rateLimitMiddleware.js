@@ -15,7 +15,7 @@ export const authRateLimiter = rateLimit({
 // General rate limiter for all API endpoints
 export const rateLimitMiddleware = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 200, // 200 requests per IP per minute
+  max: 1500, // 1500 requests per IP per minute
   standardHeaders: true, 
   legacyHeaders: false, 
   message: {

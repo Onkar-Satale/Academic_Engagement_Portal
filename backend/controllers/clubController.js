@@ -1,25 +1,23 @@
-import crypto from "crypto";
-import jwt from "jsonwebtoken";
 import clubService from "../services/clubService.js";
 import ApiError from "../utils/ApiError.js";
 
 export const createClub = async (req, res, next) => {
   try {
-    const { name, description, clubHeadKey, clubMentorKey } = req.body;
+    const { name, description, tagline, category, activities, club_head_id, club_mentor_id, permission_emails } = req.body;
 
-    const clubPrefix = name ? name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() : "CLB";
-    const headKey = clubHeadKey && clubHeadKey.trim()
-      ? clubHeadKey.trim()
-      : `KEY_${clubPrefix}_HEAD_${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
-    const mentorKey = clubMentorKey && clubMentorKey.trim()
-      ? clubMentorKey.trim()
-      : `KEY_${clubPrefix}_MNTR_${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
+    if (!name || !name.trim()) {
+      return next(new ApiError(400, "Club name is required"));
+    }
 
     const clubId = await clubService.createClub({
       name: name.trim(),
-      description: description.trim(),
-      club_head_key: headKey,
-      club_mentor_key: mentorKey
+      description: description ? description.trim() : "",
+      tagline: tagline ? tagline.trim() : null,
+      category: category ? category.trim() : null,
+      activities: activities ? activities.trim() : null,
+      club_head_id: club_head_id || null,
+      club_mentor_id: club_mentor_id || null,
+      permission_emails: permission_emails ? permission_emails.trim() : null
     });
 
     res.status(201).json({ success: true, message: "Club created successfully", clubId });
@@ -28,17 +26,19 @@ export const createClub = async (req, res, next) => {
   }
 };
 
+export const getCandidates = async (req, res, next) => {
+  try {
+    const candidates = await clubService.getCandidates();
+    res.json(candidates);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getAllClubs = async (req, res, next) => {
   try {
     const clubs = await clubService.getAllClubs();
-    // Non-admins shouldn't receive secret keys in lists
-    const sanitized = clubs.map(c => {
-      const copy = { ...c };
-      delete copy.club_head_key;
-      delete copy.club_mentor_key;
-      return copy;
-    });
-    res.json(sanitized);
+    res.json(clubs);
   } catch (err) {
     next(err);
   }
@@ -48,29 +48,6 @@ export const getClubById = async (req, res, next) => {
   try {
     const club = await clubService.getClubById(req.params.id);
     if (!club) return next(new ApiError(404, "Club not found"));
-
-    let isAdmin = false;
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      try {
-        const token = authHeader.split(" ")[1];
-        const secret = process.env.JWT_ACCESS_SECRET;
-        if (token && secret) {
-          const decoded = jwt.verify(token, secret);
-          if (Number(decoded.role_id) === 3) {
-            isAdmin = true;
-          }
-        }
-      } catch (e) {
-        // Not a valid admin token
-      }
-    }
-
-    if (!isAdmin) {
-      delete club.club_head_key;
-      delete club.club_mentor_key;
-    }
-
     res.json(club);
   } catch (err) {
     next(err);
@@ -160,46 +137,6 @@ export const toggleRegistration = async (req, res, next) => {
 
     await clubService.toggleRegistration(clubId, is_registration_open);
     res.json({ success: true, message: `Registration ${is_registration_open ? 'opened' : 'closed'} successfully` });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const generateClubKey = async (req, res, next) => {
-  try {
-    const { clubId } = req.params;
-    const { key_type, secret_key } = req.body; // key_type: 'head' | 'mentor'
-    const club = await clubService.getClubById(clubId);
-    if (!club) return next(new ApiError(404, "Club not found"));
-
-    if (req.user.role !== 3) {
-      return next(new ApiError(403, "Only Administrators can manage club secret keys"));
-    }
-
-    const keyToUse = secret_key && secret_key.trim()
-      ? secret_key.trim()
-      : `KEY_CLUB_${key_type.toUpperCase()}_${Date.now().toString(36).toUpperCase()}`;
-
-    await clubService.setClubKey(clubId, key_type, keyToUse);
-    res.json({ success: true, message: `${key_type === 'mentor' ? 'Club Mentor' : 'Club Head'} key generated successfully`, secret_key: keyToUse });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const revokeClubKey = async (req, res, next) => {
-  try {
-    const { clubId } = req.params;
-    const { key_type } = req.body;
-    const club = await clubService.getClubById(clubId);
-    if (!club) return next(new ApiError(404, "Club not found"));
-
-    if (req.user.role !== 3) {
-      return next(new ApiError(403, "Only Administrators can revoke club secret keys"));
-    }
-
-    await clubService.revokeClubKey(clubId, key_type);
-    res.json({ success: true, message: `${key_type === 'mentor' ? 'Club Mentor' : 'Club Head'} key deleted successfully` });
   } catch (err) {
     next(err);
   }

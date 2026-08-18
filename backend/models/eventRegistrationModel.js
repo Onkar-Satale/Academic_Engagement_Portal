@@ -2,6 +2,13 @@ import { db } from "../config/db.js";
 
 export const EventRegistrationModel = {
   async register(eventId, userId, formData) {
+    const [[userRow]] = await db.query("SELECT is_passout FROM user WHERE user_id = ?", [userId]);
+    if (userRow && (userRow.is_passout === 1 || userRow.is_passout === true)) {
+      const err = new Error("Passout alumni accounts cannot register for active campus student events.");
+      err.statusCode = 403;
+      throw err;
+    }
+
     const { full_name, email, phone, department, year, roll_no, notes } = formData;
     await db.query(
       "INSERT INTO event_registration (event_id, student_id, full_name, email, phone, department, year, roll_no, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

@@ -9,5 +9,10 @@ export const RoleModel = {
   getById: async (roleId) => {
     const [[row]] = await db.query("SELECT * FROM role WHERE role_id = ?", [roleId]);
     return row;
+  },
+
+  getByName: async (roleName) => {
+    const [[row]] = await db.query("SELECT * FROM role WHERE role_name = ?", [roleName]);
+    return row;
   }
 };

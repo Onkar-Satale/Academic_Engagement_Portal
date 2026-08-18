@@ -29,4 +29,3 @@ export const errorMiddleware = (err, req, res, next) => {
     error: process.env.NODE_ENV === "development" ? error.stack : undefined
   });
 };
-

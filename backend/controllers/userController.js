@@ -1,12 +1,27 @@
-import crypto from "crypto";
 import userService from "../services/userService.js";
-import { RoleKeyModel } from "../models/roleKeyModel.js";
-import { ClubModel } from "../models/clubModel.js";
 
 export const getRoles = async (req, res, next) => {
   try {
     const roles = await userService.getAllRoles();
     res.json(roles);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getProfile = async (req, res, next) => {
+  try {
+    const data = await userService.getProfile(req.user.id);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getMyAuthorityHistory = async (req, res, next) => {
+  try {
+    const data = await userService.getMyAuthorityHistory(req.user.id);
+    res.json(data);
   } catch (err) {
     next(err);
   }
@@ -25,20 +40,20 @@ export const deleteUser = async (req, res, next) => {
   try {
     const targetUserId = req.params.id;
     await userService.deleteUserById(req.user.id, targetUserId);
-    res.json({ success: true, message: "User deleted successfully" });
+    res.json({ success: true, message: "User deleted successfully 🗑️" });
   } catch (err) {
     next(err);
   }
 };
 
-export const elevateRole = async (req, res, next) => {
+export const toggleUserStatus = async (req, res, next) => {
   try {
-    const { secret_key } = req.body;
-    const result = await userService.elevateRole(req.user.id, secret_key);
+    const targetUserId = req.params.id;
+    const result = await userService.toggleUserStatus(req.user.id, targetUserId);
     res.json({
       success: true,
-      message: `Role elevated successfully to ${result.user.role_name}! 🎉`,
-      ...result
+      message: `User account has been ${result.is_active === 1 ? 'activated' : 'deactivated'} successfully.`,
+      user: result
     });
   } catch (err) {
     next(err);
@@ -52,9 +67,27 @@ export const updateUserRole = async (req, res, next) => {
     const updated = await userService.adminUpdateUserRole(req.user.id, targetUserId, role_id);
     res.json({
       success: true,
-      message: "User role updated successfully",
+      message: "User role updated successfully ⚡",
       user: updated
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAuthoritySeats = async (req, res, next) => {
+  try {
+    const data = await userService.getAuthoritySeats();
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateAuthoritySeats = async (req, res, next) => {
+  try {
+    const result = await userService.updateAuthoritySeats(req.user.id, req.body);
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -69,67 +102,77 @@ export const deleteAccount = async (req, res, next) => {
   }
 };
 
-export const generateRoleKey = async (req, res, next) => {
+export const toggleSelfRetired = async (req, res, next) => {
   try {
-    const { role_id, secret_key } = req.body;
-    if (!role_id) return res.status(400).json({ success: false, message: "role_id is required" });
-
-    if (!secret_key || !secret_key.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "A secret key must be generated or provided before activating."
-      });
-    }
-
-    const existingKey = await RoleKeyModel.findActiveByRole(role_id);
-    if (existingKey) {
-      return res.status(400).json({
-        success: false,
-        message: `A secret key record ('${existingKey.secret_key}') already exists for this role. Delete the existing key record first before creating a new key.`
-      });
-    }
-
-    const keyToUse = secret_key.trim();
-    const keyId = await RoleKeyModel.create({ secret_key: keyToUse, role_id });
-
-    res.status(201).json({
-      success: true,
-      message: "Role invite key generated successfully",
-      key_id: keyId,
-      secret_key: keyToUse,
-      role_id
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const revokeSecretKey = async (req, res, next) => {
-  try {
-    const { secret_key } = req.body;
-    if (!secret_key) return res.status(400).json({ message: "secret_key is required" });
-
-    const roleRevoked = await RoleKeyModel.revokeKey(secret_key);
-    const clubRevoked = await ClubModel.revokeClubKey(secret_key);
-
-    if (!roleRevoked && !clubRevoked) {
-      return res.status(404).json({ success: false, message: "Secret key not found or already revoked" });
-    }
-
+    const updated = await userService.toggleSelfRetiredStatus(req.user.id);
     res.json({
       success: true,
-      message: `Secret key '${secret_key}' has been revoked successfully`
+      message: `Status updated to ${updated.is_retired === 1 ? 'Retired' : 'Active'} Faculty.`,
+      user: updated
     });
   } catch (err) {
     next(err);
   }
 };
 
-export const getAllSecretKeys = async (req, res, next) => {
+export const adminToggleUserRetired = async (req, res, next) => {
   try {
-    const keys = await RoleKeyModel.getAllKeys();
-    res.json(keys);
+    const targetUserId = req.params.id;
+    const updated = await userService.adminToggleUserRetiredStatus(req.user.id, targetUserId);
+    res.json({
+      success: true,
+      message: `User status tag updated to ${updated.is_retired === 1 ? 'Retired' : 'Active'} Faculty.`,
+      user: updated
+    });
   } catch (err) {
     next(err);
   }
 };
+
+export const toggleSelfPassout = async (req, res, next) => {
+  try {
+    const updated = await userService.toggleSelfPassoutStatus(req.user.id);
+    res.json({
+      success: true,
+      message: `Status updated to ${updated.is_passout === 1 ? 'Passout / Alumni' : 'Active Student'}.`,
+      user: updated
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const adminToggleUserPassout = async (req, res, next) => {
+  try {
+    const targetUserId = req.params.id;
+    const updated = await userService.adminToggleUserPassoutStatus(req.user.id, targetUserId);
+    res.json({
+      success: true,
+      message: `Student status updated to ${updated.is_passout === 1 ? 'Passout / Alumni' : 'Active Student'}.`,
+      user: updated
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const batchGraduateFinalYear = async (req, res, next) => {
+  try {
+    const { department } = req.body;
+    const result = await userService.batchGraduateFinalYear(req.user.id, department);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const batchPromoteAcademicYears = async (req, res, next) => {
+  try {
+    const result = await userService.batchPromoteAcademicYears(req.user.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+

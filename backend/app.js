@@ -10,7 +10,6 @@ import permissionRoutes from "./routes/permissionRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import clubMemberRoutes from "./routes/clubMemberRoutes.js";
-import clubRegistrationRoutes from "./routes/clubRegistrationRoutes.js";
 import eventRegistrationRoutes from "./routes/eventRegistrationRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import { errorMiddleware } from "./middlewares/errorMiddleware.js";
@@ -57,6 +56,7 @@ app.use(
 app.use(express.json());
 app.use(sanitizeMiddleware);
 
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/events", eventRoutes);
@@ -64,7 +64,6 @@ app.use("/api/permissions", permissionRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/club-members", clubMemberRoutes);
-app.use("/api/club-registrations", clubRegistrationRoutes);
 app.use("/api/event-registrations", eventRegistrationRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
 

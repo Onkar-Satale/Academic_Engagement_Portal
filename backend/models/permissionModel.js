@@ -1,5 +1,12 @@
 import { db } from "../config/db.js";
 
+const levelRoleMap = {
+  1: "Club Mentor",
+  2: "Estate Manager",
+  3: "Principal",
+  4: "Director"
+};
+
 export const PermissionModel = {
   async createRequest({ title, description, event_date, venue, club_id, requester_id }) {
     const [result] = await db.query(
@@ -26,14 +33,14 @@ export const PermissionModel = {
       `SELECT pr.*, c.name as club_name 
        FROM permission_request pr
        LEFT JOIN club c ON pr.club_id = c.club_id
-       WHERE pr.requester_id = ?
+       WHERE pr.requester_id = ? OR c.club_head_id = ?
        ORDER BY pr.created_at DESC`,
-      [userId]
+      [userId, userId]
     );
 
     for (const req of rows) {
       const [approvals] = await db.query(
-        `SELECT pa.*, u.name as authority_name, r.role_name as authority_role
+        `SELECT pa.*, u.name as authority_name, u.email as authority_email, r.role_name as authority_current_role
          FROM permission_approval pa
          JOIN user u ON pa.authority_id = u.user_id
          JOIN role r ON u.role_id = r.role_id
@@ -41,7 +48,10 @@ export const PermissionModel = {
          ORDER BY pa.level ASC`,
         [req.request_id]
       );
-      req.approval_history = approvals || [];
+      req.approval_history = (approvals || []).map((pa) => ({
+        ...pa,
+        authority_stage_title: levelRoleMap[pa.level] || "Authority"
+      }));
     }
 
     return rows;
@@ -105,7 +115,7 @@ export const PermissionModel = {
 
     for (const req of rows) {
       const [approvals] = await db.query(
-        `SELECT pa.*, u.name as authority_name, r.role_name as authority_role
+        `SELECT pa.*, u.name as authority_name, u.email as authority_email, r.role_name as authority_current_role
          FROM permission_approval pa
          JOIN user u ON pa.authority_id = u.user_id
          JOIN role r ON u.role_id = r.role_id
@@ -113,10 +123,31 @@ export const PermissionModel = {
          ORDER BY pa.level ASC`,
         [req.request_id]
       );
-      req.approval_history = approvals || [];
+      req.approval_history = (approvals || []).map((pa) => ({
+        ...pa,
+        authority_stage_title: levelRoleMap[pa.level] || "Authority"
+      }));
     }
 
     return rows;
+  },
+
+  async getDecisionsByAuthority(userId) {
+    const [rows] = await db.query(
+      `SELECT pa.*, pr.title as request_title, pr.event_date, pr.venue, pr.status as final_request_status,
+              c.name as club_name, u.name as requester_name
+       FROM permission_approval pa
+       JOIN permission_request pr ON pa.request_id = pr.request_id
+       JOIN club c ON pr.club_id = c.club_id
+       JOIN user u ON pr.requester_id = u.user_id
+       WHERE pa.authority_id = ?
+       ORDER BY pa.action_date DESC`,
+      [userId]
+    );
+    return rows.map((r) => ({
+      ...r,
+      authority_stage_title: levelRoleMap[r.level] || "Authority"
+    }));
   },
 
   async updateStatus(requestId, authorityId, level, status, remarks) {
@@ -144,5 +175,24 @@ export const PermissionModel = {
         );
       }
     }
+  },
+
+  async deleteByRequester(requestId, requesterId) {
+    await db.query(
+      "DELETE FROM permission_request WHERE request_id = ? AND requester_id = ?",
+      [requestId, requesterId]
+    );
+  },
+
+  async getDistinctReviewers(requestId) {
+    const [rows] = await db.query(
+      "SELECT DISTINCT authority_id FROM permission_approval WHERE request_id = ?",
+      [requestId]
+    );
+    return rows.map(r => r.authority_id);
+  },
+
+  async delete(requestId) {
+    await db.query("DELETE FROM permission_request WHERE request_id = ?", [requestId]);
   }
 };

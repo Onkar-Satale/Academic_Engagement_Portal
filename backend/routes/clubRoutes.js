@@ -6,15 +6,14 @@ import {
   createClub,
   getAllClubs,
   getClubById,
+  getCandidates,
   updateClub,
   deleteClub,
   addStudentToClub,
   removeStudentFromClub,
   getClubMembers,
   toggleRegistration,
-  getMyEnrolledClubs,
-  generateClubKey,
-  revokeClubKey
+  getMyEnrolledClubs
 } from "../controllers/clubController.js";
 import { joinClub, getPendingApplications, processApplication, getMemberStatus } from "../controllers/clubMemberController.js";
 
@@ -29,6 +28,12 @@ router.post(
 );
 
 router.get("/", getAllClubs);
+
+router.get(
+  "/candidates",
+  authenticate,
+  getCandidates
+);
 
 router.get(
   "/my/enrolled",
@@ -97,18 +102,6 @@ router.get(
   "/:clubId/my-status",
   authenticate,
   getMemberStatus
-);
-
-router.post(
-  "/:clubId/generate-key",
-  authenticate,
-  generateClubKey
-);
-
-router.post(
-  "/:clubId/revoke-key",
-  authenticate,
-  revokeClubKey
 );
 
 export default router;

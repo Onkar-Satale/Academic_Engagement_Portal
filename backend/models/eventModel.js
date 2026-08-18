@@ -21,6 +21,14 @@ export const EventModel = {
     return res.insertId;
   },
 
+  publishApprovedEvent: async ({ title, description, event_date, venue, club_id, organizer_id, conducted_by }) => {
+    const [res] = await db.query(
+      "INSERT INTO event (title, description, date, venue, status, club_id, organizer_id, additional_info, conducted_by) VALUES (?,?,?,?,?,?,?,?,?)",
+      [title, description || "", event_date, venue, "APPROVED", club_id, organizer_id, null, conducted_by]
+    );
+    return res.insertId;
+  },
+
   getAll: async () => {
     try {
       await db.query(`

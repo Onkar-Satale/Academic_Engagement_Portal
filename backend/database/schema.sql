@@ -4,7 +4,9 @@ CREATE DATABASE IF NOT EXISTS college_db
 
 USE college_db;
 
--- 1. Roles Table & Initial Roles Data
+-- ============================================================================
+-- 1. ROLES TABLE & INITIAL ROLE HIERARCHY
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS role (
   role_id INT PRIMARY KEY AUTO_INCREMENT,
   role_name VARCHAR(50) NOT NULL UNIQUE
@@ -20,38 +22,47 @@ INSERT IGNORE INTO role (role_id, role_name) VALUES
 (7, 'Principal'),
 (8, 'Director');
 
--- 2. User Table
+-- ============================================================================
+-- 2. USER TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS user (
   user_id INT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(100),
-  email VARCHAR(100) UNIQUE,
-  password_hash VARCHAR(255),
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
   department VARCHAR(100),
   year INT,
   role_id INT,
   profile_photo VARCHAR(255) DEFAULT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  is_retired BOOLEAN DEFAULT FALSE,
+  is_passout BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (role_id) REFERENCES role(role_id) ON DELETE SET NULL
 );
 
--- 3. Club Table
+-- ============================================================================
+-- 3. CLUB TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS club (
   club_id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(100) NOT NULL,
   description TEXT,
-  club_head_id INT,
-  club_mentor_id INT,
-  club_mentor_key VARCHAR(100) DEFAULT NULL,
-  club_head_key VARCHAR(100) DEFAULT NULL,
+  club_head_id INT DEFAULT NULL,
+  club_mentor_id INT DEFAULT NULL,
   permission_emails TEXT DEFAULT NULL,
   tagline VARCHAR(255) DEFAULT NULL,
   category VARCHAR(100) DEFAULT NULL,
   activities TEXT DEFAULT NULL,
   is_registration_open BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (club_head_id) REFERENCES user(user_id) ON DELETE SET NULL,
   FOREIGN KEY (club_mentor_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
 
--- 4. Club Member / Member Applications Table
+-- ============================================================================
+-- 4. CLUB MEMBER / APPLICATION TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS club_member (
   club_id INT NOT NULL,
   user_id INT NOT NULL,
@@ -63,7 +74,9 @@ CREATE TABLE IF NOT EXISTS club_member (
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
--- 5. Event Table
+-- ============================================================================
+-- 5. EVENT TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS event (
   event_id INT PRIMARY KEY AUTO_INCREMENT,
   title VARCHAR(150) NOT NULL,
@@ -80,7 +93,9 @@ CREATE TABLE IF NOT EXISTS event (
   FOREIGN KEY (organizer_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
 
--- 6. Event Registration Table
+-- ============================================================================
+-- 6. EVENT REGISTRATION TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS event_registration (
   registration_id INT AUTO_INCREMENT PRIMARY KEY,
   event_id INT NOT NULL,
@@ -98,7 +113,9 @@ CREATE TABLE IF NOT EXISTS event_registration (
   UNIQUE KEY unique_registration (event_id, student_id)
 );
 
--- 7. Permission Request Table
+-- ============================================================================
+-- 7. PERMISSION REQUEST TABLE (Multi-Level Approval Workflow)
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS permission_request (
   request_id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(200) NOT NULL,
@@ -114,7 +131,9 @@ CREATE TABLE IF NOT EXISTS permission_request (
   FOREIGN KEY (requester_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
--- 8. Permission Approval / Log Table
+-- ============================================================================
+-- 8. PERMISSION APPROVAL AUDIT TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS permission_approval (
   approval_id INT AUTO_INCREMENT PRIMARY KEY,
   request_id INT NOT NULL,
@@ -127,7 +146,9 @@ CREATE TABLE IF NOT EXISTS permission_approval (
   FOREIGN KEY (authority_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
--- 9. Notification Table
+-- ============================================================================
+-- 9. NOTIFICATION TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS notification (
   notification_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -140,7 +161,9 @@ CREATE TABLE IF NOT EXISTS notification (
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
--- 10. Audit Log Table
+-- ============================================================================
+-- 10. AUDIT LOG TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS audit_log (
   log_id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
@@ -153,17 +176,9 @@ CREATE TABLE IF NOT EXISTS audit_log (
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
 
--- 11. Role Invite Key Table
-CREATE TABLE IF NOT EXISTS role_invite_key (
-  key_id INT PRIMARY KEY AUTO_INCREMENT,
-  secret_key VARCHAR(100) NOT NULL UNIQUE,
-  role_id INT NOT NULL,
-  is_used BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (role_id) REFERENCES role(role_id) ON DELETE CASCADE
-);
-
--- 12. User Feedback / Testimonials Table
+-- ============================================================================
+-- 11. FEEDBACK & TESTIMONIALS TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS feedback (
   feedback_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -171,6 +186,3 @@ CREATE TABLE IF NOT EXISTS feedback (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );
-
--- (No sample clubs or events: database starts 100% clean for fresh testing)
-

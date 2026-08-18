@@ -2,17 +2,14 @@ import { PermissionModel } from "../models/permissionModel.js";
 import { NotificationModel } from "../models/notificationModel.js";
 import { ClubModel } from "../models/clubModel.js";
 import { UserModel } from "../models/userModel.js";
-import { db } from "../config/db.js";
+import { EventModel } from "../models/eventModel.js";
 
 export const permissionService = {
   createRequest: async (data) => {
     // If replacing an existing rejected request, clean up the old request card first
     if (data.old_request_id) {
       try {
-        await db.query("DELETE FROM permission_request WHERE request_id = ? AND requester_id = ?", [
-          data.old_request_id,
-          data.requester_id
-        ]);
+        await PermissionModel.deleteByRequester(data.old_request_id, data.requester_id);
       } catch (delErr) {
         console.warn("Could not delete old request during resubmission:", delErr.message);
       }
@@ -111,24 +108,18 @@ export const permissionService = {
               }
             }
           } else {
-            // Level 4 (Director) Final Approval -> Automatically Publish Event!
+            // Level 4 (Director) Final Approval -> Automatically Publish Event via EventModel!
             let newEventId = null;
             try {
-              const [eventResult] = await db.query(
-                "INSERT INTO event (title, description, date, venue, status, club_id, organizer_id, additional_info, conducted_by) VALUES (?,?,?,?,?,?,?,?,?)",
-                [
-                  reqInfo.title,
-                  reqInfo.description,
-                  reqInfo.event_date,
-                  reqInfo.venue,
-                  "APPROVED",
-                  reqInfo.club_id,
-                  requesterId,
-                  null,
-                  reqInfo.club_name
-                ]
-              );
-              newEventId = eventResult.insertId;
+              newEventId = await EventModel.publishApprovedEvent({
+                title: reqInfo.title,
+                description: reqInfo.description,
+                event_date: reqInfo.event_date,
+                venue: reqInfo.venue,
+                club_id: reqInfo.club_id,
+                organizer_id: requesterId,
+                conducted_by: reqInfo.club_name
+              });
             } catch (evErr) {
               console.error("Failed to auto-create event upon final approval:", evErr);
             }
@@ -178,7 +169,6 @@ export const permissionService = {
     try {
       const formattedDate = reqInfo.event_date ? new Date(reqInfo.event_date).toISOString().split('T')[0] : 'N/A';
       const venue = reqInfo.venue || 'TBD';
-      const club = await ClubModel.getByIdWithDetails(reqInfo.club_id);
 
       const recipientUserIds = new Set();
 
@@ -206,11 +196,8 @@ export const permissionService = {
       }
 
       // 5. Any authority who reviewed in permission_approval
-      const [pastApprovals] = await db.query(
-        "SELECT DISTINCT authority_id FROM permission_approval WHERE request_id = ?",
-        [requestId]
-      );
-      pastApprovals.forEach(p => recipientUserIds.add(p.authority_id));
+      const reviewerIds = await PermissionModel.getDistinctReviewers(requestId);
+      reviewerIds.forEach(id => recipientUserIds.add(id));
 
       recipientUserIds.delete(reqUser.id);
 
@@ -228,7 +215,7 @@ export const permissionService = {
       console.warn("Notification warning on deleteRequest:", notifErr);
     }
 
-    await db.query("DELETE FROM permission_request WHERE request_id = ?", [requestId]);
+    await PermissionModel.delete(requestId);
 
     return { status: 200, message: "Permission request deleted successfully and authorities notified." };
   }
