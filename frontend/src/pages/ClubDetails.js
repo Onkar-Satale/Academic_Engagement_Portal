@@ -60,7 +60,25 @@ export default function ClubDetails() {
       const res = await api.get("/clubs/candidates", {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setCandidates(res.data || { students: [], teachers: [] });
+      const data = res.data || { students: [], teachers: [] };
+      if (club && club.club_head_id && !data.students.some(s => s.user_id === club.club_head_id)) {
+        data.students.push({
+          user_id: club.club_head_id,
+          name: club.head_name || "Current Club Head",
+          email: club.head_email || "",
+          department: club.head_department || "",
+          year: club.head_year || ""
+        });
+      }
+      if (club && club.club_mentor_id && !data.teachers.some(t => t.user_id === club.club_mentor_id)) {
+        data.teachers.push({
+          user_id: club.club_mentor_id,
+          name: club.mentor_name || "Current Club Mentor",
+          email: club.mentor_email || "",
+          department: club.mentor_department || ""
+        });
+      }
+      setCandidates(data);
     } catch (err) {
       console.error("Failed to fetch candidates:", err);
     }
@@ -146,7 +164,7 @@ export default function ClubDetails() {
     }
   };
 
-  const isAuthority = user && (["Admin", "Estate Manager", "Principal", "Director", "Club Mentor", "Club Head", "Teacher"].includes(user.role_name) || [2, 3, 5, 6, 7, 8, 9].includes(user.role_id) || [2, 3, 5, 6, 7, 8, 9].includes(user.role));
+  const isAuthority = user && (["Admin", "Estate Manager", "Principal", "Club Mentor", "Club Head", "Teacher"].includes(user.role_name) || [2, 3, 4, 5, 6, 7].includes(Number(user.role_id || user.role)));
   const isClubHead = user && (user.role_name === "Club Head" || user.role_id === 4 || user.role === 4 || (club && club.club_head_id === user.id));
   const isClubMentor = user && (user.role_name === "Club Mentor" || user.role_id === 5 || user.role === 5 || (club && club.club_mentor_id === user.id));
 
@@ -382,7 +400,7 @@ export default function ClubDetails() {
                             <span style={{ fontWeight: 700, color: "#f8fafc" }}>{s.name}</span>
                             <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>({s.email})</span>
                             {s.department && (
-                              <span style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
+                              <span style={{ background: "rgba(168, 85, 247, 0.2)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
                                 {s.department}{s.year ? ` - Yr ${s.year}` : ''}
                               </span>
                             )}
@@ -453,7 +471,7 @@ export default function ClubDetails() {
                                   <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>{s.email}</span>
                                 </div>
                                 {s.department && (
-                                  <span style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
+                                  <span style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
                                     {s.department}{s.year ? ` - Yr ${s.year}` : ''}
                                   </span>
                                 )}
@@ -483,7 +501,7 @@ export default function ClubDetails() {
                             <span style={{ fontWeight: 700, color: "#f8fafc" }}>Prof. {t.name}</span>
                             <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>({t.email})</span>
                             {t.department && (
-                              <span style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
+                              <span style={{ background: "rgba(168, 85, 247, 0.2)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
                                 {t.department}
                               </span>
                             )}
@@ -554,7 +572,7 @@ export default function ClubDetails() {
                                   <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>{t.email}</span>
                                 </div>
                                 {t.department && (
-                                  <span style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
+                                  <span style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
                                     {t.department}
                                   </span>
                                 )}
@@ -747,7 +765,7 @@ export default function ClubDetails() {
               )}
               <button
                 onClick={() => navigate(`/clubs/${clubId}/applications`)}
-                style={{ background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)", boxShadow: "0 4px 14px rgba(59, 130, 246, 0.35)" }}
+                style={{ background: "linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)", boxShadow: "0 4px 14px rgba(124, 58, 237, 0.35)" }}
               >
                 📩 View Applications
               </button>
@@ -940,7 +958,7 @@ export default function ClubDetails() {
                   <img
                     src={selectedMember.photo_url.startsWith("http") ? selectedMember.photo_url : `${BACKEND_URL}/${selectedMember.photo_url.replace(/\\/g, "/").replace(/^\/+/, "")}`}
                     alt="Profile"
-                    style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "2px solid #00ffff" }}
+                    style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "2px solid #a855f7" }}
                     onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                   />
                 ) : (
@@ -960,42 +978,30 @@ export default function ClubDetails() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "24px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
                 <div>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Full Name</label>
-                  <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.student_name || selectedMember.name}</div>
+                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: "4px" }}>Full Name</label>
+                  <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "600" }}>{selectedMember.student_name || selectedMember.name}</div>
                 </div>
                 <div>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem" }}>College Email</label>
+                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: "4px" }}>College Email</label>
                   <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.email}</div>
                 </div>
                 <div>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Roll No</label>
-                  <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.roll_no}</div>
-                </div>
-                <div>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Phone No</label>
-                  <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.phone_no || "N/A"}</div>
-                </div>
-                <div>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Year / Division</label>
-                  <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.year} {selectedMember.division ? `/ ${selectedMember.division}` : ""}</div>
-                </div>
-                <div>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Department</label>
+                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: "4px" }}>Department</label>
                   <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.department || selectedMember.branch || "N/A"}</div>
                 </div>
                 <div>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Personal Email</label>
-                  <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.personal_email || "N/A"}</div>
+                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: "4px" }}>Academic Year</label>
+                  <div style={{ color: "#fff", fontSize: "1rem" }}>{selectedMember.year ? `Year ${selectedMember.year}` : "N/A"}</div>
                 </div>
               </div>
 
-              {selectedMember.statement_of_purpose && (
-                <div style={{ marginTop: "16px", background: "rgba(255,255,255,0.03)", padding: "16px", borderRadius: "8px" }}>
-                  <label style={{ color: "#00ffff", fontSize: "0.9rem", display: "block", marginBottom: "8px" }}>Statement of Purpose</label>
-                  <p style={{ color: "#cbd5e1", lineHeight: "1.6", margin: 0, fontSize: "0.95rem" }}>
-                    {selectedMember.statement_of_purpose}
+              {(selectedMember.reason || selectedMember.statement_of_purpose) && (
+                <div style={{ marginTop: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "16px", borderRadius: "8px" }}>
+                  <label style={{ color: "#c084fc", fontSize: "0.88rem", fontWeight: "600", display: "block", marginBottom: "6px" }}>Statement of Purpose / Motivation</label>
+                  <p style={{ color: "#cbd5e1", lineHeight: "1.6", margin: 0, fontSize: "0.92rem" }}>
+                    "{selectedMember.reason || selectedMember.statement_of_purpose}"
                   </p>
                 </div>
               )}
@@ -1072,9 +1078,9 @@ export default function ClubDetails() {
                             setSelectedMember(m);
                           }}
                           style={{
-                            background: "rgba(59, 130, 246, 0.15)",
-                            color: "#60a5fa",
-                            border: "1px solid rgba(59, 130, 246, 0.3)",
+                            background: "rgba(168, 85, 247, 0.15)",
+                            color: "#c084fc",
+                            border: "1px solid rgba(168, 85, 247, 0.3)",
                             padding: "6px 12px",
                             borderRadius: "6px",
                             fontSize: "0.8rem",

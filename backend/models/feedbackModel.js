@@ -17,7 +17,6 @@ export const FeedbackModel = {
         u.email as user_email,
         u.department,
         u.year,
-        COALESCE(u.is_retired, 0) as is_retired,
         r.role_name
       FROM feedback f
       JOIN user u ON f.user_id = u.user_id

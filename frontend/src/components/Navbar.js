@@ -143,8 +143,8 @@ export default function Navbar() {
               </>
             )}
 
-            {/* Approvals for Authorities & Mentors */}
-            {["Club Mentor", "Estate Manager", "Principal", "Director"].includes(user?.role_name) && (
+            {/* Approvals for 3-Tier Authorities & Mentors */}
+            {["Club Mentor", "Estate Manager", "Principal"].includes(user?.role_name) && (
               <Link to="/approvals" className={`nav-link ${isActive('/approvals') ? 'active' : ''}`}>Approvals</Link>
             )}
           </div>

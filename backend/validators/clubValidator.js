@@ -10,6 +10,10 @@ export const validateCreateClub = [
     .trim()
     .notEmpty().withMessage("Description is required")
     .isLength({ min: 10, max: 2000 }).withMessage("Description must be at least 10 characters"),
+  body("club_head_id")
+    .notEmpty().withMessage("A Club Head (Student) is required to establish a club"),
+  body("club_mentor_id")
+    .notEmpty().withMessage("A Club Mentor (Teacher / Faculty) is required to establish a club"),
   validateRequest,
 ];
 

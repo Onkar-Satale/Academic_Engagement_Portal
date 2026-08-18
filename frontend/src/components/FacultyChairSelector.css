@@ -6,7 +6,10 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 12px;
+  height: 100%;
+  box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -17,60 +20,79 @@
 .chair-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  min-height: 52px;
 }
 
 .chair-title-wrap {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 
 .chair-icon {
   font-size: 1.3rem;
+  line-height: 1.2;
 }
 
 .chair-title {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .chair-subtitle {
-  margin: 2px 0 0 0;
+  margin: 4px 0 0 0;
   font-size: 0.78rem;
   color: #a1a1aa;
+  line-height: 1.3;
 }
 
 /* Appointee Card inside Chair Slot */
 .appointee-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
   background: #18181b;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 12px;
+  min-height: 118px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.appointee-card:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.appointee-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .appointee-avatar {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
   color: #000;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.appointee-info {
+.appointee-main-info {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   flex: 1;
   min-width: 0;
 }
@@ -78,44 +100,67 @@
 .appointee-name-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .appointee-name {
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: #f8fafc;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .dept-pill {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
   padding: 1px 6px;
   border-radius: 4px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .appointee-email {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #94a3b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.appointee-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: nowrap;
+}
+
 .current-role-badge {
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   color: #a1a1aa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.current-role-badge strong {
+  color: #fef08a;
+  font-weight: 600;
 }
 
 .appointee-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
   flex-shrink: 0;
 }
@@ -124,17 +169,20 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #f8fafc;
-  padding: 7px 12px;
+  padding: 5px 10px;
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .change-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.35);
 }
 
@@ -142,9 +190,9 @@
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #ef4444;
-  padding: 7px 10px;
+  padding: 5px 8px;
   border-radius: 6px;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -405,8 +453,8 @@
 }
 
 .candidate-dept-tag {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
   padding: 1px 6px;
   border-radius: 4px;
   font-size: 0.72rem;

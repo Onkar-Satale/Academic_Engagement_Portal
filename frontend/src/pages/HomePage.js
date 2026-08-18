@@ -208,7 +208,7 @@ export default function HomePage() {
                             </div>
                             <div className="hp-mock-main">
                                 <div className="hp-mock-stat-row">
-                                    <div className="hp-mock-stat blue"><div className="hp-mock-stat-num">12</div><div className="hp-mock-stat-label">Clubs</div></div>
+                                    <div className="hp-mock-stat purple"><div className="hp-mock-stat-num">12</div><div className="hp-mock-stat-label">Clubs</div></div>
                                     <div className="hp-mock-stat purple"><div className="hp-mock-stat-num">40+</div><div className="hp-mock-stat-label">Events</div></div>
                                     <div className="hp-mock-stat teal"><div className="hp-mock-stat-num">500+</div><div className="hp-mock-stat-label">Students</div></div>
                                 </div>
@@ -558,10 +558,7 @@ export default function HomePage() {
                         {feedbacks.length > 0 ? (
                             feedbacks.slice(0, 3).map((t, idx) => {
                                 const displayName = t.user_name || t.name;
-                                const isRetired = t.is_retired === 1 || t.is_retired === true;
-                                const baseRole = isRetired && !["Student", "Club Head"].includes(t.role_name || t.role)
-                                    ? `🏷️ Retired ${t.role_name || t.role || 'Teacher'}`
-                                    : (t.role_name || t.role);
+                                const baseRole = t.role_name || t.role || 'Member';
                                 const displayRole = `${baseRole}${t.department ? `, ${t.department}` : ''}`;
                                 const avatarInitial = (displayName || "?").charAt(0).toUpperCase();
                                 const fullText = t.message || t.text || "";
@@ -711,10 +708,7 @@ export default function HomePage() {
                             {feedbacks.length > 0 ? feedbacks.map((f, i) => {
                                 const displayName = f.user_name || f.name;
                                 const avatar = (displayName || "?").charAt(0).toUpperCase();
-                                const isRetired = f.is_retired === 1 || f.is_retired === true;
-                                const baseRole = isRetired && !["Student", "Club Head"].includes(f.role_name || f.role)
-                                    ? `🏷️ Retired ${f.role_name || f.role || 'Teacher'}`
-                                    : (f.role_name || f.role || "Community Member");
+                                const baseRole = f.role_name || f.role || "Community Member";
                                 const roleStr = `${baseRole}${f.department ? `, ${f.department}` : ''}`;
                                 const canDelete = f.feedback_id && user && Number(user.id) === Number(f.user_id);
                                 const fullText = f.message || f.text || "";

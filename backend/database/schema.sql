@@ -19,8 +19,7 @@ INSERT IGNORE INTO role (role_id, role_name) VALUES
 (4, 'Club Head'),
 (5, 'Club Mentor'),
 (6, 'Estate Manager'),
-(7, 'Principal'),
-(8, 'Director');
+(7, 'Principal');
 
 -- ============================================================================
 -- 2. USER TABLE
@@ -34,9 +33,6 @@ CREATE TABLE IF NOT EXISTS user (
   year INT,
   role_id INT,
   profile_photo VARCHAR(255) DEFAULT NULL,
-  is_active BOOLEAN DEFAULT TRUE,
-  is_retired BOOLEAN DEFAULT FALSE,
-  is_passout BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (role_id) REFERENCES role(role_id) ON DELETE SET NULL
 );
@@ -50,7 +46,6 @@ CREATE TABLE IF NOT EXISTS club (
   description TEXT,
   club_head_id INT DEFAULT NULL,
   club_mentor_id INT DEFAULT NULL,
-  permission_emails TEXT DEFAULT NULL,
   tagline VARCHAR(255) DEFAULT NULL,
   category VARCHAR(100) DEFAULT NULL,
   activities TEXT DEFAULT NULL,
@@ -114,7 +109,8 @@ CREATE TABLE IF NOT EXISTS event_registration (
 );
 
 -- ============================================================================
--- 7. PERMISSION REQUEST TABLE (Multi-Level Approval Workflow)
+-- 7. PERMISSION REQUEST TABLE (3-Level Approval Workflow)
+-- Level 1: Club Mentor | Level 2: Estate Manager | Level 3: Principal (Final)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS permission_request (
   request_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -162,22 +158,7 @@ CREATE TABLE IF NOT EXISTS notification (
 );
 
 -- ============================================================================
--- 10. AUDIT LOG TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS audit_log (
-  log_id INT PRIMARY KEY AUTO_INCREMENT,
-  user_id INT,
-  action VARCHAR(100),
-  entity_type VARCHAR(50),
-  entity_id INT,
-  target VARCHAR(255) DEFAULT NULL,
-  ip_address VARCHAR(45) DEFAULT NULL, 
-  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
-);
-
--- ============================================================================
--- 11. FEEDBACK & TESTIMONIALS TABLE
+-- 10. FEEDBACK & TESTIMONIALS TABLE
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS feedback (
   feedback_id INT AUTO_INCREMENT PRIMARY KEY,

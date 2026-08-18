@@ -64,7 +64,7 @@ const MyEvents = () => {
                       fontWeight: "700",
                       textTransform: "uppercase",
                       letterSpacing: "0.05em",
-                      color: "#38bdf8",
+                      color: "#c084fc",
                       marginBottom: "4px"
                     }}>
                       🏛️ {event.club_name}

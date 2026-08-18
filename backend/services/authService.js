@@ -18,7 +18,7 @@ export const authService = {
       throw new ApiError(400, "Please register as a Student. Club Heads are appointed directly inside Club settings.");
     } else if (roleName === "Club Mentor") {
       throw new ApiError(400, "Please register as a Teacher/Faculty. Club Mentors are appointed directly inside Club settings.");
-    } else if (["Estate Manager", "Principal", "Director"].includes(roleName)) {
+    } else if (["Estate Manager", "Principal"].includes(roleName)) {
       throw new ApiError(400, `Please register as Teacher/Faculty. ${roleName} is appointed directly by the Administrator.`);
     } else if (roleName === "Admin") {
       const requiredAdminKey = (process.env.SYSTEM_ADMIN_SECRET_KEY || "").trim().replace(/^["']|["']$/g, "");
@@ -65,10 +65,6 @@ export const authService = {
   loginUser: async (email, password) => {
     const user = await UserModel.findByEmail(email);
     if (!user) throw new ApiError(401, "Invalid credentials");
-
-    if (user.is_active === 0 || user.is_active === false) {
-      throw new ApiError(403, "Your account has been deactivated by the Administrator. Please contact administration.");
-    }
 
     const isMatch = await UserModel.verifyPassword(password, user.password_hash);
     if (!isMatch) throw new ApiError(401, "Invalid credentials");
@@ -122,10 +118,6 @@ export const authService = {
     const user = await UserModel.findById(decoded.id);
     if (!user) {
       throw new ApiError(401, "User not found. Please log in again.");
-    }
-
-    if (user.is_active === 0 || user.is_active === false) {
-      throw new ApiError(403, "Your account has been deactivated by the Administrator.");
     }
 
     const accessSecret = process.env.JWT_ACCESS_SECRET;

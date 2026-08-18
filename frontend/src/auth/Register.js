@@ -50,9 +50,7 @@ export default function RegisterPage() {
       { name: "Password", value: password },
     ];
 
-    if (selectedRole?.role_name !== "Admin") {
-      fields.push({ name: "Department", value: department });
-    }
+    fields.push({ name: "Department", value: department });
 
     if (selectedRole?.role_name === "Student") {
       fields.push({ name: "Year", value: year });
@@ -212,20 +210,18 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        {currentRoleName !== "Admin" && (
-          <CustomSelect
-            value={department}
-            onChange={(val) => setDepartment(val)}
-            options={[
-              { value: "CS", label: "CS (Computer Science)" },
-              { value: "IT", label: "IT (Information Technology)" },
-              { value: "AIDS", label: "AIDS (AI & Data Science)" },
-              { value: "ECE", label: "ECE (Electronics & Communication)" },
-              { value: "ENTC", label: "ENTC (Electronics & Telecommunication)" }
-            ]}
-            placeholder="Select Department"
-          />
-        )}
+        <CustomSelect
+          value={department}
+          onChange={(val) => setDepartment(val)}
+          options={[
+            { value: "CS", label: "CS (Computer Science)" },
+            { value: "IT", label: "IT (Information Technology)" },
+            { value: "AIDS", label: "AIDS (AI & Data Science)" },
+            { value: "ECE", label: "ECE (Electronics & Communication)" },
+            { value: "ENTC", label: "ENTC (Electronics & Telecommunication)" }
+          ]}
+          placeholder="Select Department"
+        />
 
         {showYear && (
           <CustomSelect

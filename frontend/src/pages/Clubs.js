@@ -8,7 +8,6 @@ import RegistrationModal from "../components/RegistrationModal";
 export default function Clubs() {
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [clubSearchQuery, setClubSearchQuery] = useState("");
 
   // Add Club Form State
   const [newClubName, setNewClubName] = useState("");
@@ -94,8 +93,20 @@ export default function Clubs() {
   }, []);
 
   const addClub = async () => {
-    if (!newClubName.trim() || !newClubDesc.trim()) {
-      toast.error("Please enter club name and description ⚠️");
+    if (!newClubName.trim()) {
+      toast.error("Club Name is required ⚠️");
+      return;
+    }
+    if (!newClubDesc.trim() || newClubDesc.trim().length < 10) {
+      toast.error("Club Description is required (minimum 10 characters) ⚠️");
+      return;
+    }
+    if (!selectedHeadId) {
+      toast.error("A Club Head (Student) must be assigned to create a club 👑");
+      return;
+    }
+    if (!selectedMentorId) {
+      toast.error("A Club Mentor (Teacher / Faculty) must be assigned to create a club 🎓");
       return;
     }
 
@@ -158,19 +169,6 @@ export default function Clubs() {
     );
   });
 
-  // Filtered clubs by search query
-  const filteredClubs = clubs.filter((c) => {
-    if (!clubSearchQuery.trim()) return true;
-    const q = clubSearchQuery.toLowerCase();
-    const matchName = c.name?.toLowerCase().includes(q);
-    const matchCat = c.category?.toLowerCase().includes(q);
-    const matchTag = c.tagline?.toLowerCase().includes(q);
-    const matchDesc = c.description?.toLowerCase().includes(q);
-    const matchHead = c.head_name?.toLowerCase().includes(q);
-    const matchMentor = c.mentor_name?.toLowerCase().includes(q);
-    return matchName || matchCat || matchTag || matchDesc || matchHead || matchMentor;
-  });
-
   const selectedHeadObj = (candidates.students || []).find(
     (s) => String(s.user_id) === String(selectedHeadId)
   );
@@ -184,19 +182,9 @@ export default function Clubs() {
   return (
     <>
       <div className="clubs-container">
-        {/* Header & Global Club Search */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
+        {/* Header */}
+        <div style={{ marginBottom: "24px" }}>
           <h2 style={{ margin: 0 }}>All Clubs ({clubs.length})</h2>
-          <div style={{ width: "100%", maxWidth: "380px" }}>
-            <input
-              type="text"
-              placeholder="🔍 Search clubs by name, category, or leadership..."
-              value={clubSearchQuery}
-              onChange={(e) => setClubSearchQuery(e.target.value)}
-              className="input-field"
-              style={{ margin: 0, padding: "10px 16px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.15)", color: "#fff", outline: "none", width: "100%", boxSizing: "border-box" }}
-            />
-          </div>
         </div>
 
         {/* Admin Add Club Section */}
@@ -254,7 +242,7 @@ export default function Clubs() {
             {/* 👑 Search & Assign Club Head (From Students) */}
             <div style={{ marginBottom: "16px", padding: "14px", background: "rgba(0, 0, 0, 0.35)", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)" }} ref={headRef}>
               <label style={{ display: "block", fontSize: "0.88rem", color: "#fde047", fontWeight: 700, marginBottom: "8px" }}>
-                👑 Appoint Club Head (From Registered Students)
+                👑 Appoint Club Head (Student) *
               </label>
 
               {selectedHeadObj ? (
@@ -263,7 +251,7 @@ export default function Clubs() {
                     <span style={{ fontWeight: 700, color: "#f8fafc" }}>{selectedHeadObj.name}</span>
                     <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>({selectedHeadObj.email})</span>
                     {selectedHeadObj.department && (
-                      <span style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
+                      <span style={{ background: "rgba(168, 85, 247, 0.2)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
                         {selectedHeadObj.department}{selectedHeadObj.year ? ` - Yr ${selectedHeadObj.year}` : ''}
                       </span>
                     )}
@@ -313,7 +301,7 @@ export default function Clubs() {
                               <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>{s.email}</span>
                             </div>
                             {s.department && (
-                              <span style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
+                              <span style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
                                 {s.department}{s.year ? ` - Yr ${s.year}` : ''}
                               </span>
                             )}
@@ -329,7 +317,7 @@ export default function Clubs() {
             {/* 🎓 Search & Assign Club Mentor (From Teachers) */}
             <div style={{ marginBottom: "20px", padding: "14px", background: "rgba(0, 0, 0, 0.35)", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)" }} ref={mentorRef}>
               <label style={{ display: "block", fontSize: "0.88rem", color: "#fde047", fontWeight: 700, marginBottom: "8px" }}>
-                🎓 Appoint Club Mentor (From Common Teachers / Faculty)
+                🎓 Appoint Club Mentor (Teacher / Faculty) *
               </label>
 
               {selectedMentorObj ? (
@@ -338,7 +326,7 @@ export default function Clubs() {
                     <span style={{ fontWeight: 700, color: "#f8fafc" }}>Prof. {selectedMentorObj.name}</span>
                     <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>({selectedMentorObj.email})</span>
                     {selectedMentorObj.department && (
-                      <span style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
+                      <span style={{ background: "rgba(168, 85, 247, 0.2)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, marginLeft: "8px" }}>
                         {selectedMentorObj.department}
                       </span>
                     )}
@@ -388,7 +376,7 @@ export default function Clubs() {
                               <span style={{ fontSize: "0.8rem", color: "#94a3b8", marginLeft: "8px" }}>{t.email}</span>
                             </div>
                             {t.department && (
-                              <span style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
+                              <span style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", padding: "2px 6px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700 }}>
                                 {t.department}
                               </span>
                             )}
@@ -421,13 +409,13 @@ export default function Clubs() {
         )}
 
         {/* Clubs Grid */}
-        {filteredClubs.length === 0 ? (
+        {clubs.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 20px", background: "rgba(255, 255, 255, 0.02)", border: "1px dashed rgba(255, 255, 255, 0.15)", borderRadius: "12px", color: "#94a3b8" }}>
-            <p style={{ margin: 0 }}>No clubs found matching your search filter.</p>
+            <p style={{ margin: 0 }}>No clubs have been created yet.</p>
           </div>
         ) : (
           <div className="clubs-grid">
-            {filteredClubs.map((c) => (
+            {clubs.map((c) => (
               <ClubCard
                 key={c.club_id}
                 club={c}

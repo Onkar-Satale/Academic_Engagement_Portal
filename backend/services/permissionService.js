@@ -64,8 +64,7 @@ export const permissionService = {
         const roleNamesByLevel = {
           1: "Club Mentor",
           2: "Estate Manager",
-          3: "Principal",
-          4: "Director"
+          3: "Principal"
         };
         const authorityRoleName = roleNamesByLevel[currentLevel] || "Authority";
 
@@ -79,10 +78,10 @@ export const permissionService = {
             link: "/my-requests"
           });
         } else if (status === "approved") {
-          if (currentLevel < 4) {
+          if (currentLevel < 3) {
             const nextLevel = currentLevel + 1;
             const nextRoleName = roleNamesByLevel[nextLevel];
-            const nextRoleIdMap = { 2: 6, 3: 7, 4: 8 };
+            const nextRoleIdMap = { 2: 6, 3: 7 };
             const nextRoleId = nextRoleIdMap[nextLevel];
 
             // Detailed Advancement Notification to Requester (Club Head)
@@ -108,7 +107,7 @@ export const permissionService = {
               }
             }
           } else {
-            // Level 4 (Director) Final Approval -> Automatically Publish Event via EventModel!
+            // Level 3 (Principal) Final Approval -> Automatically Publish Event via EventModel!
             let newEventId = null;
             try {
               newEventId = await EventModel.publishApprovedEvent({
@@ -128,7 +127,7 @@ export const permissionService = {
             await NotificationModel.createNotification({
               user_id: requesterId,
               title: "🎉 EVENT OFFICIALLY APPROVED & PUBLISHED!",
-              message: `Congratulations! Your event "${reqInfo.title}" for ${reqInfo.club_name} has received final Level 4 (Director) approval and is now LIVE on the Events page!`,
+              message: `Congratulations! Your event "${reqInfo.title}" for ${reqInfo.club_name} has received final Level 3 (Principal) approval and is now LIVE on the Events page!`,
               type: "success",
               link: newEventId ? `/events/${newEventId}` : "/my-events"
             });
@@ -183,19 +182,13 @@ export const permissionService = {
         estateUsers.forEach(u => recipientUserIds.add(u.user_id));
       }
 
-      // 3. Principal (Level 3) if request reached Level 3 or above
+      // 3. Principal (Level 3) if request reached Level 3
       if (reqInfo.current_level >= 3) {
         const principalUsers = await UserModel.findByRoleId(7);
         principalUsers.forEach(u => recipientUserIds.add(u.user_id));
       }
 
-      // 4. Director (Level 4) if request reached Level 4
-      if (reqInfo.current_level >= 4) {
-        const directorUsers = await UserModel.findByRoleId(8);
-        directorUsers.forEach(u => recipientUserIds.add(u.user_id));
-      }
-
-      // 5. Any authority who reviewed in permission_approval
+      // 4. Any authority who reviewed in permission_approval
       const reviewerIds = await PermissionModel.getDistinctReviewers(requestId);
       reviewerIds.forEach(id => recipientUserIds.add(id));
 

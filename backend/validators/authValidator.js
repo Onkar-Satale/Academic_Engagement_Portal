@@ -12,6 +12,10 @@ export const validateRegister = [
     .isEmail().withMessage("Invalid email format"),
   body("password")
     .isLength({ min: 8 }).withMessage("Password must be at least 8 characters long"),
+  body("department")
+    .trim()
+    .notEmpty().withMessage("Department is required")
+    .isIn(["CS", "IT", "AIDS", "ECE", "ENTC"]).withMessage("Invalid department. Must be CS, IT, AIDS, ECE, or ENTC"),
   validateRequest,
 ];
 

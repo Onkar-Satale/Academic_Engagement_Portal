@@ -3,7 +3,7 @@ import ApiError from "../utils/ApiError.js";
 
 export const createClub = async (req, res, next) => {
   try {
-    const { name, description, tagline, category, activities, club_head_id, club_mentor_id, permission_emails } = req.body;
+    const { name, description, tagline, category, activities, club_head_id, club_mentor_id } = req.body;
 
     if (!name || !name.trim()) {
       return next(new ApiError(400, "Club name is required"));
@@ -16,8 +16,7 @@ export const createClub = async (req, res, next) => {
       category: category ? category.trim() : null,
       activities: activities ? activities.trim() : null,
       club_head_id: club_head_id || null,
-      club_mentor_id: club_mentor_id || null,
-      permission_emails: permission_emails ? permission_emails.trim() : null
+      club_mentor_id: club_mentor_id || null
     });
 
     res.status(201).json({ success: true, message: "Club created successfully", clubId });

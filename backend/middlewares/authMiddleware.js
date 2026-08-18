@@ -21,15 +21,11 @@ export const authenticate = async (req, res, next) => {
     }
     const decoded = jwt.verify(token, secret);
 
-    // Verify user still exists in the database and is active via UserModel
+    // Verify user still exists in the database
     const activeUser = await UserModel.findById(decoded.id);
 
     if (!activeUser) {
       return next(new ApiError(401, "User account has been deleted or no longer exists"));
-    }
-
-    if (activeUser.is_active === 0 || activeUser.is_active === false) {
-      return next(new ApiError(403, "Account has been deactivated. Please contact the administrator."));
     }
 
     req.userId = decoded.id;

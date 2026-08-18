@@ -5,7 +5,6 @@ import Navbar from "./components/Navbar";
 import Clubs from "./pages/Clubs";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
-import AdminCreateEvent from "./pages/AdminCreateEvent";
 import EventPage from "./pages/Events";
 import EventRegisterPage from "./pages/EventRegisterPage";
 import Account from "./pages/Account";
@@ -24,13 +23,12 @@ function App() {
   return (
     <BrowserRouter>
       <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
-      <Navbar /> {/* <-- navbar here */}
+      <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/Signup" element={<Register />} />
         <Route path="/clubs" element={<Clubs />} />
-        <Route path="/admin/create-event" element={<AdminCreateEvent />} />
 
         {/* Permission System Routes */}
         <Route path="/create-permission" element={<PermissionRequestForm />} />
@@ -41,16 +39,14 @@ function App() {
         <Route path="/clubs/:clubId/applications" element={<ClubApplications />} />
         <Route path="/account" element={<Account />} />
         <Route path="/events" element={<EventPage />} />
-        <Route path="/events/:eventId" element={<EventDetails />} /> {/* dynamic */}
+        <Route path="/events/:eventId" element={<EventDetails />} />
         <Route path="/events/:eventId/register" element={<EventRegisterPage />} />
-        <Route path="/about" element={<About />} /> {/* About Us page */}
-        <Route path="/contact" element={<Contact />} /> {/* Contact Us page */}
-        <Route path="/my-events" element={<MyEvents />} /> {/* Club Mentor events */}
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/my-events" element={<MyEvents />} />
       </Routes>
     </BrowserRouter>
   );
 }
 
-
 export default App;
-

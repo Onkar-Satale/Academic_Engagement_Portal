@@ -3,8 +3,7 @@ import { db } from "../config/db.js";
 const levelRoleMap = {
   1: "Club Mentor",
   2: "Estate Manager",
-  3: "Principal",
-  4: "Director"
+  3: "Principal"
 };
 
 export const PermissionModel = {
@@ -62,6 +61,7 @@ export const PermissionModel = {
     let params = [];
 
     if (roleId === 5) {
+      // Level 1: Club Mentor for their specific club
       query = `
         SELECT pr.*, c.name as club_name, u.name as requester_name
         FROM permission_request pr
@@ -72,6 +72,7 @@ export const PermissionModel = {
       `;
       params = [userId];
     } else if (roleId === 6) {
+      // Level 2: Estate Manager
       query = `
         SELECT pr.*, c.name as club_name, u.name as requester_name
         FROM permission_request pr
@@ -81,6 +82,7 @@ export const PermissionModel = {
         ORDER BY pr.created_at DESC
       `;
     } else if (roleId === 7) {
+      // Level 3: Principal
       query = `
         SELECT pr.*, c.name as club_name, u.name as requester_name
         FROM permission_request pr
@@ -89,16 +91,8 @@ export const PermissionModel = {
         WHERE pr.current_level = 3 AND pr.status = 'pending'
         ORDER BY pr.created_at DESC
       `;
-    } else if (roleId === 8) {
-      query = `
-        SELECT pr.*, c.name as club_name, u.name as requester_name
-        FROM permission_request pr
-        JOIN club c ON pr.club_id = c.club_id
-        JOIN user u ON pr.requester_id = u.user_id
-        WHERE pr.current_level = 4 AND pr.status = 'pending'
-        ORDER BY pr.created_at DESC
-      `;
     } else if (roleId === 3) {
+      // Admin overview
       query = `
         SELECT pr.*, c.name as club_name, u.name as requester_name
         FROM permission_request pr
@@ -163,7 +157,7 @@ export const PermissionModel = {
         [requestId]
       );
     } else if (status === "approved") {
-      if (level < 4) {
+      if (level < 3) {
         await db.query(
           `UPDATE permission_request SET current_level = current_level + 1 WHERE request_id = ?`,
           [requestId]

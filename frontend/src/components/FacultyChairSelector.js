@@ -187,38 +187,43 @@ export default function FacultyChairSelector({
       {/* Selected Appointee Card or Empty State */}
       {selectedCandidate ? (
         <div className="appointee-card">
-          <div className="appointee-avatar">
-            {selectedCandidate.name ? selectedCandidate.name.charAt(0).toUpperCase() : "?"}
-          </div>
-          <div className="appointee-info">
-            <div className="appointee-name-row">
-              <span className="appointee-name">{selectedCandidate.name}</span>
-              {selectedCandidate.department && (
-                <span className="dept-pill">{selectedCandidate.department}</span>
-              )}
+          <div className="appointee-header">
+            <div className="appointee-avatar">
+              {selectedCandidate.name ? selectedCandidate.name.charAt(0).toUpperCase() : "?"}
             </div>
-            <span className="appointee-email">{selectedCandidate.email}</span>
-            <span className="current-role-badge">
-              Current Post: {selectedCandidate.role_name || "Faculty"}
-            </span>
+            <div className="appointee-main-info">
+              <div className="appointee-name-row">
+                <span className="appointee-name">{selectedCandidate.name}</span>
+                {selectedCandidate.department && (
+                  <span className="dept-pill">{selectedCandidate.department}</span>
+                )}
+              </div>
+              <span className="appointee-email">{selectedCandidate.email}</span>
+            </div>
           </div>
-          <div className="appointee-actions">
-            <button
-              type="button"
-              className="change-btn"
-              onClick={() => setIsOpen(true)}
-              title="Change appointee"
-            >
-              🔄 Change
-            </button>
-            <button
-              type="button"
-              className="unassign-btn"
-              onClick={() => handleSelect("")}
-              title="Unassign chair"
-            >
-              ✕
-            </button>
+
+          <div className="appointee-footer">
+            <span className="current-role-badge">
+              Current: <strong>{selectedCandidate.role_name || "Faculty"}</strong>
+            </span>
+            <div className="appointee-actions">
+              <button
+                type="button"
+                className="change-btn"
+                onClick={() => setIsOpen(true)}
+                title="Change appointee"
+              >
+                🔄 Change
+              </button>
+              <button
+                type="button"
+                className="unassign-btn"
+                onClick={() => handleSelect("")}
+                title="Unassign chair"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       ) : (

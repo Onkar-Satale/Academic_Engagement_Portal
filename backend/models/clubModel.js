@@ -1,7 +1,7 @@
 import { db } from "../config/db.js";
 
 export const ClubModel = {
-  create: async ({ name, description, club_head_id, club_mentor_id, tagline, category, activities, permission_emails }) => {
+  create: async ({ name, description, club_head_id, club_mentor_id, tagline, category, activities }) => {
     const sanitizeId = (val) => {
       if (val === "" || val === null || val === undefined || val === "null" || isNaN(Number(val))) {
         return null;
@@ -10,7 +10,7 @@ export const ClubModel = {
     };
 
     const [res] = await db.query(
-      "INSERT INTO club (name, description, club_head_id, club_mentor_id, tagline, category, activities, permission_emails) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO club (name, description, club_head_id, club_mentor_id, tagline, category, activities) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         name,
         description,
@@ -18,31 +18,35 @@ export const ClubModel = {
         sanitizeId(club_mentor_id),
         tagline || null,
         category || null,
-        activities || null,
-        permission_emails || null
+        activities || null
       ]
     );
     return res.insertId;
   },
 
   getCandidates: async () => {
-    // Students: Active Student or Club Head (excludes Passout/Graduated)
+    // Students: Only pure Students (role_id = 1 / role_name = 'Student') who are not already a Club Head
     const [students] = await db.query(`
       SELECT u.user_id, u.name, u.email, u.department, u.year, u.role_id, r.role_name
       FROM user u
       JOIN role r ON u.role_id = r.role_id
-      WHERE r.role_name IN ('Student', 'Club Head')
-        AND COALESCE(u.is_passout, 0) = 0
+      WHERE r.role_name = 'Student'
+        AND u.user_id NOT IN (
+          SELECT DISTINCT club_head_id FROM club WHERE club_head_id IS NOT NULL
+        )
       ORDER BY u.name ASC
     `);
 
-    // Common Teachers: Active Teacher or Club Mentor (excludes Retired faculty & Institutional heads)
+    // Teachers: Only pure Teachers (role_id = 2 / role_name = 'Teacher')
+    // Excludes Principal (7), Estate Manager (6), Admin (3), and existing Club Mentors (5)
     const [teachers] = await db.query(`
       SELECT u.user_id, u.name, u.email, u.department, u.year, u.role_id, r.role_name
       FROM user u
       JOIN role r ON u.role_id = r.role_id
-      WHERE r.role_name IN ('Teacher', 'Club Mentor')
-        AND COALESCE(u.is_retired, 0) = 0
+      WHERE r.role_name = 'Teacher'
+        AND u.user_id NOT IN (
+          SELECT DISTINCT club_mentor_id FROM club WHERE club_mentor_id IS NOT NULL
+        )
       ORDER BY u.name ASC
     `);
 
@@ -138,7 +142,7 @@ export const ClubModel = {
   },
 
   update: async (clubId, data) => {
-    const { name, description, tagline, category, activities, club_head_id, club_mentor_id, permission_emails } = data;
+    const { name, description, tagline, category, activities, club_head_id, club_mentor_id } = data;
     
     const sanitizeId = (val) => {
       if (val === "" || val === null || val === undefined || val === "null" || isNaN(Number(val))) {
@@ -149,7 +153,7 @@ export const ClubModel = {
 
     const [result] = await db.query(
       `UPDATE club 
-     SET name = ?, description = ?, tagline = ?, category = ?, activities = ?, club_head_id = ?, club_mentor_id = ?, permission_emails = ?
+     SET name = ?, description = ?, tagline = ?, category = ?, activities = ?, club_head_id = ?, club_mentor_id = ?
      WHERE club_id = ?`,
       [
         name,
@@ -159,7 +163,6 @@ export const ClubModel = {
         activities || null,
         sanitizeId(club_head_id),
         sanitizeId(club_mentor_id),
-        permission_emails || null,
         clubId
       ]
     );
@@ -193,21 +196,5 @@ export const ClubModel = {
       [userId]
     );
     return club || null;
-  },
-
-  findActiveHeadsInYear: async (year = 4, department = null) => {
-    let query = `
-      SELECT u.user_id, u.name, u.email, u.department, u.year, c.club_id, c.name as club_name
-      FROM user u
-      JOIN club c ON c.club_head_id = u.user_id
-      WHERE u.year = ? AND COALESCE(u.is_passout, 0) = 0
-    `;
-    const params = [year];
-    if (department && department !== "all") {
-      query += " AND u.department = ?";
-      params.push(department);
-    }
-    const [rows] = await db.query(query, params);
-    return rows;
   }
 };

@@ -2,13 +2,6 @@ import { db } from "../config/db.js";
 
 export const ClubMemberModel = {
   join: async (club_id, user_id, reason) => {
-    const [[userRow]] = await db.query("SELECT is_passout FROM user WHERE user_id = ?", [user_id]);
-    if (userRow && (userRow.is_passout === 1 || userRow.is_passout === true)) {
-      const err = new Error("Passout alumni accounts cannot submit join requests for student clubs.");
-      err.statusCode = 403;
-      throw err;
-    }
-
     const [[existing]] = await db.query(
       "SELECT status FROM club_member WHERE club_id = ? AND user_id = ?",
       [club_id, user_id]

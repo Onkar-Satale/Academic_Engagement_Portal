@@ -50,8 +50,6 @@ const MyRequestsList = () => {
         return "Estate Manager (Level 2)";
       case 3:
         return "Principal (Level 3)";
-      case 4:
-        return "Director (Level 4)";
       default:
         return `Level ${level}`;
     }
@@ -118,15 +116,14 @@ const MyRequestsList = () => {
                   <p className="description"><strong>Details:</strong> {req.description}</p>
                 )}
 
-                {/* 4-Level Visual Pipeline */}
+                {/* 3-Level Visual Pipeline */}
                 <div className="approval-pipeline">
                   <span className="pipeline-title">Approval Pipeline Progress:</span>
                   <div className="pipeline-steps">
                     {[
                       { level: 1, name: "Mentor" },
                       { level: 2, name: "Estate Mgr" },
-                      { level: 3, name: "Principal" },
-                      { level: 4, name: "Director" }
+                      { level: 3, name: "Principal" }
                     ].map((step) => {
                       const stepApproval = approvals.find((a) => a.level === step.level);
                       let stepStatus = "pending";
@@ -158,7 +155,7 @@ const MyRequestsList = () => {
                       <div key={idx} className={`remark-entry remark-${app.status}`}>
                         <div className="remark-header">
                           <span className="auth-name">
-                            {app.authority_role} ({app.authority_name || "Authority"}):
+                            {app.authority_stage_title || app.authority_role} ({app.authority_name || "Authority"}):
                           </span>
                           <span className={`remark-badge badge-${app.status}`}>
                             {app.status === "approved" ? "Approved" : "Rejected"}

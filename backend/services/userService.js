@@ -39,9 +39,6 @@ export const userService = {
       role: user.role_id,
       role_id: user.role_id,
       role_name: user.role_name,
-      is_active: user.is_active,
-      is_retired: user.is_retired ? 1 : 0,
-      is_passout: user.is_passout ? 1 : 0,
       profile_photo: user.profile_photo
     };
 
@@ -67,211 +64,6 @@ export const userService = {
     return await UserModel.delete(targetUserId);
   },
 
-  toggleUserStatus: async (adminUserId, targetUserId) => {
-    if (Number(adminUserId) === Number(targetUserId)) {
-      throw new ApiError(400, "You cannot deactivate your own administrative account.");
-    }
-    const targetUser = await UserModel.findById(targetUserId);
-    if (!targetUser) {
-      throw new ApiError(404, "User not found");
-    }
-
-    const updated = await UserModel.toggleActiveStatus(targetUserId);
-    const statusText = updated.is_active === 1 ? "Activated" : "Deactivated";
-
-    await NotificationModel.createNotification({
-      user_id: targetUserId,
-      title: `Account Status: ${statusText}`,
-      message: `Your portal account has been ${statusText.toLowerCase()} by the Administrator.`,
-      type: updated.is_active === 1 ? "success" : "warning",
-      link: "/account"
-    });
-
-    return updated;
-  },
-
-  toggleSelfRetiredStatus: async (userId) => {
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-
-    // Students / Club Heads cannot declare retirement
-    if (user.role_name === "Student" || user.role_name === "Club Head") {
-      throw new ApiError(400, "Retirement status is only applicable to Faculty and Teachers.");
-    }
-
-    const isAlreadyRetired = user.is_retired === 1 || user.is_retired === true;
-    if (!isAlreadyRetired) {
-      // Must not hold executive institutional post
-      if (["Club Mentor", "Estate Manager", "Principal", "Director", "Admin"].includes(user.role_name)) {
-        throw new ApiError(400, `Cannot declare retirement while holding active institutional position '${user.role_name}'. Please first reassign your position in Authority Seats or Club Management and change your role to normal Teacher.`);
-      }
-      // Must not be active club mentor
-      const activeMentorClub = await ClubModel.findActiveClubByMentor(userId);
-      if (activeMentorClub) {
-        throw new ApiError(400, `Cannot declare retirement while actively serving as Club Mentor for '${activeMentorClub.name}'. Please reassign the club mentorship to another teacher first.`);
-      }
-    }
-
-    const updated = await UserModel.toggleRetiredStatus(userId);
-    const statusText = updated.is_retired === 1 ? "Retired Faculty" : "Active Faculty";
-
-    await NotificationModel.createNotification({
-      user_id: userId,
-      title: `🏷️ Status Updated: ${statusText}`,
-      message: updated.is_retired === 1 
-        ? "You have marked your status as Retired Teacher/Faculty."
-        : "Your status has been updated to Active Faculty.",
-      type: updated.is_retired === 1 ? "info" : "success",
-      link: "/account"
-    });
-
-    return updated;
-  },
-
-  adminToggleUserRetiredStatus: async (adminUserId, targetUserId) => {
-    const targetUser = await UserModel.findById(targetUserId);
-    if (!targetUser) {
-      throw new ApiError(404, "User not found");
-    }
-
-    if (targetUser.role_name === "Student" || targetUser.role_name === "Club Head") {
-      throw new ApiError(400, "Retirement status is only applicable to Faculty and Teachers.");
-    }
-
-    const isAlreadyRetired = targetUser.is_retired === 1 || targetUser.is_retired === true;
-    if (!isAlreadyRetired) {
-      // Must not hold executive institutional post
-      if (["Club Mentor", "Estate Manager", "Principal", "Director", "Admin"].includes(targetUser.role_name)) {
-        throw new ApiError(400, `Cannot retire faculty member while they hold active position '${targetUser.role_name}'. Please first reassign their position to another teacher and set their role to normal Teacher.`);
-      }
-      // Must not be active club mentor
-      const activeMentorClub = await ClubModel.findActiveClubByMentor(targetUserId);
-      if (activeMentorClub) {
-        throw new ApiError(400, `Cannot retire faculty member while they are the active Club Mentor for '${activeMentorClub.name}'. Please reassign the club mentorship first.`);
-      }
-    }
-
-    const updated = await UserModel.toggleRetiredStatus(targetUserId);
-    const statusText = updated.is_retired === 1 ? "Retired Faculty" : "Active Faculty";
-
-    await NotificationModel.createNotification({
-      user_id: targetUserId,
-      title: `🏷️ Status Tag Updated: ${statusText}`,
-      message: `Your account status was set to ${statusText} by Administrator.`,
-      type: updated.is_retired === 1 ? "info" : "success",
-      link: "/account"
-    });
-
-    return updated;
-  },
-
-  toggleSelfPassoutStatus: async (userId) => {
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-
-    // Only students / club heads can declare passout
-    if (user.role_name !== "Student" && user.role_name !== "Club Head") {
-      throw new ApiError(400, "Passout / Alumni status is only applicable to Students.");
-    }
-
-    const isAlreadyPassout = user.is_passout === 1 || user.is_passout === true;
-    if (!isAlreadyPassout) {
-      if (user.role_name === "Club Head") {
-        throw new ApiError(400, "Cannot mark yourself as Passout while holding the active 'Club Head' position. Please handover/reassign the Club Head post to a junior student first.");
-      }
-      const activeHeadClub = await ClubModel.findActiveClubByHead(userId);
-      if (activeHeadClub) {
-        throw new ApiError(400, `Cannot mark yourself as Passout while serving as active Club Head for '${activeHeadClub.name}'. Please handover the Club Head post first.`);
-      }
-    }
-
-    const updated = await UserModel.togglePassoutStatus(userId);
-    const statusText = updated.is_passout === 1 ? "Passout / Alumni" : "Active Student";
-
-    await NotificationModel.createNotification({
-      user_id: userId,
-      title: `🎓 Academic Status Updated: ${statusText}`,
-      message: updated.is_passout === 1 
-        ? "Congratulations on graduating! Your account has been updated to Passout / Alumni."
-        : "Your academic status has been restored to Active Student.",
-      type: updated.is_passout === 1 ? "success" : "info",
-      link: "/account"
-    });
-
-    return updated;
-  },
-
-  adminToggleUserPassoutStatus: async (adminUserId, targetUserId) => {
-    const targetUser = await UserModel.findById(targetUserId);
-    if (!targetUser) {
-      throw new ApiError(404, "User not found");
-    }
-
-    if (targetUser.role_name !== "Student" && targetUser.role_name !== "Club Head") {
-      throw new ApiError(400, "Passout / Alumni status is only applicable to Students.");
-    }
-
-    const isAlreadyPassout = targetUser.is_passout === 1 || targetUser.is_passout === true;
-    if (!isAlreadyPassout) {
-      if (targetUser.role_name === "Club Head") {
-        throw new ApiError(400, `Cannot mark student '${targetUser.name}' as Passout while they hold the active 'Club Head' role. Please reassign the Club Head position to a junior student and change their role to normal Student first.`);
-      }
-      const activeHeadClub = await ClubModel.findActiveClubByHead(targetUserId);
-      if (activeHeadClub) {
-        throw new ApiError(400, `Cannot mark student '${targetUser.name}' as Passout while they are the active Club Head of '${activeHeadClub.name}'. Please reassign the Club Head position first.`);
-      }
-    }
-
-    const updated = await UserModel.togglePassoutStatus(targetUserId);
-    const statusText = updated.is_passout === 1 ? "Passout / Alumni" : "Active Student";
-
-    await NotificationModel.createNotification({
-      user_id: targetUserId,
-      title: `🎓 Status Updated: ${statusText}`,
-      message: `Your student status was updated to ${statusText} by the Administrator.`,
-      type: updated.is_passout === 1 ? "success" : "info",
-      link: "/account"
-    });
-
-    return updated;
-  },
-
-  batchGraduateFinalYear: async (adminUserId, department = null) => {
-    // Check if ANY 4th-year (BE) student in target batch is currently an active Club Head
-    const activeHeads = await ClubModel.findActiveHeadsInYear(4, department);
-    if (activeHeads.length > 0) {
-      const headNames = activeHeads.map(h => `${h.name} (${h.club_name})`).join(", ");
-      throw new ApiError(400, `Cannot graduate batch: ${headNames} is/are currently active Club Head(s). Please first handover their Club Head post to a junior student and make them normal Student, then proceed.`);
-    }
-
-    const count = await UserModel.batchGraduateFinalYear(department);
-    return {
-      success: true,
-      message: `Successfully graduated ${count} Final Year (BE - Year 4) student(s) to Passout / Alumni! 🎓`,
-      count
-    };
-  },
-
-  batchPromoteAcademicYears: async (adminUserId) => {
-    // Check if ANY 4th-year (BE) student is currently an active Club Head
-    const activeHeads = await ClubModel.findActiveHeadsInYear(4, "all");
-    if (activeHeads.length > 0) {
-      const headNames = activeHeads.map(h => `${h.name} (${h.club_name})`).join(", ");
-      throw new ApiError(400, `Cannot perform annual roll-over: ${headNames} is/are currently active Club Head(s). Please first handover their Club Head post to junior students before rolling over.`);
-    }
-
-    const result = await UserModel.batchPromoteAcademicYears();
-    return {
-      success: true,
-      message: `Academic year transition completed! ${result.graduated} Final Year student(s) graduated to Alumni, and ${result.promoted} student(s) promoted to their next academic year. 🚀`,
-      ...result
-    };
-  },
-
   adminUpdateUserRole: async (adminUserId, targetUserId, newRoleId) => {
     const roleIdNum = Number(newRoleId);
     if (!roleIdNum) {
@@ -290,7 +82,7 @@ export const userService = {
     const targetRole = await RoleModel.getById(roleIdNum);
     const targetRoleName = targetRole?.role_name || "New Role";
 
-    // Strict Barrier: Student Track (Student, Club Head) vs Faculty Track (Teacher, Club Mentor, Estate Manager, Principal, Director, Admin)
+    // Strict Barrier: Student Track (Student, Club Head) vs Faculty Track (Teacher, Club Mentor, Estate Manager, Principal, Admin)
     if ((currentRoleId === 1 || currentRoleId === 4) && (roleIdNum !== 1 && roleIdNum !== 4)) {
       throw new ApiError(400, "Students and Club Heads cannot be converted into Faculty or Institutional Authorities.");
     }
@@ -308,9 +100,9 @@ export const userService = {
       await ClubModel.clearMentor(targetUserId);
     }
 
-    // 3. For single-chair executive roles (Estate Manager, Principal, Director),
+    // 3. For single-chair executive roles (Estate Manager, Principal, Admin),
     // automatically transition previous holder to Teacher so there is one primary chair holder
-    if (["Estate Manager", "Principal", "Director"].includes(targetRoleName)) {
+    if (["Estate Manager", "Principal"].includes(targetRoleName)) {
       const teacherRole = await RoleModel.getByName("Teacher");
       const teacherRoleId = teacherRole ? teacherRole.role_id : 2;
 
@@ -349,7 +141,7 @@ export const userService = {
   },
 
   updateAuthoritySeats: async (adminUserId, seats) => {
-    const { admin_id, director_id, principal_id, estate_manager_id } = seats;
+    const { admin_id, principal_id, estate_manager_id } = seats;
     const teacherRole = await RoleModel.getByName("Teacher");
     const teacherRoleId = teacherRole ? teacherRole.role_id : 2;
 
@@ -374,7 +166,7 @@ export const userService = {
       const currentHolders = await UserModel.findOtherHoldersOfRole(rid, uid);
       for (const ch of currentHolders) {
         // Demote previous holder to Teacher unless they are being assigned another chair
-        const isBeingReassigned = [admin_id, director_id, principal_id, estate_manager_id].map(Number).includes(Number(ch.user_id));
+        const isBeingReassigned = [admin_id, principal_id, estate_manager_id].map(Number).includes(Number(ch.user_id));
         if (!isBeingReassigned) {
           await UserModel.updateRole(ch.user_id, teacherRoleId);
           await NotificationModel.createNotification({
@@ -401,7 +193,6 @@ export const userService = {
       }
     };
 
-    if (director_id) await assignSeat(director_id, 8, "Director");
     if (principal_id) await assignSeat(principal_id, 7, "Principal");
     if (estate_manager_id) await assignSeat(estate_manager_id, 6, "Estate Manager");
     if (admin_id) await assignSeat(admin_id, 3, "Admin");
