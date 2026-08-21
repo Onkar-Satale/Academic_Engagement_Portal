@@ -1,13 +1,15 @@
 # 🎓 Academic Engagement Portal – Campus Club, Event & Multi-Tier Permission Ecosystem
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://academic-engagement-portal-kappa.vercel.app/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![React](https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Backend API](https://img.shields.io/badge/API%20Gateway-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://academic-engagement-portal-backend.onrender.com/)
+[![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![NodeJS](https://img.shields.io/badge/Node.js-Express-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**Academic Engagement Portal** is an enterprise-grade, full-stack campus engagement and institutional governance platform. Tailored for colleges and universities, it streamlines student club ecosystems, event lifecycle administration, and a **4-tier sequential permission approval pipeline** across campus leadership, accompanied by cryptographically secured role activations, real-time in-app notifications, and granular role-based access control (RBAC).
+**Academic Engagement Portal** is a production-ready, full-stack campus engagement and institutional governance platform designed for colleges and universities. It digitizes club operations, event administration, and institutional permissions through a **3-tier sequential approval workflow** across campus leadership. Built with modern React 19, Vite, Node.js/Express, and MySQL, the portal features real-time in-app notifications, strict career-track role barriers, single-chair executive management, and automated event publishing.
 
 ---
 
@@ -22,44 +24,56 @@
 
 ## 🚀 Key System Features
 
-### 🏛️ 1. 4-Tier Sequential Permission & Approval Pipeline
-- **Hierarchical Review Routing:** Event permission requests automatically progress through four verified levels:
-  1. **Level 1:** Club Mentor *(Initial review & academic alignment)*
-  2. **Level 2:** Estate Manager *(Venue & campus facility clearance)*
-  3. **Level 3:** Principal *(Institutional sanction & security review)*
-  4. **Level 4:** Director *(Final executive approval & automatic event publication)*
-- **Automatic Event Publishing:** Upon Level 4 approval, the event is automatically published to the live public Events catalog, and a campus-wide notification is broadcast.
-- **Remarks & Feedback History:** Every level records reviewer remarks and timestamps. Higher authorities and Club Heads can inspect prior approval comments at each stage.
-- **Edit Details & Resubmit:** If a request is rejected at any level (e.g. venue clash), the Club Head can click **"🔄 Edit Details"** to modify and resubmit, which seamlessly cleans up the rejected entry and initiates a fresh review.
-- **Request Withdrawal with Authority Broadcast:** If a Club Head withdraws/cancels an active request in the middle of the pipeline, all involved authorities up to that review stage receive an instant cancellation warning notification.
+### 🏛️ 1. 3-Tier Hierarchical Permission & Approval Workflow
+- **Sequential Authority Review:** Event permission requests automatically progress through three verified review tiers:
+  1. **Level 1 — Club Mentor:** Academic alignment, club validity, and preliminary sanction.
+  2. **Level 2 — Estate Manager:** Campus facility booking, venue availability, and logistics verification.
+  3. **Level 3 — Principal (Final Authority):** Executive sanction, safety review, and final approval.
+- **⚡ Automatic Event Publication:** Upon Level 3 (Principal) approval, the backend automatically creates and publishes the event to the public **Events Catalog**, triggering a campus-wide notification.
+- **📝 Audit Logs & Historical Remarks:** Reviewers record granular remarks and timestamps at every level, visible to higher authorities and the requesting Club Head.
+- **🔄 Edit & Resubmit:** If rejected at any stage, Club Heads can modify event details and resubmit, seamlessly archiving the previous attempt and restarting the approval pipeline.
+- **🚫 Request Withdrawal with Broad Notification:** Club Heads can cancel active requests mid-pipeline; all involved authorities up to that review stage receive an instant cancellation notification.
 
-### 🔐 2. Cryptographic Secret Keys & Role Elevation
-- **CSPRNG Key Generation:** Uses cryptographically secure random bytes (`crypto.randomBytes` / `window.crypto.getRandomValues`) to generate unguessable secret keys for Club Mentors, Club Heads, Estate Managers, Principals, and Directors.
-- **In-App Role Upgrading:** Registered users can activate their secret keys directly on their **Account Profile** page to instantly elevate their role and permissions.
-- **Key Management & Revocation:** Administrators have full controls to auto-generate, copy, or revoke secret keys per club and authority tier.
+---
 
-### 👥 3. Granular Role-Based Access Control (RBAC) & Strict UI Gating
-- **8 Distinct User Tiers:**
-  1. `Student` (Role ID: 1)
-  2. `Teacher` (Role ID: 2)
-  3. `Admin` (Role ID: 3)
-  4. `Club Head` (Role ID: 4)
-  5. `Club Mentor` (Role ID: 5)
-  6. `Estate Manager` (Role ID: 6)
-  7. `Principal` (Role ID: 7)
-  8. `Director` (Role ID: 8)
-- **Strict Student Action Isolation:** Action buttons such as **"Join Club"** and **"Register for Event"** are exclusively rendered for verified Students. Leadership and authorities are presented only with management, review, and details views across all pages.
-- **Duplicate Prevention:** Prevents duplicate applications to the same club or duplicate event registrations at both database and API layers.
+### 👥 2. Role-Based Access Control (RBAC) & Governance Architecture
+- **7 Distinct User Roles:**
+  1. `Student` (Role ID: 1) — Explore clubs, apply for memberships, RSVP to events.
+  2. `Teacher` (Role ID: 2) — Faculty member eligible for club mentorship or executive chairs.
+  3. `Admin` (Role ID: 3) — Institutional system administrator with user management & chair allocation.
+  4. `Club Head` (Role ID: 4) — Student leader managing club activities, members, and event permission submissions.
+  5. `Club Mentor` (Role ID: 5) — Faculty mentor conducting Level 1 permission reviews.
+  6. `Estate Manager` (Role ID: 6) — Campus facility authority conducting Level 2 venue reviews.
+  7. `Principal` (Role ID: 7) — Head of institution conducting Level 3 final approvals.
+- **🔒 Strict Career-Track Isolation:** Enforces hard boundary checks between the **Student Track** (`Student`, `Club Head`) and the **Faculty Track** (`Teacher`, `Club Mentor`, `Estate Manager`, `Principal`, `Admin`), preventing privilege escalation across tracks.
+- **🪑 Single-Chair Executive Seat Management:** Dynamic reallocation of single-holder executive seats (`Principal`, `Estate Manager`, `Admin`) with automatic role handoff and executive transition alerts for outgoing holders.
 
-### 🔔 4. Real-Time Notification Center
-- Instant alerts for membership applications, approval pipeline updates, reviewer remarks, request withdrawals, and newly announced campus events.
-- Read/Unread state tracking with notification badges and direct deep-linking to relevant approval cards or event details.
+---
 
-### 🛡️ 5. Robust Security & Data Integrity
-- **JWT Bearer Authentication:** Secure access and refresh tokens with bcrypt-hashed credentials.
-- **Validation & Typo Detection:** Strict RFC email validation with automatic detection for common typos (e.g., `@gail.com` ➔ `@gmail.com`).
-- **Autofill Protection:** Explicit autocomplete disabling to prevent browser credential overwriting in administrative forms.
-- **SQL Sanitization:** Parameterized SQL queries and foreign key sanitization preventing data corruption or SQL injection.
+### 🎪 3. Club Ecosystem & Student Membership Lifecycle
+- **Club Directory:** Browse clubs by categories (Technical, Cultural, Sports, Social, etc.) with detailed profiles and activity logs.
+- **Application Workflow:** Students submit join requests with custom statements; Club Heads review, approve, or reject applicants with instant status feedback.
+- **Enrolled Clubs Portal:** Students track their club affiliations and pending applications in a unified view.
+
+---
+
+### 📅 4. Event Lifecycle & RSVP Management
+- **Centralized Event Showcase:** Displays upcoming and past campus events with venue, date, organizer info, and real-time registered student counts.
+- **Student Event Registration:** Verified students RSVP with one-click enrollment forms, eliminating duplicate registrations at database and API levels.
+- **My Events Dashboard:** Personalized student dashboard displaying all upcoming registered events with direct access to details.
+
+---
+
+### 🔔 5. Real-Time In-App Notification Engine
+- Instant notifications for permission advancement, rejections with remarks, membership approvals, request withdrawals, and campus-wide event releases.
+- Read/unread tracking, notification counter badges in the navigation bar, and deep-linking directly to relevant approval dashboards or event pages.
+
+---
+
+### 🛡️ 6. Enterprise-Grade Security & Reliability
+- **Stateless JWT Bearer Auth:** Secure access and refresh tokens paired with `bcryptjs` password hashing.
+- **Input Sanitization & Typo Detection:** RFC-compliant email validation with intelligent typo correction suggestions (e.g., `@gail.com` ➔ `@gmail.com`).
+- **API Hardening:** `helmet` security headers, `express-rate-limit` DDoS prevention, CORS allowlisting, and parameterized SQL queries to eliminate SQL injection.
 
 ---
 
@@ -67,20 +81,22 @@
 
 ```mermaid
 flowchart TD
-    subgraph Client [Client Tier (React 18 SPA)]
-        UI[Tailored Glassmorphism UI]
+    subgraph Client [Client Tier — React 19 + Vite]
+        UI[Glassmorphic UI / Single Page App]
         AuthUI[JWT Auth & Profile Manager]
-        PipelineUI[Interactive 4-Stage Stepper]
+        PipelineUI[Interactive 3-Stage Stepper]
+        AdminUI[User Management & Chair Selector]
     end
 
-    subgraph Server [Backend REST API (Node.js & Express)]
-        MW[JWT Auth & RBAC Middleware]
+    subgraph Server [Backend REST API — Node.js & Express]
+        MW[JWT & RBAC Middleware]
         PermService[Permission Pipeline Engine]
         ClubService[Club & Member Management]
-        NotifService[Real-Time Notification Dispatcher]
+        UserService[Role Governance & User Directory]
+        NotifService[Notification Dispatcher]
     end
 
-    subgraph Database [Database Tier (MySQL)]
+    subgraph Database [Database Tier — MySQL 8.0]
         Users[(user & role)]
         Clubs[(club & club_member)]
         Permissions[(permission_request & permission_approval)]
@@ -88,16 +104,34 @@ flowchart TD
         Notifs[(notification)]
     end
 
-    UI -->|REST Requests + JWT| MW
+    UI -->|REST + Bearer JWT| MW
     MW --> PermService
     MW --> ClubService
+    MW --> UserService
     PermService --> Permissions
     PermService --> NotifService
     NotifService --> Notifs
-    PermService -->|On Level 4 Approval| Events
+    PermService -->|On Level 3 Approval| Events
     ClubService --> Clubs
+    UserService --> Users
     AuthUI --> Users
 ```
+
+---
+
+## 📸 Application Showcase
+
+| Landing Page | Interactive How It Works |
+| :---: | :---: |
+| ![Landing Page](assets/landing_page.png) | ![How It Works](assets/how_it_works.png) |
+
+| Campus Clubs Directory | Live Events Catalog |
+| :---: | :---: |
+| ![Clubs Directory](assets/clubs_directory.png) | ![Events Directory](assets/events_directory.png) |
+
+| Account & Role Management | Architecture Overview |
+| :---: | :---: |
+| ![Account Profile](assets/account_profile.png) | ![Architecture](assets/architecture.png) |
 
 ---
 
@@ -105,28 +139,29 @@ flowchart TD
 
 ```
 Academic-Engagement-Portal/
-├── assets/                     # Architecture diagrams and UI screenshots
+├── assets/                     # UI screenshots and architecture diagrams
 ├── backend/                    # Node.js + Express REST API Server
-│   ├── config/                 # Database connection pool (db.js)
+│   ├── config/                 # MySQL database connection pool (db.js)
 │   ├── controllers/            # Auth, Club, Event, Permission, User & Feedback controllers
 │   ├── database/               # Relational SQL schema (schema.sql)
 │   ├── middlewares/            # JWT verification, RBAC auth, rate limiting & error handling
-│   ├── models/                 # MySQL data access layer (Club, Event, Permission, User models)
+│   ├── models/                 # Data access layer (Club, Event, Permission, User, Role models)
 │   ├── routes/                 # API endpoint routing definitions
-│   ├── services/               # Core business services (Permission pipeline, Club & Event services)
+│   ├── services/               # Business logic (Permission pipeline, Club, User & Event services)
 │   ├── utils/                  # ApiError helper, logger, and utility functions
 │   ├── validators/             # Request payload validation rules (express-validator)
-│   ├── app.js                  # Express middleware setup & route mounts
+│   ├── app.js                  # Express middleware setup & route mounting
 │   └── server.js               # HTTP server entrypoint
-└── frontend/                   # React.js Single Page Application
+└── frontend/                   # React.js SPA (Vite)
     ├── public/                 # Static assets & index.html
     └── src/
         ├── api/                # Axios instance configuration & JWT interceptors
         ├── auth/               # Login & Register components with email typo validation
         ├── components/         # ApprovalDashboard, MyRequestsList, PermissionRequestForm, Navbar, etc.
         ├── pages/              # HomePage, Clubs, ClubDetails, Events, EventDetails, Account, etc.
-        ├── App.js              # React Router routing & global notification toast wrapper
-        └── index.css           # Global dark purple/glassmorphic design system
+        ├── App.js              # React Router v7 routes & global notification wrappers
+        ├── index.css           # Global modern glassmorphic styling & design tokens
+        └── main.jsx / index.js # React application mount point
 ```
 
 ---
@@ -135,24 +170,23 @@ Academic-Engagement-Portal/
 
 | Tier | Technology | Purpose |
 | :--- | :--- | :--- |
-| **Frontend** | React 18, React Router v7, Axios, React Toastify, Modern CSS3 | Responsive Single Page Application, Multi-Role Dashboards & Interactive Steppers |
-| **Backend** | Node.js, Express.js, Express Validator | REST API Gateway, Permission Pipeline Execution & Notification Dispatching |
-| **Database** | MySQL Server 8.0+ | Relational data persistence with foreign key constraints & cascading actions |
-| **Authentication** | JWT (JSON Web Tokens), bcryptjs | Secure stateless authentication & password hashing |
-| **Cryptography** | Node `crypto` / Web Crypto API | CSPRNG random key generation for authority elevation |
-| **Hosting** | Vercel (Frontend), Render (Backend) | Production continuous deployment |
+| **Frontend** | React 19, React Router v7, Vite 6, Axios, React Toastify | High-performance Single Page Application with dynamic dashboards & responsive UI |
+| **Backend** | Node.js (ESM), Express.js, Express Validator, Helmet | Secure REST API Gateway, permission pipeline engine, rate limiting |
+| **Database** | MySQL Server 8.0+ | Relational data persistence with foreign keys, indexing, and cascading constraints |
+| **Authentication** | JWT (JSON Web Tokens), bcryptjs | Stateless authorization with access/refresh token rotation |
+| **Deployment** | Vercel (Frontend), Render (Backend) | Continuous integration and production cloud hosting |
 
 ---
 
 ## ⚙️ Environment Configuration
 
-Set up `.env` files in both `backend` and `frontend` before running the project locally.
+Create `.env` files in both the `backend` and `frontend` directories before running the application locally.
 
 ### 1. Backend Configuration (`backend/.env`)
 ```env
 PORT=5000
 NODE_ENV=development
-ALLOWED_ORIGINS=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 FRONTEND_URL=http://localhost:3000
 DB_HOST=localhost
 DB_PORT=3306
@@ -161,6 +195,8 @@ DB_PASSWORD=your_mysql_password
 DB_NAME=college_db
 JWT_ACCESS_SECRET=your_jwt_secret_key_here
 JWT_ACCESS_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_key
+JWT_REFRESH_EXPIRES_IN=30d
 ```
 
 ### 2. Frontend Configuration (`frontend/.env`)
@@ -174,7 +210,7 @@ REACT_APP_WEB3FORMS_KEY=your_optional_web3forms_key
 ## 🚀 Local Installation & Setup
 
 ### Prerequisites
-- **Node.js**: v18.x or higher
+- **Node.js**: v18.x or v20.x+
 - **npm**: v9.x or higher
 - **MySQL Server**: v8.0 or higher running on port `3306`
 
@@ -198,7 +234,7 @@ mysql -u root -p < backend/database/schema.sql
 ```bash
 cd backend
 npm install
-npm start
+npm run dev
 ```
 > *Backend API server will run at:* `http://localhost:5000`
 
@@ -207,9 +243,9 @@ In a separate terminal:
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
-> *Frontend React application will open at:* `http://localhost:3000`
+> *Frontend React application will run at:* `http://localhost:3000` (or `http://localhost:5173`)
 
 ---
 
@@ -217,19 +253,26 @@ npm start
 
 ### 🔐 Authentication & Accounts
 - `POST /api/auth/register` — Register a new student or faculty account.
-- `POST /api/auth/login` — Authenticate credentials and receive JWT.
-- `POST /api/users/generate-role-key` — Generate administrative role secret keys (Admin only).
-- `POST /api/users/elevate-role` — Elevate user role via valid cryptographic secret key.
+- `POST /api/auth/login` — Authenticate credentials and receive access/refresh tokens.
+- `GET /api/users/profile` — Fetch current user profile and role details.
+- `DELETE /api/users/profile` — Delete personal user account.
+
+### 👑 User Governance & Administration
+- `GET /api/users/all` — Retrieve all registered users across roles (Admin only).
+- `PUT /api/users/:id/role` — Update a user's role with track boundary validation (Admin only).
+- `DELETE /api/users/:id` — Delete a user from the directory (Admin only).
+- `GET /api/users/authority-seats` — Fetch current executive chair holders (Principal, Estate Manager, Admin).
+- `POST /api/users/authority-seats` — Reassign executive chair holders with auto-transition.
 
 ### 🏛️ Campus Clubs & Memberships
-- `GET /api/clubs` — Retrieve list of all campus clubs.
+- `GET /api/clubs` — Retrieve list of all active campus clubs.
 - `GET /api/clubs/:id` — Retrieve detailed club profile, active members, and mentor information.
 - `POST /api/clubs` — Create a new campus club entity (Admin only).
 - `PUT /api/clubs/:id` — Update club description, activities, or leadership (Club Leadership/Admin).
 - `POST /api/clubs/:id/join` — Submit a club membership application (Students only).
-- `GET /api/clubs/my/enrolled` — Retrieve all clubs the active student is enrolled in or applied to.
+- `GET /api/clubs/my/enrolled` — Retrieve all clubs the active student is enrolled in.
 
-### 📋 Multi-Tier Permissions & Approvals
+### 📋 3-Tier Permissions & Approvals
 - `POST /api/permissions` — Submit a new event permission request (Club Head only).
 - `GET /api/permissions/my-requests` — Retrieve real-time permission status, progress stepper, and remarks history.
 - `GET /api/permissions/pending` — Fetch pending requests matching the current authority's review level.
@@ -242,9 +285,10 @@ npm start
 - `POST /api/event-registrations/register` — Register student attendance for an event (Students only).
 - `GET /api/event-registrations/my` — Fetch events registered by the active student.
 
-### 🔔 Notifications
+### 🔔 Notifications & Feedback
 - `GET /api/notifications` — Retrieve all user notifications.
 - `PUT /api/notifications/:id/read` — Mark a notification as read.
+- `POST /api/feedback` — Submit user feedback/testimonials.
 
 ---
 
@@ -270,4 +314,6 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 
 - **Onkar Satale**
 - **GitHub:** [@Onkar-Satale](https://github.com/Onkar-Satale)
+- **LinkedIn:** [Onkar Satale](https://www.linkedin.com/in/Onkar-Satale)
+- **Email:** [onkarsatale4@gmail.com](mailto:onkarsatale4@gmail.com)
 - **Repository:** [Academic_Engagement_Portal](https://github.com/Onkar-Satale/Academic_Engagement_Portal)
