@@ -80,24 +80,32 @@
 ## 🧠 System Architecture
 
 <div align="center">
-  <img src="assets/architecture.png" alt="Academic Engagement Portal Architecture Diagram" width="100%" />
+  <img src="assets/architecture.png" alt="Academic Engagement Portal Architecture Diagram" width="680" />
 </div>
 
 ---
 
 ## 📸 Application Showcase
 
-| Landing Page | Interactive How It Works |
-| :---: | :---: |
-| ![Landing Page](assets/landing_page.png) | ![How It Works](assets/how_it_works.png) |
+<div align="center">
 
-| Campus Clubs Directory | Live Events Catalog |
+| 🏠 Landing Page | 🧭 Interactive How It Works |
 | :---: | :---: |
-| ![Clubs Directory](assets/clubs_directory.png) | ![Events Directory](assets/events_directory.png) |
+| <img src="assets/landing_page.png" alt="Landing Page" width="420" /> | <img src="assets/how_it_works.png" alt="How It Works" width="420" /> |
 
-| Authentication (Login & Register) | Account & Role Profile |
+| 🎪 Campus Clubs Directory | 📅 Live Events Catalog |
 | :---: | :---: |
-| ![Login](assets/login.png) | ![Account Profile](assets/account_profile.png) |
+| <img src="assets/clubs_directory.png" alt="Clubs Directory" width="420" /> | <img src="assets/events_directory.png" alt="Events Directory" width="420" /> |
+
+| 🔐 User Login Portal | 📝 Student & Faculty Registration |
+| :---: | :---: |
+| <img src="assets/login.png" alt="Login Portal" width="420" /> | <img src="assets/signup.png" alt="User Registration" width="420" /> |
+
+| 👤 Account & Role Profile |
+| :---: |
+| <img src="assets/account_profile.png" alt="Account Profile" width="480" /> |
+
+</div>
 
 ---
 
