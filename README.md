@@ -77,45 +77,11 @@
 
 ---
 
-## 🧠 System Architecture & Workflow
+## 🧠 System Architecture
 
-```mermaid
-flowchart TD
-    subgraph Client [Client Tier — React 19 + Vite]
-        UI[Glassmorphic UI / Single Page App]
-        AuthUI[JWT Auth & Profile Manager]
-        PipelineUI[Interactive 3-Stage Stepper]
-        AdminUI[User Management & Chair Selector]
-    end
-
-    subgraph Server [Backend REST API — Node.js & Express]
-        MW[JWT & RBAC Middleware]
-        PermService[Permission Pipeline Engine]
-        ClubService[Club & Member Management]
-        UserService[Role Governance & User Directory]
-        NotifService[Notification Dispatcher]
-    end
-
-    subgraph Database [Database Tier — MySQL 8.0]
-        Users[(user & role)]
-        Clubs[(club & club_member)]
-        Permissions[(permission_request & permission_approval)]
-        Events[(event & event_registration)]
-        Notifs[(notification)]
-    end
-
-    UI -->|REST + Bearer JWT| MW
-    MW --> PermService
-    MW --> ClubService
-    MW --> UserService
-    PermService --> Permissions
-    PermService --> NotifService
-    NotifService --> Notifs
-    PermService -->|On Level 3 Approval| Events
-    ClubService --> Clubs
-    UserService --> Users
-    AuthUI --> Users
-```
+<div align="center">
+  <img src="assets/architecture.png" alt="Academic Engagement Portal Architecture Diagram" width="100%" />
+</div>
 
 ---
 
@@ -129,9 +95,9 @@ flowchart TD
 | :---: | :---: |
 | ![Clubs Directory](assets/clubs_directory.png) | ![Events Directory](assets/events_directory.png) |
 
-| Account & Role Management | Architecture Overview |
+| Authentication (Login & Register) | Account & Role Profile |
 | :---: | :---: |
-| ![Account Profile](assets/account_profile.png) | ![Architecture](assets/architecture.png) |
+| ![Login](assets/login.png) | ![Account Profile](assets/account_profile.png) |
 
 ---
 
